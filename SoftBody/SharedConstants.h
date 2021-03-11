@@ -1,0 +1,6 @@
+#pragma once
+
+#define AS_GROUP_SIZE 1
+#define MAX_MSGROUPS_PER_ASGROUP 512
+#define MAX_TRIANGLES_PER_GROUP 85
+#define NUM_INSTANCES 50

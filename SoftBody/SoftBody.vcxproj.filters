@@ -1,0 +1,159 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <FxCompile Include="DefaultMS.hlsl">
+      <Filter>Engine\Assets</Filter>
+    </FxCompile>
+    <FxCompile Include="DefaultPS.hlsl">
+      <Filter>Engine\Assets</Filter>
+    </FxCompile>
+    <FxCompile Include="GameImplementations\SoftBodyDemo\Assets\BasicPS.hlsl">
+      <Filter>GameImplementations\SoftBodyDemo\Assets</Filter>
+    </FxCompile>
+    <FxCompile Include="GameImplementations\SoftBodyDemo\Assets\LinesMS.hlsl">
+      <Filter>GameImplementations\SoftBodyDemo\Assets</Filter>
+    </FxCompile>
+    <FxCompile Include="GameImplementations\SoftBodyDemo\Assets\SoftBodyAS.hlsl">
+      <Filter>GameImplementations\SoftBodyDemo\Assets</Filter>
+    </FxCompile>
+    <FxCompile Include="GameImplementations\SoftBodyDemo\Assets\SoftBodyMS.hlsl">
+      <Filter>GameImplementations\SoftBodyDemo\Assets</Filter>
+    </FxCompile>
+    <FxCompile Include="GameImplementations\SoftBodyDemo\Assets\SoftBodyPS.hlsl">
+      <Filter>GameImplementations\SoftBodyDemo\Assets</Filter>
+    </FxCompile>
+    <FxCompile Include="Engine\Assets\DefaultAS.hlsl" />
+    <FxCompile Include="Engine\Assets\DefaultMS.hlsl" />
+    <FxCompile Include="Engine\Assets\BasicLightingPS.hlsl" />
+    <FxCompile Include="Engine\Assets\InstancesMS.hlsl" />
+    <FxCompile Include="Engine\Assets\InstancesAS.hlsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Engine\DXSample.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Main.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Shapes.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\SimpleCamera.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\SimpleMath.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Win32Application.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Engine.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="GameUtils.cpp" />
+    <ClCompile Include="Engine\Interfaces\GameEngineInterface.cpp">
+      <Filter>Engine\Interfaces</Filter>
+    </ClCompile>
+    <ClCompile Include="GameImplementations\SoftBodyDemo\SoftBodyDemo.cpp">
+      <Filter>GameImplementations\SoftBodyDemo</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Interfaces\BodyInterface.cpp">
+      <Filter>Engine\Interfaces</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Graphics\Body.cpp">
+      <Filter>Engine\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="GameInterfaces\GameBase.cpp">
+      <Filter>GameInterfaces</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Engine\DXSample.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\DXSampleHelper.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Shapes.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\SimpleCamera.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\SimpleMath.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\StepTimer.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Win32Application.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Engine.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="GameInterfaces\GameBase.h">
+      <Filter>GameInterfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="GameInterfaces\GameUtils.h">
+      <Filter>GameInterfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Interfaces\GameEngineInterface.h">
+      <Filter>Engine\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\EngineUtils.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="SharedConstants.h" />
+    <ClInclude Include="GameImplementations\SoftBodyDemo\SoftBodyDemo.h">
+      <Filter>GameImplementations\SoftBodyDemo</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Interfaces\BodyInterface.h">
+      <Filter>Engine\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Graphics\Body.h">
+      <Filter>Engine\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="d3dx12.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Engine\SimpleMath.inl">
+      <Filter>Engine</Filter>
+    </None>
+    <None Include="GameImplementations\SoftBodyDemo\Assets\SoftbodyShared.hlsli">
+      <Filter>GameImplementations\SoftBodyDemo\Assets</Filter>
+    </None>
+    <None Include="Engine\Assets\Common.hlsli" />
+    <None Include="Engine\Assets\Instances.hlsli" />
+    <None Include="Engine\Assets\Default.hlsli" />
+    <None Include="Engine\Graphics\Body.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="GameImplementations">
+      <UniqueIdentifier>{0320542b-70bd-49ef-ac99-c3678398e5ab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine">
+      <UniqueIdentifier>{253fe27e-f894-452c-a3d8-72b2b75cc982}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameInterfaces">
+      <UniqueIdentifier>{eb3c92c4-b53b-4c3e-b70c-eef746f9e10d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Assets">
+      <UniqueIdentifier>{089bc000-ed69-4aa4-b6ac-3bf4c0e694c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Interfaces">
+      <UniqueIdentifier>{533d71eb-84b7-48db-bb28-edcff74a418f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameImplementations\SoftBodyDemo">
+      <UniqueIdentifier>{ff6412f6-349f-4d06-8a48-8c9d92f9a621}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameImplementations\SoftBodyDemo\Assets">
+      <UniqueIdentifier>{e94463a1-874b-49bc-8e2f-ad06b7912114}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Graphics">
+      <UniqueIdentifier>{58e4061a-e53d-4c59-a67b-ffc18d871fdf}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
