@@ -22,6 +22,8 @@ gfx::pipeline_objects gfx::create_pipelineobjects(std::wstring const& as, std::w
 
     D3DX12_MESH_SHADER_PIPELINE_STATE_DESC pso_desc = engine->get_pso_desc();
 
+    // todo : debug code
+    pso_desc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
     pso_desc.pRootSignature = result.root_signature.Get();
 
     if (!as.empty()) 
@@ -29,7 +31,6 @@ gfx::pipeline_objects gfx::create_pipelineobjects(std::wstring const& as, std::w
 
     pso_desc.MS = { meshshader.data, meshshader.size };
     pso_desc.PS = { pixelshader.data, pixelshader.size };
-    pso_desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE::D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
     auto psostream = CD3DX12_PIPELINE_MESH_STATE_STREAM(pso_desc);
 
@@ -105,7 +106,7 @@ ComPtr<ID3D12Resource> gfx::create_vertexbuffer_upload(uint8_t** mapped_buffer, 
 ComPtr<ID3D12Resource> gfx::create_instancebuffer(uint8_t** mapped_buffer, void* data_start, std::size_t const perframe_buffersize)
 {
     auto result = create_uploadbuffer(mapped_buffer, configurable_properties::frame_count * perframe_buffersize);
-    update_perframebuffer(*mapped_buffer, data_start, perframe_buffersize);
+    update_allframebuffers(*mapped_buffer, data_start, perframe_buffersize, configurable_properties::frame_count);
 
     return result;
 }
@@ -120,6 +121,14 @@ void gfx::update_perframebuffer(uint8_t* mapped_buffer, void* data_start, std::s
 {
     auto frame_idx = game_engine::g_engine->get_frame_index();
     memcpy(mapped_buffer + perframe_buffersize * frame_idx, data_start, perframe_buffersize);
+}
+
+void gfx::update_allframebuffers(uint8_t* mapped_buffer, void* data_start, std::size_t const perframe_buffersize, std::size_t framecount)
+{
+    for (size_t i = 0; i < framecount; ++i)
+    {
+        memcpy(mapped_buffer + perframe_buffersize * i, data_start, perframe_buffersize);
+    }
 }
 
 ComPtr<ID3D12Resource> gfx::create_uploadbuffer(uint8_t** mapped_buffer, std::size_t const buffersize)

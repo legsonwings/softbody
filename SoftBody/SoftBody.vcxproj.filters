@@ -117,6 +117,7 @@
     </ClInclude>
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="d3dx12.h" />
+    <ClInclude Include="Engine\Graphics\gfxcore.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Engine\SimpleMath.inl">

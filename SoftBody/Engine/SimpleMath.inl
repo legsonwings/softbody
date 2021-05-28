@@ -1,3 +1,4 @@
+#include "SimpleMath.h"
 //-------------------------------------------------------------------------------------
 // SimpleMath.inl -- Simplified C++ Math wrapper for DirectXMath
 //
@@ -979,6 +980,16 @@ inline void Vector3::Clamp(const Vector3& vmin, const Vector3& vmax, Vector3& re
     XMVECTOR v3 = XMLoadFloat3(&vmax);
     XMVECTOR X = XMVectorClamp(v1, v2, v3);
     XMStoreFloat3(&result, X);
+}
+
+inline Vector2 Vector3::To2D() const noexcept
+{
+    using namespace DirectX;
+    XMVECTOR v = XMLoadFloat3(this);
+
+    Vector2 result;
+    XMStoreFloat2(&result, v);
+    return result;
 }
 
 //------------------------------------------------------------------------------

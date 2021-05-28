@@ -34,7 +34,6 @@ soft_body::soft_body(game_engine const* engine)
     m_camera.Init({ 0, 0, 10.f });
     m_camera.SetMoveSpeed(10.0f);
 
-    m_cpu_instance_data_control_net.reset(new controlnet_instance_data[c_num_controlpoints]);
     uintptr_t const temp = reinterpret_cast<uintptr_t>(constant_buffer_memory) + cb_alignment - 1;
     m_constantbuffer_data = reinterpret_cast<SceneConstantBuffer*>(temp & ~static_cast<uintptr_t>(cb_alignment - 1));
 }
@@ -42,6 +41,15 @@ soft_body::soft_body(game_engine const* engine)
 void soft_body::update(float dt)
 {
     m_camera.Update(dt);
+
+    static std::size_t const num_spheres = spheres.size();
+    for (std::size_t i = 0; i < num_spheres; ++i)
+    {
+        for (std::size_t j = i + 1; j < num_spheres; ++j)
+        {
+            spheres[i]->get_body().resolve_collision(spheres[j]->get_body(), dt);
+        }
+    }
 
     for (auto& body : spheres)
     {
@@ -59,9 +67,6 @@ void soft_body::update(float dt)
     XMStoreFloat4x4(&(m_constantbuffer_data->WorldViewProj), XMMatrixTranspose(world * view * proj));
 
     memcpy(m_cbv_databegin + sizeof(SceneConstantBuffer) * engine->get_frame_index(), m_constantbuffer_data, sizeof(SceneConstantBuffer));
-
-    auto frame_idx = engine->get_frame_index();
-    memcpy(m_ibv_mapped_controlnet + sizeof(controlnet_instance_data) * c_num_controlpoints * frame_idx, m_cpu_instance_data_control_net.get(), sizeof(controlnet_instance_data) * c_num_controlpoints);
 }
 
 void soft_body::render(float dt)
@@ -80,8 +85,16 @@ void soft_body::populate_command_list()
         cmd_list->SetPipelineState((m_wireframe_toggle && pipelineobjects.pso_wireframe) ? pipelineobjects.pso_wireframe.Get() : pipelineobjects.pso.Get());
         cmd_list->SetGraphicsRootSignature(pipelineobjects.root_signature.Get());
         cmd_list->SetGraphicsRootConstantBufferView(0, cb_gpuaddress);
+
+        // todo : debug code
+        int i = 0;
         for (auto& body : spheres)
         {
+            ++i;
+            
+            if ((i == 1 && toggle1) || (i == 2 && toggle2))
+                continue;
+
             struct dispatch_parameters
             {
                 uint32_t num_triangles;
@@ -97,105 +110,90 @@ void soft_body::populate_command_list()
             // these shouldn't be directly int the root signature, use descriptor heap
             cmd_list->SetGraphicsRootShaderResourceView(2, body->get_vertexbuffer_gpuaddress());
 
-            //cmd_list->DispatchMesh(1, 1, 1);
+            cmd_list->DispatchMesh(1, 1, 1);
         }
     }
+
+    //{
+    //    struct
+    //    {
+    //        float color[4] = { 1.f, 1.f, 0.f, 1.f };
+    //        uint32_t num_instances;
+    //        uint32_t num_primitives_per_instance;
+    //    } sphere_isectinfo;
+
+    //    sphere_isectinfo.num_instances = sphere_isect->get_numinstances();
+    //    sphere_isectinfo.num_primitives_per_instance = static_cast<unsigned>(sphere_isect->get_numvertices() / 2);
+
+    //    gfx::pipeline_objects const& pipelineobjects = gfx::body_static<Geometry::nullshape, gfx::topology::line>::get_static_pipelineobjects();
+
+    //    cmd_list->SetPipelineState((m_wireframe_toggle && pipelineobjects.pso_wireframe) ? pipelineobjects.pso_wireframe.Get() : pipelineobjects.pso.Get());
+    //    cmd_list->SetGraphicsRootSignature(pipelineobjects.root_signature.Get());
+    //    cmd_list->SetGraphicsRootConstantBufferView(0, cb_gpuaddress);
+    //    cmd_list->SetGraphicsRoot32BitConstants(1, 6, &sphere_isectinfo, 0);
+    //    cmd_list->SetGraphicsRootShaderResourceView(3, sphere_isect->get_vertexbuffer_gpuaddress());
+    //    cmd_list->SetGraphicsRootShaderResourceView(4, sphere_isect->get_instancebuffer_gpuaddress());
+
+    //    unsigned const num_lines = sphere_isectinfo.num_primitives_per_instance * sphere_isectinfo.num_instances;
+
+    //    unsigned const num_ms = (num_lines / MAX_LINES_PER_MS) + ((num_lines % MAX_LINES_PER_MS) == 0 ? 0 : 1);
+
+    //    unsigned num_lines_processed = 0;
+    //    for (unsigned ms_idx = 0; ms_idx < num_ms; ++ms_idx)
+    //    {
+    //        cmd_list->SetGraphicsRoot32BitConstant(2, num_lines_processed, 0);
+    //        cmd_list->DispatchMesh(1, 1, 1);
+
+    //        num_lines_processed += MAX_LINES_PER_MS;
+    //    }
+    //}
+
     {
-        gfx::pipeline_objects const& pipelineobjects = gfx::body_static<Geometry::circle>::get_static_pipelineobjects();
-        cmd_list->SetPipelineState((m_wireframe_toggle && pipelineobjects.pso_wireframe) ? pipelineobjects.pso_wireframe.Get() : pipelineobjects.pso.Get());
-        cmd_list->SetGraphicsRootSignature(pipelineobjects.root_signature.Get());
-        cmd_list->SetGraphicsRootConstantBufferView(0, cb_gpuaddress);
-
-        circle->update_instancebuffer();
-        unsigned const num_tris = circle->get_numvertices() / 3;
-
-        // draw the circle
-        cmd_list->SetGraphicsRoot32BitConstant(1, num_tris, 0);
-        cmd_list->SetGraphicsRoot32BitConstant(1, num_tris, 1);
-        
-        // these shouldn't be directly int the root signature, use descriptor heap
-        cmd_list->SetGraphicsRootShaderResourceView(2, circle->get_vertexbuffer_gpuaddress());
-        cmd_list->SetGraphicsRootShaderResourceView(3, circle->get_instancebuffer_gpuaddress());
-
-        //cmd_list->DispatchMesh(1, 1, 1);
-    }
-
-    {
-        struct
+        struct controlnet_info
         {
             float color[4] = { 1.f, 1.f, 0.f, 1.f };
             uint32_t num_instances;
             uint32_t num_primitives_per_instance;
-        } controlnet_info;
+        };
 
-        controlnet_info.num_instances = c_num_controlpoints;
-        controlnet_info.num_primitives_per_instance = static_cast<unsigned>(m_vertices_controlnet.size() / 2);
+        gfx::pipeline_objects const& pipelineobjects = gfx::body_static<Geometry::ffd_object const&, gfx::topology::line>::get_static_pipelineobjects();
 
-        // Draw the control net
-        cmd_list->SetPipelineState(m_pipelinestate_lines.Get());
-        cmd_list->SetGraphicsRootSignature(m_rootsignature_lines.Get());
+        cmd_list->SetPipelineState((m_wireframe_toggle&& pipelineobjects.pso_wireframe) ? pipelineobjects.pso_wireframe.Get() : pipelineobjects.pso.Get());
+        cmd_list->SetGraphicsRootSignature(pipelineobjects.root_signature.Get());
         cmd_list->SetGraphicsRootConstantBufferView(0, cb_gpuaddress);
-        cmd_list->SetGraphicsRoot32BitConstants(1, 6, &controlnet_info, 0);
-        cmd_list->SetGraphicsRootShaderResourceView(3, m_vertexbuffer_controlnet->GetGPUVirtualAddress());
-        cmd_list->SetGraphicsRootShaderResourceView(4, m_instance_buffer_controlnet->GetGPUVirtualAddress() + sizeof(controlnet_instance_data) * c_num_controlpoints * frame_idx);
 
-        // TODO : Move this to shared constants
-        static constexpr unsigned max_lines_per_ms = 64;
-        unsigned const num_lines = controlnet_info.num_primitives_per_instance * controlnet_info.num_instances;
-        
-        unsigned const num_ms = (num_lines / max_lines_per_ms) + ((num_lines % max_lines_per_ms) == 0 ? 0 : 1);
-
-        unsigned num_lines_processed = 0;
-        for (unsigned ms_idx = 0; ms_idx < num_ms; ++ms_idx)
+        for (auto& control_net : controlnets)
         {
-            cmd_list->SetGraphicsRoot32BitConstant(2, num_lines_processed, 0);
-            cmd_list->DispatchMesh(1, 1, 1);
+            control_net->update_instancebuffer();
 
-            num_lines_processed += max_lines_per_ms;
+            controlnet_info info;
+            info.num_instances = control_net->get_numinstances();
+            info.num_primitives_per_instance = static_cast<unsigned>(control_net->get_numvertices() / 2);
+
+            cmd_list->SetGraphicsRoot32BitConstants(1, 6, &info, 0);
+            cmd_list->SetGraphicsRootShaderResourceView(3, control_net->get_vertexbuffer_gpuaddress());
+            cmd_list->SetGraphicsRootShaderResourceView(4, control_net->get_instancebuffer_gpuaddress());
+
+            unsigned const num_lines = info.num_primitives_per_instance * info.num_instances;
+            unsigned const num_ms = (num_lines / MAX_LINES_PER_MS) + ((num_lines % MAX_LINES_PER_MS) == 0 ? 0 : 1);
+
+            unsigned num_lines_processed = 0;
+            for (unsigned ms_idx = 0; ms_idx < num_ms; ++ms_idx)
+            {
+                cmd_list->SetGraphicsRoot32BitConstant(2, num_lines_processed, 0);
+                cmd_list->DispatchMesh(1, 1, 1);
+
+                num_lines_processed += MAX_LINES_PER_MS;
+            }
         }
     }
 }
 
 std::vector<std::weak_ptr<gfx::body>> soft_body::load_assets_and_geometry()
 {
-    std::vector<std::weak_ptr<gfx::body>> return_bodies;
-
     auto device = engine->get_device();
 
     m_constantbuffer = create_upload_buffer(&m_cbv_databegin, sizeof(SceneConstantBuffer) * configurable_properties::frame_count);
-    m_instance_buffer_controlnet = create_upload_buffer(&m_ibv_mapped_controlnet, c_num_controlpoints * configurable_properties::frame_count * sizeof(controlnet_instance_data));
-
-    // Create the pipeline state, which includes compiling and loading shaders.
-    {
-        struct shader
-        {
-            byte* data;
-            uint32_t size;
-        };
-
-        {
-            shader meshshader_lines, pixelshader_lines;
-
-            ReadDataFromFile(engine->get_asset_fullpath(c_lines_meshshader_filename).c_str(), &meshshader_lines.data, &meshshader_lines.size);
-            ReadDataFromFile(engine->get_asset_fullpath(c_lines_pixelshader_filename).c_str(), &pixelshader_lines.data, &pixelshader_lines.size);
-
-            ThrowIfFailed(device->CreateRootSignature(0, meshshader_lines.data, meshshader_lines.size, IID_PPV_ARGS(&m_rootsignature_lines)));
-
-            D3DX12_MESH_SHADER_PIPELINE_STATE_DESC pso_desc_lines = engine->get_pso_desc();
-            pso_desc_lines.pRootSignature = m_rootsignature_lines.Get();
-            pso_desc_lines.MS = { meshshader_lines.data, meshshader_lines.size };
-            pso_desc_lines.PS = { pixelshader_lines.data, pixelshader_lines.size };
-            pso_desc_lines.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE::D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
-
-            auto psostream_lines = CD3DX12_PIPELINE_MESH_STATE_STREAM(pso_desc_lines);
-
-            D3D12_PIPELINE_STATE_STREAM_DESC stream_desc_lines;
-            stream_desc_lines.pPipelineStateSubobjectStream = &psostream_lines;
-            stream_desc_lines.SizeInBytes = sizeof(psostream_lines);
-
-            ThrowIfFailed(device->CreatePipelineState(&stream_desc_lines, IID_PPV_ARGS(m_pipelinestate_lines.ReleaseAndGetAddressOf())));
-        }
-    }
 
     // Load geometry
     static const float blob_size = 10.f;
@@ -203,70 +201,61 @@ std::vector<std::weak_ptr<gfx::body>> soft_body::load_assets_and_geometry()
     static const std::uniform_real_distribution<float> color_dist(0.f, 1.f);
 
     Vector3 const color = { color_dist(mt), color_dist(mt), color_dist(mt) };
-    Vector3 const position = Vector3::Zero;
+    Vector3 const lposition = { -7.f, 0.f, 0.f };
+    Vector3 const rposition = {7.f, 0.f, 0.f};
 
-    Geometry::ffd_object ffd_sphere = { {position} };
-    ffd_sphere.apply_force(1, 2, 1, { 0.f, 2.f, 0.f });
-    ffd_sphere.apply_force(2, 1, 1, { 5.f, 0.f, 0.f });
+    Geometry::ffd_object l = { {lposition, 1.f} };
+    Geometry::ffd_object r = { {rposition, 1.f} };
 
-    spheres.push_back(std::make_shared<gfx::body_dynamic<Geometry::ffd_object>>(ffd_sphere));
-    return_bodies.push_back(spheres.back());
+    spheres.push_back(std::make_shared<gfx::body_dynamic<Geometry::ffd_object>>(l));
+    spheres.push_back(std::make_shared<gfx::body_dynamic<Geometry::ffd_object>>(r));
 
-    // test
-    Geometry::circle localcircle;
-    localcircle.center = { 3, 0, 0 };
-    localcircle.radius = 1;
-    localcircle.normal = { 1, 0, 0 };
+    spheres[0]->get_body().set_velocity({ 8.f, 0.f, 0.f });
+    spheres[1]->get_body().set_velocity({ -8.f, 0.f, 0.f });
 
-    circle = std::make_shared<gfx::body_static<Geometry::circle>>(localcircle, 1);
-    return_bodies.push_back(circle);
+    //{ 
+    //    // Todo : create a template to work without all type specifications
+    //    sphere_isect = std::make_shared<gfx::body_static<Geometry::nullshape, gfx::topology::line>>(Geometry::nullshape{},
+    //        [ls = spheres[0], rs = spheres[1]](Geometry::nullshape const&) { return utils::flatten(ls->get_body().intersect(rs->get_body())); },
+    //            [](Geometry::nullshape const&) { return std::vector<gfx::instance_data>{ {Vector3::Zero, { 1.f, 0.f, 0.f } } }; });
+    //}
 
-
+    // todo : support for instances with single color for all vertices
+    auto to_instancedata = [](std::vector<Vector3> const& locations, Vector3 const &color)
     {
-        m_vertices_controlnet = ffd_sphere.get_control_point_visualization();
+        std::vector<gfx::instance_data> instances;
+        instances.resize(locations.size());
+        std::transform(locations.begin(), locations.end(), instances.begin(), [&color](Vector3 const& v) { return gfx::instance_data{ v, color }; });
+        return instances;
+    };
 
-        if (m_vertices_controlnet.size() > 0)
-        {
-            auto vb_size = m_vertices_controlnet.size() * sizeof(Geometry::Vector3);
-            auto vb_desc = CD3DX12_RESOURCE_DESC::Buffer(vb_size);
+    controlnets.push_back(std::make_shared<gfx::body_static<Geometry::ffd_object const&, gfx::topology::line>>(spheres[0]->get_body(),
+                                    [](Geometry::ffd_object const& ffd_obj) { return ffd_obj.get_control_point_visualization(); },
+                                    [to_instancedata](Geometry::ffd_object const& ffd_obj) { return to_instancedata(ffd_obj.get_control_net(), { 1.f, 0.f, 0.f }); }));
 
-            // Create vertex buffer on the default heap
-            auto defaultheap_desc = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-            ThrowIfFailed(device->CreateCommittedResource(&defaultheap_desc, D3D12_HEAP_FLAG_NONE, &vb_desc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(m_vertexbuffer_controlnet.ReleaseAndGetAddressOf())));
 
-            // Create vertex resource on the upload heap
-            auto uploadheap_desc = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-            ThrowIfFailed(device->CreateCommittedResource(&uploadheap_desc, D3D12_HEAP_FLAG_NONE, &vb_desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(m_uploadbuffer_controlnet.GetAddressOf())));
+    controlnets.push_back(std::make_shared<gfx::body_static<Geometry::ffd_object const&, gfx::topology::line>>(spheres[1]->get_body(),
+                                    [](Geometry::ffd_object const& ffd_obj) { return ffd_obj.get_control_point_visualization(); },
+                                    [to_instancedata](Geometry::ffd_object const& ffd_obj) { return to_instancedata(ffd_obj.get_control_net(), { 1.f, 0.f, 0.f }); }));
 
-            {
-                uint8_t* vb_upload_start = nullptr;
+    return { spheres[0], spheres[1], controlnets[0], controlnets[1] };
+}
 
-                // We do not intend to read from this resource on the CPU.
-                m_uploadbuffer_controlnet->Map(0, nullptr, reinterpret_cast<void**>(&vb_upload_start));
-
-                // Copy vertex data to upload heap
-                memcpy(vb_upload_start, m_vertices_controlnet.data(), vb_size);
-
-                m_uploadbuffer_controlnet->Unmap(0, nullptr);
-            }
-
-            auto resource_transition = CD3DX12_RESOURCE_BARRIER::Transition(m_vertexbuffer_controlnet.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-
-            auto cmd_list = game_engine::g_engine->get_command_list();
-
-            // Copy vertex data from upload heap to default heap
-            cmd_list->CopyResource(m_vertexbuffer_controlnet.Get(), m_uploadbuffer_controlnet.Get());
-            cmd_list->ResourceBarrier(1, &resource_transition);
-        }
-    }
-
-    auto const& control_net = ffd_sphere.get_control_net();
-    for (size_t ctrl_pt_idx = 0; ctrl_pt_idx < control_net.size(); ++ctrl_pt_idx)
+void soft_body::switch_cameraview()
+{
+    switch (camera_view)
     {
-        m_cpu_instance_data_control_net[ctrl_pt_idx].position = control_net[ctrl_pt_idx];
+    case 1:
+    {
+        m_camera.TopView();
+        break;
     }
-
-    return return_bodies;
+    case 2:
+    {
+        m_camera.BotView();
+        break;
+    }
+    }
 }
 
 void soft_body::on_key_down(unsigned key)
@@ -276,6 +265,27 @@ void soft_body::on_key_down(unsigned key)
     if (key == 'T')
     {
         m_wireframe_toggle = !m_wireframe_toggle;
+    }
+
+    if (key == 'L')
+    {
+        toggle1 = !toggle1;
+    }
+
+    if (key == 'R')
+    {
+        toggle2 = !toggle2;
+    }
+
+    unsigned const relative_key = key - '0';
+    if (relative_key > 0 && relative_key < 5)
+    {
+        camera_view = relative_key;
+        switch_cameraview();
+    }
+    else if(camera_view != 0)
+    {
+        camera_view = 0;
     }
 }
 
@@ -318,7 +328,7 @@ ComPtr<ID3D12Resource> soft_body::create_upload_buffer(uint8_t** mapped_buffer, 
 
     //blob_physx[0].position = blob_physx[1].position + pos;
 
-    //m_cpu_instance_data[0].Position = Geometry::Utils::create_Vector4(blob_physx[0].position);
+    //m_cpu_instance_data[0].Position = utils::create_Vector4(blob_physx[0].position);
 
     //auto const omega = 1.f; //std::sqrt(spring.k / blob_physx[0].mass);
     //auto const eta = 0.5f;

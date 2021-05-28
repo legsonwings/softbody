@@ -1,0 +1,18 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+*.json
+*.dll
+*.exe
+*.pdb
+*.suo
+*.sln
+*.vcxproj
+/.vs/
+/Debug/
+/Release/
+/x64/
+/SoftBody/Debug/
+/SoftBody/Release/
+/SoftBody/x64/

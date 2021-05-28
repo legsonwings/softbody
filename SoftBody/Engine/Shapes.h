@@ -2,19 +2,27 @@
 
 #include "SimpleMath.h"
 #include "DirectXMath.h"
+#include "Graphics/gfxcore.h"
+#include "EngineUtils.h"
 
 #include <array>
 #include <vector>
 #include <limits>
 #include <cmath>
+#include <optional>
 #include <algorithm>
 #include <functional>
 
 namespace Geometry
 {
+    using Vector2 = DirectX::SimpleMath::Vector2;
     using Vector3 = DirectX::SimpleMath::Vector3;
     using Vector4 = DirectX::SimpleMath::Vector4;
     using Matrix = DirectX::SimpleMath::Matrix;
+    using Plane = DirectX::SimpleMath::Plane;
+
+    struct nullshape {};
+
     struct Vertex
     {
         Vector3 position;
@@ -28,26 +36,94 @@ namespace Geometry
         {}
     };
 
+    struct line2D
+    {
+        line2D() = default;
+        constexpr line2D(Vector2 const& _point, Vector2 const& _dir)
+            : point(_point), dir(_dir)
+        {}
+
+        static float getparameter(line2D const& line, Vector2 const& point);
+        Vector2 point, dir;
+    };
+
+    struct line
+    {
+        line() = default;
+        constexpr line(Vector3 const& _point, Vector3 const& _dir)
+            : point(_point), dir(_dir)
+        {}
+
+        line2D to2D() const;
+        static float getparameter(line const& line, Vector3 const& point);
+        static std::optional<Vector3> intersect_lines(line const& l, line const& r);
+        Vector3 point, dir;
+    };
+
+    struct linesegment
+    {
+        linesegment() = default;
+        constexpr linesegment(Vector3 const& _v0, Vector3 const& _v1)
+            : v0(_v0), v1(_v1)
+        {}
+
+        static std::optional<Vector2> intersect_line2D(linesegment const& linesegment, line const& line);
+        Vector3 v0, v1;
+    };
+
+    struct triangle2D
+    {
+        triangle2D() = default;
+        constexpr triangle2D(Vector2 const& _v0, Vector2 const& _v1, Vector2 const& _v2)
+            : v0(_v0), v1(_v1), v2(_v2)
+        {}
+
+        bool isin(Vector2 const& point) const;
+
+        Vector2 v0, v1, v2;
+
+    };
+    struct triangle
+    {
+        triangle() = default;
+        constexpr triangle(Vector3 const& _v0, Vector3 const& _v1, Vector3 const& _v2)
+            : v0(_v0), v1(_v1), v2(_v2)
+        {}
+
+        operator Plane() const { return { v0, v1, v2 }; }
+        bool isin(Vector3 const &point) const;
+
+        static std::optional<linesegment> intersect(triangle const& t0, triangle const& t1);
+        Vector3 v0, v1, v2;
+    };
+
     struct sphere
     {
-        std::vector<Vertex> const& GetTriangles();
+        sphere() { generate_triangles(); }
+        sphere(Vector3 const& _position, float _radius) : position(_position), radius(_radius) { generate_triangles(); }
+
+        void generate_triangles();
+        std::vector<Vertex> const& get_triangles() const;
+        std::vector<linesegment> intersect(sphere const& r) const;
+        static std::vector<linesegment> intersect(sphere const& l, sphere const& r);
+
     private:
-        void GenerateTriangles();
-        Vertex CreateSphereVertex(float const phi, float const theta);
+        void addquad(float theta, float phi,float step_theta, float step_phi);
+        Vertex create_spherevertex(float const phi, float const theta);
+
         std::vector<Vertex> triangulated_sphere;
     public:
-        sphere() = default;
-        sphere(Vector3 const& _position) : position(_position)
-        {}
-        float step_degrees = 20.f;
+
+        // todo : use num segments instead
+        float step_degrees = 30.f;
         float radius = 1.5f;
         Vector3 position = {};
     };
 
     struct circle
     {
-        std::vector<Vertex> GetTriangles();
-
+        std::vector<Vertex> get_triangles() const;
+        std::vector<gfx::instance_data> get_instance_data() const;
         float step = 1.27f;
         float radius = 1.f;
         Vector3 center = {};
@@ -98,6 +174,8 @@ namespace Geometry
             }
         }
 
+        Vector3 span() const { return max_pt - min_pt; }
+
         // Top left back is min, bot right front max
         Vector3 min_pt;
         Vector3 max_pt;
@@ -108,97 +186,99 @@ namespace Geometry
         sphere ball;
     public:
         ffd_object() = default;
-        ffd_object(sphere const& _sphere) : ball(_sphere)
+
+        ffd_object(sphere const& _sphere) : ball(_sphere), center(_sphere.position)
         {
-            std::vector<Vertex> const &sphereverts = ball.GetTriangles();
-            
+            ball.position = Vector3::Zero;
+            ball.generate_triangles();
+
+            std::vector<Vertex> const &sphereverts = ball.get_triangles();
+
+            auto const num_verts = sphereverts.size();
             std::vector<Vector3> verts;
-            verts.reserve(sphereverts.size());
+            verts.reserve(num_verts);
+            vertices.reserve(num_verts);
             for (auto const & vert : sphereverts)
             {
                 verts.push_back(vert.position);
             }
 
-            box = aabb(verts);
+            span = aabb(verts).span();
+            
+            for (auto const& vert : sphereverts)
+            {
+                vertices.push_back({ get_parametric_coordinates(vert.position), vert.normal });
+                evaluated_verts.push_back({ vert.position + center, vert.normal });
+            }
 
-            Vector3 const& span = box.max_pt - box.min_pt;
-            unsigned const product_ln = (l + 1) * (n + 1);
+            uint const product_ln = (l + 1) * (n + 1);
             float const reciprocal_product_ln = 1.f / product_ln;
 
-            unsigned num_control_pts = product_ln * (m + 1);
-            control_points.reserve(num_control_pts);
+            //uint num_ctrl_pts = product_ln * (m + 1);
 
-            for (unsigned idx = 0; idx < num_control_pts; ++idx)
+            rest_config.reserve(num_control_points);
+            control_points.reserve(num_control_points);
+
+            for (uint idx = 0; idx < num_control_points; ++idx)
             {
                 unsigned const j = static_cast<unsigned>(idx * reciprocal_product_ln);
                 unsigned const k = static_cast<unsigned>((idx % product_ln) / (m + 1));
                 unsigned const i = static_cast<unsigned>(idx - k * (l + 1) - j * product_ln);
 
-                control_points.push_back(box.min_pt + Vector3{ span.x * (float(i) / float(l)), span.y * (float(j) / float(m)), span.z * (float(k) / float(n)) });
+                rest_config.push_back(Vector3{ span.x * (float(i) / float(l)), span.y * (float(j) / float(m)), span.z * (float(k) / float(n)) });
+                control_points.push_back(box_minpt() + rest_config[idx] );
             }
 
-            rest_config = control_points;
-            velocities.resize(num_control_pts);
-
-            for (auto const& vert : sphereverts)
-            {
-                vertices.push_back({ get_parametric_coordinates(vert.position), vert.normal });
-            }
+            velocities.resize(num_control_points);
         }
+
         void update(float dt);
-        Vector3 to_local(Vector3 const & point) const
-        {
-            return point - box.min_pt;
-        }
 
-        Vector3 to_global(Vector3 const& local_point) const
-        {
-            return box.min_pt + local_point;
-        }
+        inline Vector3 box_minpt() const { return center - span / 2.f; }
 
         Vector3 get_parametric_coordinates(Vector3 const& cartesian_coordinates) const
         {
-            Vector3 to_point = cartesian_coordinates - box.min_pt;
+            Vector3 const to_point = cartesian_coordinates + span / 2.f;
             
             // We can just use span as the deformation volume is axis aligned
-            Vector3 const& span = box.max_pt - box.min_pt;
-
             return { to_point.Dot(Vector3::UnitX) / span.x,
                 to_point.Dot(Vector3::UnitY) / span.y,
                 to_point.Dot(Vector3::UnitZ) / span.z };
-
         }
 
-        unsigned get_1D_idx(unsigned i, unsigned j, unsigned k) const
+        uint get_1D_idx(uint i, uint j, uint k) const
         {
             return i + k * (l + 1) + j * (l + 1) * (m + 1);
         }
 
-        void apply_force(unsigned i, unsigned j, unsigned k, Vector3 const & force)
+        void apply_force(Vector3 const& force, float dt)
         {
-            std::vector<Vertex> ret;
+            velocity += force * dt;
+        }
 
-            auto ctr_pt_idx = get_1D_idx(i, j, k);
-            control_points[ctr_pt_idx] = control_points[ctr_pt_idx] + force;
+        void apply_force_at_controlpoint(uint i, uint j, uint k, Vector3 const& force)
+        {
+            apply_force_at_controlpoint(get_1D_idx(i, j, k), force);
+        }
+
+        void apply_force_at_controlpoint(uint ctrlpt_idx, Vector3 const& force)
+        {
+            velocities[ctrlpt_idx] += force;
         }
 
         std::vector<Vector3> get_control_point_visualization() const;
-        std::vector<Vector3> const& get_control_net() const { return control_points; }
 
-        std::vector<Vertex> get_vertices() const
-        {
-            std::vector<Vertex> result;
-            result.reserve(vertices.size());
-
-            for (auto const & vert : vertices)
-            {
-                result.push_back({ eval_bez_trivariate(vert.position.x, vert.position.y, vert.position.z), vert.normal });
-            }
-
-            return result;
+        std::vector<Vector3> const& get_control_net() const 
+        { 
+            return control_points; 
         }
 
-        float fact(unsigned i) const
+        std::vector<Vertex> const& get_vertices() const
+        {
+            return evaluated_verts;
+        }
+
+        float fact(uint i) const
         {
             if (i < 1)
                 return 1;
@@ -209,13 +289,13 @@ namespace Geometry
         Vector3 eval_bez_trivariate(float s, float t, float u) const
         {
             Vector3 result = Vector3::Zero;
-            for (unsigned i = 0; i <= 2; ++i)
+            for (uint i = 0; i <= 2; ++i)
             {
                 float basis_s = (float(l) / float(fact(i) * fact(l - i))) * std::powf(float(1 - s), float(l - i)) * std::powf(float(s), float(i));
-                for (unsigned j = 0; j <= 2; ++j)
+                for (uint j = 0; j <= 2; ++j)
                 {
                     float basis_t = (float(m) / float(fact(j) * fact(m - j))) * std::powf(float(1 - t), float(m - j)) * std::powf(float(t), float(j));
-                    for (unsigned k = 0; k <= 2; ++k)
+                    for (uint k = 0; k <= 2; ++k)
                     {
                         float basis_u = (float(n) / float(fact(k) * fact(n - k))) * std::powf(float(1 - u), float(n - k)) * std::powf(float(u), float(k));
 
@@ -227,13 +307,26 @@ namespace Geometry
             return result;
         }
 
-        aabb box;
+        Vector3 compute_wholebody_forces() const;
+        void set_velocity(Vector3 const vel);
+        void resolve_collision(ffd_object &r, float dt);
+        uint closest_controlpoint(Vector3 const &point) const;
+        std::vector<linesegment> intersect(ffd_object const& r) const;
+        std::vector<Geometry::Vector3> compute_contacts(ffd_object const&) const;
+
+        float penetration_duration;
+        Vector3 span;
+        Vector3 center = {};
+        Vector3 accel = {};
+        Vector3 velocity = {};
+        std::vector<Vertex> evaluated_verts;
         std::vector<Vertex> vertices;
         std::vector<Vector3> control_points;
         std::vector<Vector3> rest_config;
         std::vector<Vector3> velocities;
 
-        unsigned l = 2, m = 2, n = 2;
+        uint l = 2, m = 2, n = 2;
+        static std::size_t constexpr num_control_points = 27;
     };
 
     struct Spring
@@ -252,11 +345,14 @@ namespace Geometry
         float l = 0.f;
         float v = 0.f;
     };
+}
 
-    namespace Utils
-    {
-        Vector4 create_Vector4(Vector3 const& v, float w = 1.f);
-        Matrix get_planematrix(Vector3 translation, Vector3 normal);
-        std::vector<Vector3> create_marker(Vector3 point, float scale);
-    }
+namespace utils
+{
+    Geometry::Vector4 create_Vector4(Geometry::Vector3 const& v, float w = 1.f);
+    Geometry::Matrix get_planematrix(Geometry::Vector3 translation, Geometry::Vector3 normal);
+    std::vector<Geometry::Vector3> create_marker(Geometry::Vector3 point, float scale);
+    std::vector<Geometry::Vector3> flatten(std::vector<Geometry::linesegment> const& lines);
+    bool are_equal(float const& l, float const& r);
+    bool are_equal(Geometry::Vector3 const& l, Geometry::Vector3 const& r);
 }

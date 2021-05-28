@@ -83,8 +83,8 @@ void SimpleCamera::Update(float elapsedSeconds)
         m_pitch -= rotateInterval;
 
     // Prevent looking too far up or down.
-    m_pitch = std::min(m_pitch, XM_PIDIV4);
-    m_pitch = std::max(-XM_PIDIV4, m_pitch);
+    //m_pitch = std::min(m_pitch, XM_PIDIV4);
+    //m_pitch = std::max(-XM_PIDIV4, m_pitch);
 
     // Move the camera in model space.
     float x = move.x * -cosf(m_yaw) - move.z * sinf(m_yaw);
@@ -112,6 +112,22 @@ XMMATRIX SimpleCamera::GetViewMatrix()
 XMMATRIX SimpleCamera::GetProjectionMatrix(float fov, float aspectRatio, float nearPlane, float farPlane)
 {
     return XMMatrixPerspectiveFovRH(fov, aspectRatio, nearPlane, farPlane);
+}
+
+void SimpleCamera::TopView()
+{
+    m_position = { 0, 3, 0.f };
+    m_yaw = 0.f;
+    m_pitch = -XM_PIDIV2;
+    m_lookDirection = { 0, -1, 0 };
+}
+
+void SimpleCamera::BotView()
+{
+    m_position = { 0, -3, 0.f };
+    m_yaw = 0.f;
+    m_pitch = XM_PIDIV2;
+    m_lookDirection = { 0, 1, 0 };
 }
 
 void SimpleCamera::OnKeyDown(WPARAM key)

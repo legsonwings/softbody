@@ -26,9 +26,10 @@ public:
     void SetMoveSpeed(float unitsPerSecond);
     void SetTurnSpeed(float radiansPerSecond);
 
+    void TopView();
+    void BotView();
     void OnKeyDown(WPARAM key);
     void OnKeyUp(WPARAM key);
-
 private:
     void Reset();
 

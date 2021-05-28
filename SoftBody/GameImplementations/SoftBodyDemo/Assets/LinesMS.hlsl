@@ -19,6 +19,7 @@ struct Constants
 struct instance_data
 {
     float3 position;
+    float3 color;
 };
 
 struct instances_information
