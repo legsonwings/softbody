@@ -7,8 +7,6 @@
 *.exe
 *.pdb
 *.suo
-*.sln
-*.vcxproj
 /.vs/
 /Debug/
 /Release/
