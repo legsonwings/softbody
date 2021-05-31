@@ -83,18 +83,20 @@ namespace Geometry
         Vector2 v0, v1, v2;
 
     };
+
     struct triangle
     {
         triangle() = default;
         constexpr triangle(Vector3 const& _v0, Vector3 const& _v1, Vector3 const& _v2)
-            : v0(_v0), v1(_v1), v2(_v2)
+            : verts{_v0, _v1, _v2}
         {}
 
-        operator Plane() const { return { v0, v1, v2 }; }
-        bool isin(Vector3 const &point) const;
+        operator Plane() const { return { verts[0], verts[1], verts[1] }; }
 
-        static std::optional<linesegment> intersect(triangle const& t0, triangle const& t1);
-        Vector3 v0, v1, v2;
+        static bool isin(Vector3 const *tri, Vector3 const &point);
+        static std::optional<linesegment> intersect(triangle const &t0, triangle const &t1);
+        static std::optional<linesegment> intersect(Vector3 const *t0, Vector3 const *t1);
+        Vector3 verts[3];
     };
 
     struct sphere
@@ -133,6 +135,10 @@ namespace Geometry
     struct aabb
     {
         aabb() = default;
+        aabb(aabb const &) = default;
+        aabb(aabb&&) = default;
+        aabb& operator=(const aabb&) = default;
+        aabb& operator=(aabb&&) = default;
 
         constexpr aabb(Vector3 const& _min, Vector3 const& _max)
             : min_pt(_min), max_pt(_max)
@@ -143,34 +149,15 @@ namespace Geometry
             min_pt = Vector3{ std::numeric_limits<float>::max() };
             max_pt = Vector3{ std::numeric_limits<float>::min() };
 
-            // TODO : For larger set better to compute min separately for each set of ordinate
-            for (auto const pt : points)
+            for (auto const &pt : points)
             {
-                if (pt.x < min_pt.x)
-                {
-                    min_pt.x = pt.x;
-                }
-                if (pt.y < min_pt.y)
-                {
-                    min_pt.y = pt.y;
-                }
-                if (pt.z < min_pt.z)
-                {
-                    min_pt.z = pt.z;
-                }
+                min_pt.x = std::min(pt.x, min_pt.x);
+                min_pt.y = std::min(pt.y, min_pt.y);
+                min_pt.z = std::min(pt.z, min_pt.z);
 
-                if (pt.x > max_pt.x)
-                {
-                    max_pt.x = pt.x;
-                }
-                if (pt.y > max_pt.y)
-                {
-                    max_pt.y = pt.y;
-                }
-                if (pt.z > max_pt.z)
-                {
-                    max_pt.z = pt.z;
-                }
+                max_pt.x = std::max(pt.x, max_pt.x);
+                max_pt.y = std::max(pt.y, max_pt.y);
+                max_pt.z = std::max(pt.z, max_pt.z);
             }
         }
 
@@ -198,17 +185,23 @@ namespace Geometry
             std::vector<Vector3> verts;
             verts.reserve(num_verts);
             vertices.reserve(num_verts);
+            physx_verts.reserve(num_verts);
+            evaluated_verts.reserve(num_verts);
             for (auto const & vert : sphereverts)
             {
                 verts.push_back(vert.position);
             }
 
-            span = aabb(verts).span();
-            
+            auto const &span = aabb(verts).span();
+            auto const& min_pt = center - span / 2.f;
+
             for (auto const& vert : sphereverts)
             {
-                vertices.push_back({ get_parametric_coordinates(vert.position), vert.normal });
-                evaluated_verts.push_back({ vert.position + center, vert.normal });
+                vertices.push_back({ get_parametric_coordinates(vert.position, span), vert.normal });
+
+                auto const &pos = vert.position + center;
+                physx_verts.push_back(pos);
+                evaluated_verts.push_back({ pos, vert.normal });
             }
 
             uint const product_ln = (l + 1) * (n + 1);
@@ -226,24 +219,21 @@ namespace Geometry
                 unsigned const i = static_cast<unsigned>(idx - k * (l + 1) - j * product_ln);
 
                 rest_config.push_back(Vector3{ span.x * (float(i) / float(l)), span.y * (float(j) / float(m)), span.z * (float(k) / float(n)) });
-                control_points.push_back(box_minpt() + rest_config[idx] );
+                control_points.push_back(min_pt + rest_config[idx]);
             }
 
+            box = std::move(aabb{ control_points });
             velocities.resize(num_control_points);
         }
 
         void update(float dt);
 
-        inline Vector3 box_minpt() const { return center - span / 2.f; }
-
-        Vector3 get_parametric_coordinates(Vector3 const& cartesian_coordinates) const
+        static Vector3 get_parametric_coordinates(Vector3 const& cartesian_coordinates, Vector3 const &span)
         {
             Vector3 const to_point = cartesian_coordinates + span / 2.f;
             
-            // We can just use span as the deformation volume is axis aligned
-            return { to_point.Dot(Vector3::UnitX) / span.x,
-                to_point.Dot(Vector3::UnitY) / span.y,
-                to_point.Dot(Vector3::UnitZ) / span.z };
+            // assume the volume is axis aligned and coordinates relative to volume center)
+            return { to_point.x / span.x, to_point.y / span.y, to_point.z / span.z };
         }
 
         uint get_1D_idx(uint i, uint j, uint k) const
@@ -276,6 +266,11 @@ namespace Geometry
         std::vector<Vertex> const& get_vertices() const
         {
             return evaluated_verts;
+        }
+
+        std::vector<Vector3> const& get_physx_traingles() const
+        {
+            return physx_verts;
         }
 
         float fact(uint i) const
@@ -314,11 +309,15 @@ namespace Geometry
         std::vector<linesegment> intersect(ffd_object const& r) const;
         std::vector<Geometry::Vector3> compute_contacts(ffd_object const&) const;
 
-        float penetration_duration;
-        Vector3 span;
-        Vector3 center = {};
+        // todo : remove
         Vector3 accel = {};
+        float penetration_duration;
+        //
+
+        aabb box;
+        Vector3 center = {};
         Vector3 velocity = {};
+        std::vector<Vector3> physx_verts;
         std::vector<Vertex> evaluated_verts;
         std::vector<Vertex> vertices;
         std::vector<Vector3> control_points;

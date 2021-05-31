@@ -175,6 +175,7 @@
     <ClCompile Include="Engine\Interfaces\BodyInterface.cpp" />
     <ClCompile Include="Engine\Interfaces\GameEngineInterface.cpp" />
     <ClCompile Include="Engine\Main.cpp" />
+    <ClCompile Include="Engine\physics\collision.cpp" />
     <ClCompile Include="Engine\Shapes.cpp" />
     <ClCompile Include="Engine\SimpleCamera.cpp" />
     <ClCompile Include="Engine\SimpleMath.cpp" />
@@ -194,6 +195,7 @@
     <ClInclude Include="Engine\Graphics\gfxcore.h" />
     <ClInclude Include="Engine\Interfaces\BodyInterface.h" />
     <ClInclude Include="Engine\Interfaces\GameEngineInterface.h" />
+    <ClInclude Include="Engine\physics\collision.h" />
     <ClInclude Include="Engine\Shapes.h" />
     <ClInclude Include="Engine\SimpleCamera.h" />
     <ClInclude Include="Engine\SimpleMath.h" />

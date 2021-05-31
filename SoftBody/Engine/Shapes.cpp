@@ -3,6 +3,10 @@
 
 #include <algorithm>
 
+#ifdef PROFILE_TIMING
+#include <chrono>
+#endif 
+
 using namespace DirectX;
 using namespace Geometry;
 
@@ -57,7 +61,7 @@ void sphere::generate_triangles()
     float const step_theta = XM_PI - std::floor(XM_PI * reciprocal_stepradians) * step_radians;
     float const step_phi = XM_2PI - std::floor(XM_2PI * reciprocal_stepradians) * step_radians;
 
-    // Divide the sphere into quads for each region defined by two circles(at theta and theta + step)
+    // Divide the sphere into quads for each region defined by four circles(at theta, theta + step, phi and phi + step)
     for (theta = 0.f; theta < theta_end; theta += step_radians)
     {
         for (phi = 0.f; phi < phi_end; phi += step_radians)
@@ -137,6 +141,7 @@ std::vector<linesegment> sphere::intersect(sphere const& l, sphere const& r)
 
 void ffd_object::update(float dt)
 {
+    box = std::move(aabb{ control_points });
     velocity += compute_wholebody_forces() * dt;
 
     auto const delta_pos = velocity * dt;
@@ -147,13 +152,13 @@ void ffd_object::update(float dt)
 
     for (uint ctrl_pt_idx = 0; ctrl_pt_idx < control_points.size(); ++ctrl_pt_idx)
     {
-        // omega = std::sqrt(spring_const / mass);
         // eta = damping factor
-        auto const omega = 2.7f;
+        // omega = std::sqrt(spring_const / mass);
         auto const eta = 0.5f;
+        auto const omega = 2.7f;
 
         auto const alpha = omega * std::sqrt(1 - eta * eta);
-        auto const rest_pt = box_minpt() + rest_config[ctrl_pt_idx];
+        auto const rest_pt = box.min_pt + rest_config[ctrl_pt_idx];
         auto const displacement = control_points[ctrl_pt_idx] - rest_pt;
 
         // damped shm
@@ -164,10 +169,15 @@ void ffd_object::update(float dt)
         control_points[ctrl_pt_idx] = rest_pt + delta_pos;
     }
 
+    physx_verts.clear();
     evaluated_verts.clear();
     for (auto const& vert : vertices)
     {
-        evaluated_verts.push_back({ eval_bez_trivariate(vert.position.x, vert.position.y, vert.position.z), vert.normal });
+        auto pos = eval_bez_trivariate(vert.position.x, vert.position.y, vert.position.z);
+        physx_verts.push_back(pos);
+
+        // todo : evaluate the normal as well
+        evaluated_verts.push_back({ pos, vert.normal });
     }
 }
 
@@ -263,34 +273,20 @@ uint Geometry::ffd_object::closest_controlpoint(Vector3 const& point) const
 
 std::vector<linesegment> Geometry::ffd_object::intersect(ffd_object const& r) const
 {
-    auto const& lsphereverts = get_vertices();
-    auto const& rsphereverts = r.get_vertices();
+    auto const& ltris = get_physx_traingles();
+    auto const& rtris = r.get_physx_traingles();
 
-    auto const lnum_verts = lsphereverts.size();
-    auto const rnum_verts = rsphereverts.size();
+    auto const lnum_verts = ltris.size();
+    auto const rnum_verts = rtris.size();
 
     assert(lnum_verts % 3 == 0);
     assert(rnum_verts % 3 == 0);
 
-    std::vector<triangle> ltriangles;
-    ltriangles.reserve(lnum_verts % 3);
-    for (uint i = 0; i < lnum_verts; i += 3)
-    {
-        ltriangles.emplace_back(triangle{ lsphereverts[i].position, lsphereverts[i + 1].position, lsphereverts[i + 2].position });
-    }
-
-    std::vector<triangle> rtriangles;
-    ltriangles.reserve(rnum_verts % 3);
-    for (uint i = 0; i < rnum_verts; i += 3)
-    {
-        rtriangles.emplace_back(triangle{ rsphereverts[i].position, rsphereverts[i + 1].position, rsphereverts[i + 2].position });
-    }
-
     std::vector<linesegment> result;
-    for (auto const& ltri : ltriangles)
-        for (auto const& rtri : rtriangles)
+    for(int lidx = 0; lidx < lnum_verts; lidx+=3)
+        for (int ridx = 0; ridx < lnum_verts; ridx += 3)
         {
-            if (auto const& isect = triangle::intersect(ltri, rtri))
+            if (auto const& isect = triangle::intersect(&ltris[lidx], &rtris[ridx]))
             {
                 result.push_back(isect.value());
             }
@@ -301,7 +297,23 @@ std::vector<linesegment> Geometry::ffd_object::intersect(ffd_object const& r) co
 
 std::vector<Geometry::Vector3> Geometry::ffd_object::compute_contacts(ffd_object const& other) const
 {
+#ifdef PROFILE_TIMING
+    static float isect_cost = 0.f;
+    auto start = std::chrono::high_resolution_clock::now();
+#endif
     auto const lines = intersect(other);
+
+#ifdef PROFILE_TIMING
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    isect_cost += duration.count();
+
+    char buf[512];
+    sprintf_s(buf, "Intersection took [%f] ms\n", isect_cost);
+
+    OutputDebugStringA(buf);
+#endif
+
     std::vector<Vector3> mids;
     mids.reserve(lines.size() / 2);
     for (uint i = 0; i < lines.size(); i++)
@@ -520,9 +532,9 @@ bool triangle2D::isin(Vector2 const& point) const
     return (u >= 0.f && u <= 1.f) && (v >= 0.f && v <= 1.f) && (w >= 0.f && w <= 1.f);
 }
 
-bool Geometry::triangle::isin(Vector3 const& point) const
+bool Geometry::triangle::isin(Vector3 const* tri, Vector3 const& point)
 {
-    Vector3 normal_unnormalized = (v1 - v0).Cross(v2 - v0);
+    Vector3 normal_unnormalized = (tri[1] - tri[0]).Cross(tri[2] - tri[0]);
     Vector3 normal = normal_unnormalized;
     normal.Normalize();
 
@@ -530,16 +542,21 @@ bool Geometry::triangle::isin(Vector3 const& point) const
     if (triarea == 0)
         return false;
 
-    float const alpha = normal.Dot((v1 - point).Cross(v2 - point)) / triarea;
-    float const beta = normal.Dot((v2 - point).Cross(v0 - point)) / triarea;
+    float const alpha = normal.Dot((tri[1] - point).Cross(tri[2] - point)) / triarea;
+    float const beta = normal.Dot((tri[2] - point).Cross(tri[0] - point)) / triarea;
 
     return alpha > -utils::tolerance<float> && beta > -utils::tolerance<float> && (alpha + beta) < (1.f + utils::tolerance<float>);
 }
 
 std::optional<linesegment> triangle::intersect(triangle const& t0, triangle const& t1)
 {
-    Vector3 t0_normal = (t0.v1 - t0.v0).Cross(t0.v2 - t0.v0);
-    Vector3 t1_normal = (t1.v1 - t1.v0).Cross(t1.v2 - t1.v0);
+    return intersect(t0.verts, t1.verts);
+}
+
+std::optional<linesegment> Geometry::triangle::intersect(Vector3 const* t0, Vector3 const* t1)
+{
+    Vector3 t0_normal = (t0[1] - t0[0]).Cross(t0[2] - t0[0]);
+    Vector3 t1_normal = (t1[1] - t1[0]).Cross(t1[2] - t1[0]);
     t0_normal.Normalize();
     t1_normal.Normalize();
 
@@ -552,33 +569,33 @@ std::optional<linesegment> triangle::intersect(triangle const& t0, triangle cons
 
     if (fabs(det) < FLT_EPSILON)
         return {};
-    
-    Vector3 const &linepoint0 = (t0.v0.Dot(t0_normal) * (t1_normal.Cross(linedir)) + t1.v0.Dot(t1_normal) * linedir.Cross(t0_normal)) / det;
+
+    Vector3 const& linepoint0 = (t0[0].Dot(t0_normal) * (t1_normal.Cross(linedir)) + t1[0].Dot(t1_normal) * linedir.Cross(t0_normal)) / det;
 
     line const isect_line{ linepoint0, linedir };
 
     std::vector<line> edges;
     edges.reserve(6);
 
-    auto dir = (t0.v1 - t0.v0);
+    auto dir = (t0[1] - t0[0]);
     dir.Normalize();
-    edges.emplace_back(line{ t0.v0, dir });
-    dir = (t0.v2 - t0.v1);
+    edges.emplace_back(line{ t0[0], dir });
+    dir = (t0[2] - t0[1]);
     dir.Normalize();
-    edges.emplace_back(line{ t0.v1, dir });
-    dir = (t0.v0 - t0.v2);
+    edges.emplace_back(line{ t0[1], dir });
+    dir = (t0[0] - t0[2]);
     dir.Normalize();
-    edges.emplace_back(line{ t0.v2, dir });
+    edges.emplace_back(line{ t0[2], dir });
 
-    dir = (t1.v1 - t1.v0);
+    dir = (t1[1] - t1[0]);
     dir.Normalize();
-    edges.emplace_back(line{ t1.v0, dir });
-    dir = (t1.v2 - t1.v1);
+    edges.emplace_back(line{ t1[0], dir });
+    dir = (t1[2] - t1[1]);
     dir.Normalize();
-    edges.emplace_back(line{ t1.v1, dir });
-    dir = (t1.v0 - t1.v2);
+    edges.emplace_back(line{ t1[1], dir });
+    dir = (t1[0] - t1[2]);
     dir.Normalize();
-    edges.emplace_back(line{ t1.v2, dir });
+    edges.emplace_back(line{ t1[2], dir });
 
     std::vector<Vector3> isect_linesegment;
     isect_linesegment.reserve(2);
@@ -590,7 +607,7 @@ std::optional<linesegment> triangle::intersect(triangle const& t0, triangle cons
             continue;
 
         // the points on intersection of two triangles will be on both triangles
-        if (auto isect = line::intersect_lines(edge, isect_line); isect.has_value() && t0.isin(isect.value()) && t1.isin(isect.value()))
+        if (auto isect = line::intersect_lines(edge, isect_line); isect.has_value() && triangle::isin(t0, isect.value()) && triangle::isin(t1, isect.value()))
             isect_linesegment.push_back(isect.value());
     }
 
