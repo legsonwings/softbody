@@ -15,9 +15,63 @@ std::vector<Vertex> const& sphere::get_triangles() const
     return triangulated_sphere;
 }
 
+std::vector<Geometry::sphere::polar_coords> const& Geometry::sphere::get_triangles_polar() const
+{
+    return triangulated_sphere_polar;
+}
+
 std::vector<linesegment> Geometry::sphere::intersect(sphere const& r) const
 {
     return intersect(*this, r);
+}
+
+void Geometry::sphere::sort_tris()
+{
+    auto const num_tris = triangulated_sphere.size() / 3;
+    std::vector<uint> proxy_tris(num_tris);
+    std::sort(proxy_tris.begin(), proxy_tris.end(), [tris = triangulated_sphere, polar_tris = triangulated_sphere_polar](uint l, uint r)
+        {
+            uint const lv = l * 3;
+            uint const rv = r * 3;
+
+            float minphi_l, minphi_r, mintheta_l, mintheta_r;
+            minphi_l = minphi_r = mintheta_l = mintheta_r = std::numeric_limits<float>::max();
+
+            for (uint i = 0; i < 3; ++i)
+            {
+                float const phi_l = polar_tris[lv + i].second;
+                float const phi_r = polar_tris[rv + i].second;
+                float const theta_l = polar_tris[lv + i].first;
+                float const theta_r = polar_tris[rv + i].first;
+
+                if (phi_l < minphi_l)
+                    minphi_l = phi_l;
+                if (phi_r < minphi_r)
+                    minphi_r = phi_r;
+
+                if (theta_l < mintheta_l)
+                    mintheta_l = theta_l;
+                if (theta_r < mintheta_r)
+                    mintheta_r = theta_r;
+            }
+
+            return minphi_l < minphi_r || mintheta_l < mintheta_r;
+        });
+
+    auto const temp_tris = triangulated_sphere;
+    auto const temp_polars = triangulated_sphere_polar;
+
+    for (std::size_t i = 0; i < num_tris; ++i)
+    {
+        auto const tri_idx = proxy_tris[i];
+        triangulated_sphere[tri_idx] = temp_tris[tri_idx];
+        triangulated_sphere[tri_idx + 1] = temp_tris[tri_idx + 1];
+        triangulated_sphere[tri_idx + 2] = temp_tris[tri_idx + 2];
+
+        triangulated_sphere_polar[tri_idx] = temp_polars[tri_idx];
+        triangulated_sphere_polar[tri_idx + 1] = temp_polars[tri_idx + 1];
+        triangulated_sphere_polar[tri_idx + 2] = temp_polars[tri_idx + 2];
+    }
 }
 
 void sphere::addquad(float theta, float phi, float step_theta, float step_phi)
@@ -34,6 +88,9 @@ void sphere::addquad(float theta, float phi, float step_theta, float step_phi)
         triangulated_sphere.push_back(lbv);
         triangulated_sphere.push_back(ltv);
         triangulated_sphere.push_back(rtv);
+        triangulated_sphere_polar.push_back({ theta + step_theta, phi });
+        triangulated_sphere_polar.push_back({ theta, phi });
+        triangulated_sphere_polar.push_back({ theta, phi + step_phi });
     }
 
     if (!utils::are_equal(lbv.position, rtv.position) && !utils::are_equal(lbv.position, rbv.position) && !utils::are_equal(rtv.position, rbv.position))
@@ -41,6 +98,9 @@ void sphere::addquad(float theta, float phi, float step_theta, float step_phi)
         triangulated_sphere.push_back(lbv);
         triangulated_sphere.push_back(rtv);
         triangulated_sphere.push_back(rbv);
+        triangulated_sphere_polar.push_back({ theta + step_theta, phi });
+        triangulated_sphere_polar.push_back({ theta, phi + step_phi });
+        triangulated_sphere_polar.push_back({ theta + step_theta, phi + step_phi});
     }
 }
 
@@ -89,6 +149,8 @@ void sphere::generate_triangles()
             addquad(theta, phi, step_theta, step_phi);
         }
     }
+
+    sort_tris();
 }
 
 Vertex sphere::create_spherevertex(float const phi, float const theta)

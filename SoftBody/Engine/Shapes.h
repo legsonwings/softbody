@@ -5,6 +5,7 @@
 #include "Graphics/gfxcore.h"
 #include "EngineUtils.h"
 
+#include <utility>
 #include <array>
 #include <vector>
 #include <limits>
@@ -101,19 +102,24 @@ namespace Geometry
 
     struct sphere
     {
+        using polar_coords = std::pair<float, float>;
+
         sphere() { generate_triangles(); }
         sphere(Vector3 const& _position, float _radius) : position(_position), radius(_radius) { generate_triangles(); }
 
         void generate_triangles();
         std::vector<Vertex> const& get_triangles() const;
+        std::vector<polar_coords> const& get_triangles_polar() const;
         std::vector<linesegment> intersect(sphere const& r) const;
         static std::vector<linesegment> intersect(sphere const& l, sphere const& r);
 
     private:
+        void sort_tris();
         void addquad(float theta, float phi,float step_theta, float step_phi);
         Vertex create_spherevertex(float const phi, float const theta);
 
         std::vector<Vertex> triangulated_sphere;
+        std::vector<polar_coords> triangulated_sphere_polar;
     public:
 
         // todo : use num segments instead
