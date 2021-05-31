@@ -177,14 +177,10 @@
     <ClCompile Include="Engine\geometry\Shapes.cpp" />
     <ClCompile Include="Engine\geometry\sphere.cpp" />
     <ClCompile Include="Engine\geometry\triangle.cpp" />
-    <ClCompile Include="Engine\Graphics\Body.cpp" />
-    <ClCompile Include="Engine\Interfaces\BodyInterface.cpp" />
-    <ClCompile Include="Engine\Interfaces\GameEngineInterface.cpp" />
     <ClCompile Include="Engine\Main.cpp" />
     <ClCompile Include="Engine\physics\collision.cpp" />
     <ClCompile Include="Engine\SimpleCamera.cpp" />
     <ClCompile Include="Engine\SimpleMath.cpp" />
-    <ClCompile Include="Engine\Engine.cpp" />
     <ClCompile Include="Engine\Win32Application.cpp" />
     <ClCompile Include="GameImplementations\SoftBodyDemo\SoftBodyDemo.cpp" />
     <ClCompile Include="GameInterfaces\GameBase.cpp" />
@@ -202,15 +198,9 @@
     <ClInclude Include="Engine\geometry\Shapes.h" />
     <ClInclude Include="Engine\geometry\sphere.h" />
     <ClInclude Include="Engine\geometry\triangle.h" />
-    <ClInclude Include="Engine\Graphics\Body.h" />
-    <ClInclude Include="Engine\Graphics\gfxcore.h" />
-    <ClInclude Include="Engine\Interfaces\BodyInterface.h" />
-    <ClInclude Include="Engine\Interfaces\GameEngineInterface.h" />
     <ClInclude Include="Engine\physics\collision.h" />
-    <ClInclude Include="Engine\Shapes.h" />
     <ClInclude Include="Engine\SimpleCamera.h" />
     <ClInclude Include="Engine\SimpleMath.h" />
-    <ClInclude Include="Engine\Engine.h" />
     <ClInclude Include="Engine\StepTimer.h" />
     <ClInclude Include="Engine\Win32Application.h" />
     <ClInclude Include="GameImplementations\SoftBodyDemo\SoftBodyDemo.h" />
@@ -301,7 +291,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Engine\Assets\Common.hlsli" />
-    <None Include="Engine\Graphics\Body.hpp" />
     <None Include="Engine\SimpleMath.inl" />
     <None Include="Engine\Assets\Default.hlsli" />
     <None Include="GameImplementations\SoftBodyDemo\Assets\SoftbodyShared.hlsli" />

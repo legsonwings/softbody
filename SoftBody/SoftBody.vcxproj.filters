@@ -57,9 +57,6 @@
     <ClCompile Include="Engine\Interfaces\BodyInterface.cpp">
       <Filter>Engine\Interfaces</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Graphics\Body.cpp">
-      <Filter>Engine\Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="GameInterfaces\GameBase.cpp">
       <Filter>GameInterfaces</Filter>
@@ -116,12 +113,8 @@
     <ClInclude Include="Engine\Interfaces\BodyInterface.h">
       <Filter>Engine\Interfaces</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Graphics\Body.h">
-      <Filter>Engine\Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="d3dx12.h" />
-    <ClInclude Include="Engine\Graphics\gfxcore.h" />
     <ClInclude Include="Engine\physics\collision.h" />
     <ClInclude Include="Engine\geometry\Shapes.h" />
     <ClInclude Include="Engine\geometry\sphere.h" />
@@ -140,7 +133,6 @@
     <None Include="Engine\Assets\Common.hlsli" />
     <None Include="Engine\Assets\Instances.hlsli" />
     <None Include="Engine\Assets\Default.hlsli" />
-    <None Include="Engine\Graphics\Body.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="GameImplementations">
