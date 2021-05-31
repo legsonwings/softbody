@@ -1,7 +1,7 @@
 #pragma once
 
 #include "geocore.h"
-#include "Engine/EngineUtils.h"
+#include "Engine/engineutils.h"
 #include "line.h"
 
 #include <utility>

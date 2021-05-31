@@ -2,10 +2,10 @@
 #include "SoftBodyDemo.h"
 #include "GameUtils.h"
 #include "SharedConstants.h"
-#include "Engine/Interfaces/GameEngineInterface.h"
+#include "Engine/interfaces/engineinterface.h"
 #include "Engine/DXSample.h"
-#include "Engine/EngineUtils.h"
-#include "Engine/Graphics/Body.h"
+#include "Engine/engineutils.h"
+#include "Engine/graphics/body.h"
 
 #include <random>
 #include <iterator>

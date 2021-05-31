@@ -10,12 +10,12 @@
 //*********************************************************
 
 #include "stdafx.h"
-#include "Engine.h"
+#include "engine.h"
 
 _Use_decl_annotations_
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
 {
-    SoftBody sample{};
+    softbody sample{};
     game_engine::g_engine = &sample;
 
     return Win32Application::Run(&sample, hInstance, nCmdShow);

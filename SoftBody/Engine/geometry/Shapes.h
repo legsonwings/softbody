@@ -2,7 +2,7 @@
 
 #include "Engine/SimpleMath.h"
 #include "Engine/Graphics/gfxcore.h"
-#include "Engine/EngineUtils.h"
+#include "Engine/engineutils.h"
 #include "geocore.h"
 #include "sphere.h"
 

@@ -2,7 +2,7 @@
 
 #include "geocore.h"
 #include "line.h"
-#include "Engine/EngineUtils.h"
+#include "Engine/engineutils.h"
 
 #include <optional>
 

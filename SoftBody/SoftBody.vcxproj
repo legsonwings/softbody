@@ -171,12 +171,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Engine\DXSample.cpp" />
+    <ClCompile Include="Engine\engine.cpp" />
     <ClCompile Include="Engine\geometry\geocore.cpp" />
     <ClCompile Include="Engine\geometry\geoutils.cpp" />
     <ClCompile Include="Engine\geometry\line.cpp" />
     <ClCompile Include="Engine\geometry\Shapes.cpp" />
     <ClCompile Include="Engine\geometry\sphere.cpp" />
     <ClCompile Include="Engine\geometry\triangle.cpp" />
+    <ClCompile Include="Engine\graphics\body.cpp" />
+    <ClCompile Include="Engine\interfaces\bodyinterface.cpp" />
+    <ClCompile Include="Engine\interfaces\engineinterface.cpp" />
     <ClCompile Include="Engine\Main.cpp" />
     <ClCompile Include="Engine\physics\collision.cpp" />
     <ClCompile Include="Engine\SimpleCamera.cpp" />
@@ -191,6 +195,7 @@
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="Engine\DXSample.h" />
     <ClInclude Include="Engine\DXSampleHelper.h" />
+    <ClInclude Include="Engine\engine.h" />
     <ClInclude Include="Engine\EngineUtils.h" />
     <ClInclude Include="Engine\geometry\geocore.h" />
     <ClInclude Include="Engine\geometry\geoutils.h" />
@@ -198,6 +203,11 @@
     <ClInclude Include="Engine\geometry\Shapes.h" />
     <ClInclude Include="Engine\geometry\sphere.h" />
     <ClInclude Include="Engine\geometry\triangle.h" />
+    <ClInclude Include="Engine\graphics\body.h" />
+    <ClInclude Include="Engine\graphics\body.hpp" />
+    <ClInclude Include="Engine\graphics\gfxcore.h" />
+    <ClInclude Include="Engine\interfaces\bodyinterface.h" />
+    <ClInclude Include="Engine\interfaces\engineinterface.h" />
     <ClInclude Include="Engine\physics\collision.h" />
     <ClInclude Include="Engine\SimpleCamera.h" />
     <ClInclude Include="Engine\SimpleMath.h" />

@@ -44,18 +44,9 @@
     <ClCompile Include="Engine\Win32Application.cpp">
       <Filter>Engine</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Engine.cpp">
-      <Filter>Engine</Filter>
-    </ClCompile>
     <ClCompile Include="GameUtils.cpp" />
-    <ClCompile Include="Engine\Interfaces\GameEngineInterface.cpp">
-      <Filter>Engine\Interfaces</Filter>
-    </ClCompile>
     <ClCompile Include="GameImplementations\SoftBodyDemo\SoftBodyDemo.cpp">
       <Filter>GameImplementations\SoftBodyDemo</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Interfaces\BodyInterface.cpp">
-      <Filter>Engine\Interfaces</Filter>
     </ClCompile>
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="GameInterfaces\GameBase.cpp">
@@ -68,15 +59,16 @@
     <ClCompile Include="Engine\geometry\triangle.cpp" />
     <ClCompile Include="Engine\geometry\geocore.cpp" />
     <ClCompile Include="Engine\geometry\geoutils.cpp" />
+    <ClCompile Include="Engine\engine.cpp" />
+    <ClCompile Include="Engine\graphics\body.cpp" />
+    <ClCompile Include="Engine\interfaces\bodyinterface.cpp" />
+    <ClCompile Include="Engine\interfaces\engineinterface.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\DXSample.h">
       <Filter>Engine</Filter>
     </ClInclude>
     <ClInclude Include="Engine\DXSampleHelper.h">
-      <Filter>Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Shapes.h">
       <Filter>Engine</Filter>
     </ClInclude>
     <ClInclude Include="Engine\SimpleCamera.h">
@@ -91,17 +83,11 @@
     <ClInclude Include="Engine\Win32Application.h">
       <Filter>Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Engine.h">
-      <Filter>Engine</Filter>
-    </ClInclude>
     <ClInclude Include="GameInterfaces\GameBase.h">
       <Filter>GameInterfaces</Filter>
     </ClInclude>
     <ClInclude Include="GameInterfaces\GameUtils.h">
       <Filter>GameInterfaces</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Interfaces\GameEngineInterface.h">
-      <Filter>Engine\Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="Engine\EngineUtils.h">
       <Filter>Engine</Filter>
@@ -109,9 +95,6 @@
     <ClInclude Include="SharedConstants.h" />
     <ClInclude Include="GameImplementations\SoftBodyDemo\SoftBodyDemo.h">
       <Filter>GameImplementations\SoftBodyDemo</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Interfaces\BodyInterface.h">
-      <Filter>Engine\Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="d3dx12.h" />
@@ -122,6 +105,12 @@
     <ClInclude Include="Engine\geometry\geocore.h" />
     <ClInclude Include="Engine\geometry\triangle.h" />
     <ClInclude Include="Engine\geometry\geoutils.h" />
+    <ClInclude Include="Engine\engine.h" />
+    <ClInclude Include="Engine\graphics\body.h" />
+    <ClInclude Include="Engine\graphics\body.hpp" />
+    <ClInclude Include="Engine\graphics\gfxcore.h" />
+    <ClInclude Include="Engine\interfaces\bodyinterface.h" />
+    <ClInclude Include="Engine\interfaces\engineinterface.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Engine\SimpleMath.inl">

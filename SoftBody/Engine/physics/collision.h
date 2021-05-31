@@ -2,16 +2,10 @@
 
 #include "Engine/SimpleMath.h"
 #include "DirectXMath.h"
-#include "Engine/EngineUtils.h"
+#include "Engine/engineutils.h"
 #include "Engine/geometry/Shapes.h"
 
 #include <vector>
-//#include <array>
-//#include <limits>
-//#include <cmath>
-//#include <optional>
-//#include <algorithm>
-//#include <functional>
 
 namespace collision
 {
