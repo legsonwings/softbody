@@ -4,8 +4,7 @@
 #include "Engine/SimpleMath.h"
 #include "Engine/SimpleCamera.h"
 
-// TODO : Refactor this file
-#include "Engine/Shapes.h"
+#include "Engine/geometry/Shapes.h"
 
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
@@ -71,7 +70,7 @@ private:
 	bool toggle1 = false;
 	bool toggle2 = false;
 
-	std::vector<std::shared_ptr<gfx::body_dynamic<Geometry::ffd_object>>> spheres;
-	std::vector<std::shared_ptr<gfx::body_static<Geometry::ffd_object const&, gfx::topology::line>>> controlnets;
-	std::shared_ptr<gfx::body_static<Geometry::nullshape, gfx::topology::line>> sphere_isect;
+	std::vector<std::shared_ptr<gfx::body_dynamic<geometry::ffd_object>>> spheres;
+	std::vector<std::shared_ptr<gfx::body_static<geometry::ffd_object const&, gfx::topology::line>>> controlnets;
+	std::shared_ptr<gfx::body_static<geometry::nullshape, gfx::topology::line>> sphere_isect;
 };

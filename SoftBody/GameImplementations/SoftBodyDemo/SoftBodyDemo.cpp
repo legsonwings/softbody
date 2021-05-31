@@ -81,7 +81,7 @@ void soft_body::populate_command_list()
     D3D12_GPU_VIRTUAL_ADDRESS const cb_gpuaddress = m_constantbuffer->GetGPUVirtualAddress() + sizeof(SceneConstantBuffer) * frame_idx;
 
     {
-        gfx::pipeline_objects const& pipelineobjects = gfx::body_dynamic<Geometry::ffd_object>::get_static_pipelineobjects();
+        gfx::pipeline_objects const& pipelineobjects = gfx::body_dynamic<geometry::ffd_object>::get_static_pipelineobjects();
         cmd_list->SetPipelineState((m_wireframe_toggle && pipelineobjects.pso_wireframe) ? pipelineobjects.pso_wireframe.Get() : pipelineobjects.pso.Get());
         cmd_list->SetGraphicsRootSignature(pipelineobjects.root_signature.Get());
         cmd_list->SetGraphicsRootConstantBufferView(0, cb_gpuaddress);
@@ -125,7 +125,7 @@ void soft_body::populate_command_list()
     //    sphere_isectinfo.num_instances = sphere_isect->get_numinstances();
     //    sphere_isectinfo.num_primitives_per_instance = static_cast<unsigned>(sphere_isect->get_numvertices() / 2);
 
-    //    gfx::pipeline_objects const& pipelineobjects = gfx::body_static<Geometry::nullshape, gfx::topology::line>::get_static_pipelineobjects();
+    //    gfx::pipeline_objects const& pipelineobjects = gfx::body_static<geometry::nullshape, gfx::topology::line>::get_static_pipelineobjects();
 
     //    cmd_list->SetPipelineState((m_wireframe_toggle && pipelineobjects.pso_wireframe) ? pipelineobjects.pso_wireframe.Get() : pipelineobjects.pso.Get());
     //    cmd_list->SetGraphicsRootSignature(pipelineobjects.root_signature.Get());
@@ -156,7 +156,7 @@ void soft_body::populate_command_list()
             uint32_t num_primitives_per_instance;
         };
 
-        gfx::pipeline_objects const& pipelineobjects = gfx::body_static<Geometry::ffd_object const&, gfx::topology::line>::get_static_pipelineobjects();
+        gfx::pipeline_objects const& pipelineobjects = gfx::body_static<geometry::ffd_object const&, gfx::topology::line>::get_static_pipelineobjects();
 
         cmd_list->SetPipelineState((m_wireframe_toggle&& pipelineobjects.pso_wireframe) ? pipelineobjects.pso_wireframe.Get() : pipelineobjects.pso.Get());
         cmd_list->SetGraphicsRootSignature(pipelineobjects.root_signature.Get());
@@ -204,20 +204,20 @@ std::vector<std::weak_ptr<gfx::body>> soft_body::load_assets_and_geometry()
     Vector3 const lposition = { -7.f, 0.f, 0.f };
     Vector3 const rposition = {7.f, 0.f, 0.f};
 
-    Geometry::ffd_object l = { {lposition, 1.f} };
-    Geometry::ffd_object r = { {rposition, 1.f} };
+    geometry::ffd_object l = { {lposition, 1.f} };
+    geometry::ffd_object r = { {rposition, 1.f} };
 
-    spheres.push_back(std::make_shared<gfx::body_dynamic<Geometry::ffd_object>>(l));
-    spheres.push_back(std::make_shared<gfx::body_dynamic<Geometry::ffd_object>>(r));
+    spheres.push_back(std::make_shared<gfx::body_dynamic<geometry::ffd_object>>(l));
+    spheres.push_back(std::make_shared<gfx::body_dynamic<geometry::ffd_object>>(r));
 
     spheres[0]->get_body().set_velocity({ 8.f, 0.f, 0.f });
     spheres[1]->get_body().set_velocity({ -8.f, 0.f, 0.f });
 
     //{ 
     //    // Todo : create a template to work without all type specifications
-    //    sphere_isect = std::make_shared<gfx::body_static<Geometry::nullshape, gfx::topology::line>>(Geometry::nullshape{},
-    //        [ls = spheres[0], rs = spheres[1]](Geometry::nullshape const&) { return utils::flatten(ls->get_body().intersect(rs->get_body())); },
-    //            [](Geometry::nullshape const&) { return std::vector<gfx::instance_data>{ {Vector3::Zero, { 1.f, 0.f, 0.f } } }; });
+    //    sphere_isect = std::make_shared<gfx::body_static<geometry::nullshape, gfx::topology::line>>(geometry::nullshape{},
+    //        [ls = spheres[0], rs = spheres[1]](geometry::nullshape const&) { return geoutils::flatten(ls->get_body().intersect(rs->get_body())); },
+    //            [](geometry::nullshape const&) { return std::vector<gfx::instance_data>{ {Vector3::Zero, { 1.f, 0.f, 0.f } } }; });
     //}
 
     // todo : support for instances with single color for all vertices
@@ -229,14 +229,14 @@ std::vector<std::weak_ptr<gfx::body>> soft_body::load_assets_and_geometry()
         return instances;
     };
 
-    controlnets.push_back(std::make_shared<gfx::body_static<Geometry::ffd_object const&, gfx::topology::line>>(spheres[0]->get_body(),
-                                    [](Geometry::ffd_object const& ffd_obj) { return ffd_obj.get_control_point_visualization(); },
-                                    [to_instancedata](Geometry::ffd_object const& ffd_obj) { return to_instancedata(ffd_obj.get_control_net(), { 1.f, 0.f, 0.f }); }));
+    controlnets.push_back(std::make_shared<gfx::body_static<geometry::ffd_object const&, gfx::topology::line>>(spheres[0]->get_body(),
+                                    [](geometry::ffd_object const& ffd_obj) { return ffd_obj.get_control_point_visualization(); },
+                                    [to_instancedata](geometry::ffd_object const& ffd_obj) { return to_instancedata(ffd_obj.get_control_net(), { 1.f, 0.f, 0.f }); }));
 
 
-    controlnets.push_back(std::make_shared<gfx::body_static<Geometry::ffd_object const&, gfx::topology::line>>(spheres[1]->get_body(),
-                                    [](Geometry::ffd_object const& ffd_obj) { return ffd_obj.get_control_point_visualization(); },
-                                    [to_instancedata](Geometry::ffd_object const& ffd_obj) { return to_instancedata(ffd_obj.get_control_net(), { 1.f, 0.f, 0.f }); }));
+    controlnets.push_back(std::make_shared<gfx::body_static<geometry::ffd_object const&, gfx::topology::line>>(spheres[1]->get_body(),
+                                    [](geometry::ffd_object const& ffd_obj) { return ffd_obj.get_control_point_visualization(); },
+                                    [to_instancedata](geometry::ffd_object const& ffd_obj) { return to_instancedata(ffd_obj.get_control_net(), { 1.f, 0.f, 0.f }); }));
 
     return { spheres[0], spheres[1], controlnets[0], controlnets[1] };
 }
@@ -328,7 +328,7 @@ ComPtr<ID3D12Resource> soft_body::create_upload_buffer(uint8_t** mapped_buffer, 
 
     //blob_physx[0].position = blob_physx[1].position + pos;
 
-    //m_cpu_instance_data[0].Position = utils::create_Vector4(blob_physx[0].position);
+    //m_cpu_instance_data[0].Position = geoutils::create_Vector4(blob_physx[0].position);
 
     //auto const omega = 1.f; //std::sqrt(spring.k / blob_physx[0].mass);
     //auto const eta = 0.5f;
@@ -379,7 +379,7 @@ ComPtr<ID3D12Resource> soft_body::create_upload_buffer(uint8_t** mapped_buffer, 
 
     //        // The first connecting spring for ith spring is given by i (n - (i + 1)/2)
     //        unsigned const spring_idx = (2 * num_spheres - i - 1) * 0.5f * i + j - i - 1;
-    //        Geometry::Spring & connecting_spring = springs[spring_idx];
+    //        geometry::Spring & connecting_spring = springs[spring_idx];
     //        auto dir_m2 = (blob_physx[connecting_spring.m2].position - blob_physx[connecting_spring.m1].position);
     //        connecting_spring.l = dir_m2.Length();
     //        dir_m2.Normalize();
@@ -412,7 +412,7 @@ ComPtr<ID3D12Resource> soft_body::create_upload_buffer(uint8_t** mapped_buffer, 
     //    {
     //        // The first connecting spring for ith spring is given by i (n - (i + 1)/2)
     //        unsigned const spring_idx = (2 * num_spheres - i - 1) * 0.5f * i + j - i - 1;
-    //        Geometry::Spring const &connecting_spring = springs[spring_idx];
+    //        geometry::Spring const &connecting_spring = springs[spring_idx];
 
     //        auto displacement = blob_physx[j].position - blob_physx[i].position;
     //        float const dist = displacement.Length();

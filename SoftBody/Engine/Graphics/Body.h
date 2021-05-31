@@ -4,7 +4,7 @@
 #include "Engine/EngineUtils.h"
 #include "Engine/Interfaces/BodyInterface.h"
 #include "Engine/SimpleMath.h"
-#include "Engine/Shapes.h"
+#include "Engine/geometry/Shapes.h"
 
 #include <type_traits>
 #include <memory>
@@ -22,7 +22,7 @@ namespace gfx
         ComPtr<ID3D12Resource> m_vertexbuffer;
         ComPtr<ID3D12Resource> m_instance_buffer;
         uint8_t* m_instancebuffer_mapped = nullptr;
-        std::vector<std::conditional_t<primitive_type == gfx::topology::triangle, Geometry::Vertex, Geometry::Vector3>> m_vertices;
+        std::vector<std::conditional_t<primitive_type == gfx::topology::triangle, geometry::vertex, vec3>> m_vertices;
         std::unique_ptr<instance_data[]> m_cpu_instance_data;
 
         using vertex_fetch = std::function<decltype(m_vertices)(body_type const&)>;
@@ -68,14 +68,14 @@ namespace gfx
         body_type body;
         ComPtr<ID3D12Resource> m_vertexbuffer;
         uint8_t* m_vertexbuffer_databegin = nullptr;
-        std::vector<Geometry::Vertex> m_vertices;
+        std::vector<geometry::vertex> m_vertices;
 
         static pipeline_objects pipelineobjects;
         static constexpr const wchar_t* c_ampshader_filename = L"DefaultAS.cso";
         static constexpr const wchar_t* c_meshshader_filename = L"DefaultMS.cso";
         static constexpr const wchar_t* c_pixelshader_filename = L"BasicLightingPS.cso";
 
-        std::size_t get_vertexbuffersize() const { return m_vertices.size() * sizeof(Geometry::Vertex); }
+        std::size_t get_vertexbuffersize() const { return m_vertices.size() * sizeof(geometry::vertex); }
     public:
         body_dynamic(body_type const& _body);
         void create_static_resources() override;

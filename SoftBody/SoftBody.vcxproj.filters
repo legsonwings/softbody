@@ -35,9 +35,6 @@
     <ClCompile Include="Engine\Main.cpp">
       <Filter>Engine</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Shapes.cpp">
-      <Filter>Engine</Filter>
-    </ClCompile>
     <ClCompile Include="Engine\SimpleCamera.cpp">
       <Filter>Engine</Filter>
     </ClCompile>
@@ -68,6 +65,12 @@
       <Filter>GameInterfaces</Filter>
     </ClCompile>
     <ClCompile Include="Engine\physics\collision.cpp" />
+    <ClCompile Include="Engine\geometry\Shapes.cpp" />
+    <ClCompile Include="Engine\geometry\sphere.cpp" />
+    <ClCompile Include="Engine\geometry\line.cpp" />
+    <ClCompile Include="Engine\geometry\triangle.cpp" />
+    <ClCompile Include="Engine\geometry\geocore.cpp" />
+    <ClCompile Include="Engine\geometry\geoutils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\DXSample.h">
@@ -120,6 +123,12 @@
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="Engine\Graphics\gfxcore.h" />
     <ClInclude Include="Engine\physics\collision.h" />
+    <ClInclude Include="Engine\geometry\Shapes.h" />
+    <ClInclude Include="Engine\geometry\sphere.h" />
+    <ClInclude Include="Engine\geometry\line.h" />
+    <ClInclude Include="Engine\geometry\geocore.h" />
+    <ClInclude Include="Engine\geometry\triangle.h" />
+    <ClInclude Include="Engine\geometry\geoutils.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Engine\SimpleMath.inl">

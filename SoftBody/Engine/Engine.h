@@ -16,7 +16,6 @@
 
 #include "StepTimer.h"
 #include "SimpleMath.h"
-#include "Shapes.h"
 #include "GameBase.h"
 #include "EngineUtils.h"
 
@@ -84,9 +83,6 @@ private:
     void WaitForGpu();
 
 private:
-
-    static constexpr const wchar_t* c_meshShaderFilename = L"DefaultMS.cso";
-    static constexpr const wchar_t* c_pixelShaderFilename = L"DefaultPS.cso";
 
     configurable_properties config_properties;
     std::unique_ptr<game_base> game;
