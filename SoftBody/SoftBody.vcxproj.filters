@@ -10,7 +10,7 @@
     <FxCompile Include="GameImplementations\SoftBodyDemo\Assets\BasicPS.hlsl">
       <Filter>GameImplementations\SoftBodyDemo\Assets</Filter>
     </FxCompile>
-    <FxCompile Include="GameImplementations\SoftBodyDemo\Assets\LinesMS.hlsl">
+    <FxCompile Include="GameImplementations\SoftBodyDemo\Assets\linesinstancesMS.hlsl">
       <Filter>GameImplementations\SoftBodyDemo\Assets</Filter>
     </FxCompile>
     <FxCompile Include="GameImplementations\SoftBodyDemo\Assets\SoftBodyAS.hlsl">
@@ -27,6 +27,7 @@
     <FxCompile Include="Engine\Assets\BasicLightingPS.hlsl" />
     <FxCompile Include="Engine\Assets\InstancesMS.hlsl" />
     <FxCompile Include="Engine\Assets\InstancesAS.hlsl" />
+    <FxCompile Include="Engine\Assets\linesMS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\DXSample.cpp">

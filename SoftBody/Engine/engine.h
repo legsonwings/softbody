@@ -22,11 +22,6 @@
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 
-namespace gfx
-{
-    class body;
-}
-
 class softbody : public DXSample, public game_engine
 {
 public:
@@ -62,23 +57,22 @@ private:
     ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
     ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
 
-    UINT m_rtvDescriptorSize;
-    UINT m_dsvDescriptorSize;
+    unsigned m_rtvDescriptorSize;
+    unsigned m_dsvDescriptorSize;
 
     ComPtr<ID3D12GraphicsCommandList6> m_commandList;
 
     StepTimer m_timer;
     
     // Synchronization objects.
-    UINT m_frameIndex;
-    UINT m_frameCounter;
+    unsigned m_frameIndex;
+    unsigned m_frameCounter;
     HANDLE m_fenceEvent;
     ComPtr<ID3D12Fence> m_fence;
     UINT64 m_fenceValues[configurable_properties::frame_count];
 
     void load_pipeline();
     void load_assetsandgeometry();
-    void populate_commandlist();
     void moveto_nextframe();
     void waitforgpu();
 
@@ -89,6 +83,4 @@ private:
 
     // Root assets path.
     std::wstring m_assetsPath;
-
-    std::vector<std::weak_ptr<gfx::body>> bodies_gfx;
 };

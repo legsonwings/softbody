@@ -15,10 +15,10 @@ namespace gfx
 {
 	struct instance_data;
 
-	template<typename body_type, gfx::topology primitive_type = gfx::topology::triangle>
+	template<typename geometry_t, gfx::topology primitive_t = gfx::topology::triangle>
 	class body_static;
 
-	template<typename body_type>
+	template<typename geometry_t, gfx::topology primitive_t = gfx::topology::triangle>
 	class body_dynamic;
 }
 
@@ -29,9 +29,8 @@ public:
 
 	void update(float dt) override;
 	void render(float dt) override;
-	void populate_command_list() override;
 	
-	std::vector<std::weak_ptr<gfx::body>> load_assets_and_geometry() override;
+	std::vector<ComPtr<ID3D12Resource>> load_assets_and_geometry() override;
 
 	void switch_cameraview();
 	void on_key_down(unsigned key) override;
@@ -47,8 +46,6 @@ private:
 		XMFLOAT4X4 WorldView;
 		XMFLOAT4X4 WorldViewProj;
 	};
-
-	ComPtr<ID3D12Resource> create_upload_buffer(uint8_t **mapped_buffer, size_t const buffer_size ) const;
 
 	static constexpr unsigned cb_alignment = D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
 
@@ -66,11 +63,27 @@ private:
 	SceneConstantBuffer *m_constantbuffer_data = nullptr;
 
 	bool m_wireframe_toggle = false;
+	bool m_debugviz_toggle = true;
+
 	uint8_t camera_view = 0;
 	bool toggle1 = false;
 	bool toggle2 = false;
 
-	std::vector<std::shared_ptr<gfx::body_dynamic<geometry::ffd_object>>> spheres;
-	std::vector<std::shared_ptr<gfx::body_static<geometry::ffd_object const&, gfx::topology::line>>> controlnets;
-	std::shared_ptr<gfx::body_static<geometry::nullshape, gfx::topology::line>> sphere_isect;
+	std::vector<gfx::body_dynamic<geometry::ffd_object>> dynamicbodies_tri;
+	std::vector<gfx::body_dynamic<geometry::ffd_object const&, gfx::topology::line>> dynamicbodies_line;
+	std::vector<gfx::body_static<geometry::ffd_object const&, gfx::topology::line>> staticbodies_lines;
+
+	ComPtr<ID3D12Resource> create_upload_buffer(uint8_t** mapped_buffer, size_t const buffer_size) const;
+	
+	template<typename geometry_t, gfx::topology primitive_t = gfx::topology::triangle>
+	typename std::enable_if_t<primitive_t == gfx::topology::triangle, void> dispatch_bodies(std::vector<gfx::body_dynamic<geometry_t>>&);
+
+	template<typename geometry_t, gfx::topology primitive_t>
+	typename std::enable_if_t<primitive_t == gfx::topology::line, void> dispatch_bodies(std::vector<gfx::body_dynamic<geometry_t, primitive_t>>&);
+
+	template<typename geometry_t, gfx::topology primitive_t = gfx::topology::triangle>
+	typename std::enable_if_t<primitive_t == gfx::topology::triangle, void> dispatch_bodies(std::vector<gfx::body_static<geometry_t>>&);
+
+	template<typename geometry_t, gfx::topology primitive_t>
+	typename std::enable_if_t<primitive_t == gfx::topology::line, void> dispatch_bodies(std::vector<gfx::body_static<geometry_t, primitive_t>>&);
 };

@@ -15,7 +15,6 @@
 #include "..\SharedConstants.h"
 
 #include <random>
-#include <iterator>
 #include <algorithm>
 
 #define CONSOLE_LOGS 0
@@ -223,17 +222,8 @@ void softbody::load_assetsandgeometry()
     // Create the command list. They are created in recording state
     ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[m_frameIndex].Get(), nullptr, IID_PPV_ARGS(&m_commandList)));
 
-    std::vector<ComPtr<ID3D12Resource>> gpu_resources;
-    for (auto const & weak_body : game->load_assets_and_geometry())
-    {
-        if (auto body = weak_body.lock())
-        {
-            // need to keep these alive till data is uploaded to gpu
-            auto body_resources = body->create_resources();
-            gpu_resources.insert(gpu_resources.end(), body_resources.begin(), body_resources.end());
-        }
-    }
-
+    // need to keep these alive till data is uploaded to gpu
+    std::vector<ComPtr<ID3D12Resource>> const gpu_resources = game->load_assets_and_geometry();
     ThrowIfFailed(m_commandList->Close());
 
     ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
@@ -276,10 +266,42 @@ void softbody::OnUpdate()
 // Render the scene.
 void softbody::OnRender()
 {
+    // Command list allocators can only be reset when the associated 
+    // command lists have finished execution on the GPU; apps should use 
+    // fences to determine GPU execution progress.
+    ThrowIfFailed(m_commandAllocators[m_frameIndex]->Reset());
+
+    // However, when ExecuteCommandList() is called on a particular command 
+    // list, that command list can then be reset at any time and must be before 
+    // re-recording.
+    ThrowIfFailed(m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), nullptr));
+
+    // Set necessary state.
+    m_commandList->RSSetViewports(1, &m_viewport);
+    m_commandList->RSSetScissorRects(1, &m_scissorRect);
+
+    auto resource_transition_rt = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+    // Indicate that the back buffer will be used as a render target.
+    m_commandList->ResourceBarrier(1, &resource_transition_rt);
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_frameIndex, m_rtvDescriptorSize);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
+    m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+
+    // Record commands.
+    const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
+    m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+    m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
     game->render(static_cast<float>(m_timer.GetElapsedSeconds()));
 
-    // Record all the commands we need to render the scene into the command list.
-    populate_commandlist();
+    auto resource_transition_present = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+
+    // Indicate that the back buffer will now be used to present.
+    m_commandList->ResourceBarrier(1, &resource_transition_present);
+
+    ThrowIfFailed(m_commandList->Close());
 
     // Execute the command list.
     ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
@@ -323,46 +345,6 @@ D3DX12_MESH_SHADER_PIPELINE_STATE_DESC softbody::get_pso_desc() const
       pso_desc.SampleDesc = DefaultSampleDesc();
 
       return pso_desc;
-}
-
-void softbody::populate_commandlist()
-{
-    // Command list allocators can only be reset when the associated 
-    // command lists have finished execution on the GPU; apps should use 
-    // fences to determine GPU execution progress.
-    ThrowIfFailed(m_commandAllocators[m_frameIndex]->Reset());
-
-    // However, when ExecuteCommandList() is called on a particular command 
-    // list, that command list can then be reset at any time and must be before 
-    // re-recording.
-    ThrowIfFailed(m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), nullptr));
-
-    // Set necessary state.
-    m_commandList->RSSetViewports(1, &m_viewport);
-    m_commandList->RSSetScissorRects(1, &m_scissorRect);
-
-    auto resource_transition_rt = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-
-    // Indicate that the back buffer will be used as a render target.
-    m_commandList->ResourceBarrier(1, &resource_transition_rt);
-
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_frameIndex, m_rtvDescriptorSize);
-    CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
-    m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
-
-    // Record commands.
-    const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
-    m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-    m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-
-    game->populate_command_list();
-
-    auto resource_transition_present = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-
-    // Indicate that the back buffer will now be used to present.
-    m_commandList->ResourceBarrier(1, &resource_transition_present);
-
-    ThrowIfFailed(m_commandList->Close());
 }
 
 // Wait for pending GPU work to complete.

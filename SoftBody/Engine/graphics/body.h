@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gfxcore.h"
+#include "Engine/geometry/geocore.h"
 #include "Engine/engineutils.h"
 #include "Engine/interfaces/bodyinterface.h"
 #include "Engine/SimpleMath.h"
@@ -14,81 +15,101 @@ using Microsoft::WRL::ComPtr;
 
 namespace gfx
 {
-    template<typename body_type, gfx::topology primitive_type>
+    template<typename geometry_t, gfx::topology primitive_t>
     class body_static : public body
     {
-        body_type body;
-        std::size_t num_instances;
+        geometry_t body;
+        uint num_instances;
         ComPtr<ID3D12Resource> m_vertexbuffer;
         ComPtr<ID3D12Resource> m_instance_buffer;
         uint8_t* m_instancebuffer_mapped = nullptr;
-        std::vector<std::conditional_t<primitive_type == gfx::topology::triangle, geometry::vertex, vec3>> m_vertices;
+        std::vector<std::conditional_t<primitive_t == gfx::topology::triangle, geometry::vertex, vec3>> m_vertices;
         std::unique_ptr<instance_data[]> m_cpu_instance_data;
 
-        using vertex_fetch = std::function<decltype(m_vertices)(body_type const&)>;
-        using instancedata_fetch = std::function<std::vector<instance_data>(body_type const&)>;
-        vertex_fetch get_vertices;
-        instancedata_fetch get_instancedata;
+        using vertexfetch_r = decltype(m_vertices);
+        using vertexfetch = std::function<vertexfetch_r (std::decay_t<geometry_t> const&)>;
+        using instancedatafetch_r = std::vector<instance_data>;
+        using instancedatafetch = std::function<instancedatafetch_r(std::decay_t<geometry_t> const&)>;
+
+        vertexfetch get_vertices;
+        instancedatafetch get_instancedata;
 
         static pipeline_objects pipelineobjects;
 
-        template<gfx::topology primitive_type>
-        static constexpr const wchar_t* c_ampshader_filename = L"InstancesAS.cso";
-        template<gfx::topology primitive_type>
-        static constexpr const wchar_t* c_meshshader_filename = L"InstancesMS.cso";
-        template<gfx::topology primitive_type>
-        static constexpr const wchar_t* c_pixelshader_filename = L"BasicLightingPS.cso";
+        template<gfx::topology primitive_t> static constexpr const wchar_t* c_ampshader_filename = L"InstancesAS.cso";
+        template<gfx::topology primitive_t> static constexpr const wchar_t* c_meshshader_filename = L"InstancesMS.cso";
+        template<gfx::topology primitive_t> static constexpr const wchar_t* c_pixelshader_filename = L"BasicLightingPS.cso";
 
-        template<>
-        static constexpr const wchar_t* c_ampshader_filename<gfx::topology::line> = L"";
-        template<>
-        static constexpr const wchar_t* c_meshshader_filename<gfx::topology::line> = L"LinesMS.cso";
-        template<>
-        static constexpr const wchar_t* c_pixelshader_filename<gfx::topology::line> = L"BasicPS.cso";
+        template<> static constexpr const wchar_t* c_ampshader_filename<gfx::topology::line> = L"";
+        template<> static constexpr const wchar_t* c_meshshader_filename<gfx::topology::line> = L"linesinstancesMS.cso";
+        template<> static constexpr const wchar_t* c_pixelshader_filename<gfx::topology::line> = L"BasicPS.cso";
 
-        std::size_t get_vertexbuffersize() const { return m_vertices.size() * sizeof(decltype(m_vertices)::value_type); }
-        std::size_t get_instancebuffersize() const { return num_instances * sizeof(instance_data); }
+        uint get_vertexbuffersize() const { return m_vertices.size() * sizeof(decltype(m_vertices)::value_type); }
+        uint get_instancebuffersize() const { return num_instances * sizeof(instance_data); }
     public:
-        body_static(body_type _body, vertex_fetch const&, instancedata_fetch const&);
-        void create_static_resources() override;
+        template<typename = std::enable_if_t<!std::is_lvalue_reference_v<geometry_t>>>
+        body_static(geometry_t _body);
+        body_static(geometry_t const& _body, vertexfetch_r(std::decay_t<geometry_t>::* vfun)() const, instancedatafetch_r(std::decay_t<geometry_t>::* ifun)() const);
+
         std::vector<ComPtr<ID3D12Resource>> create_resources() override;
         D3D12_GPU_VIRTUAL_ADDRESS get_instancebuffer_gpuaddress() const;
         void update_instancebuffer();
 
-        unsigned get_numinstances() const { return static_cast<unsigned>(num_instances); }
-        unsigned get_numvertices() const { return static_cast<unsigned>(m_vertices.size()); }
-        pipeline_objects const& get_pipelineobjects() const override { return body_static<body_type, primitive_type>::get_static_pipelineobjects(); }
+        uint get_numinstances() const { return num_instances; }
+        uint get_numvertices() const { return m_vertices.size(); }
+        pipeline_objects const& get_pipelineobjects() const override { return body_static<geometry_t, primitive_t>::get_static_pipelineobjects(); }
         D3D12_GPU_VIRTUAL_ADDRESS get_vertexbuffer_gpuaddress() const override { return m_vertexbuffer->GetGPUVirtualAddress(); }
-        static pipeline_objects const& get_static_pipelineobjects() { return pipelineobjects; }
+        static pipeline_objects const& get_static_pipelineobjects();
     };
 
-    template<typename body_type>
+    template<typename geometry_t, gfx::topology primitive_t>
     class body_dynamic : public body
     {
-        body_type body;
+        static_assert(!std::is_rvalue_reference_v<geometry_t>, "storing rvalue reference types is prohibited.");
+
+        geometry_t body;
         ComPtr<ID3D12Resource> m_vertexbuffer;
         uint8_t* m_vertexbuffer_databegin = nullptr;
-        std::vector<geometry::vertex> m_vertices;
+        std::vector<std::conditional_t<primitive_t == gfx::topology::triangle, geometry::vertex, vec3>> m_vertices;
+        
+        using vertexfetch_r = decltype(m_vertices);
+        using vertexfetch = std::function<vertexfetch_r (std::decay_t<geometry_t> const&)>;
+
+        vertexfetch get_vertices;
 
         static pipeline_objects pipelineobjects;
-        static constexpr const wchar_t* c_ampshader_filename = L"DefaultAS.cso";
-        static constexpr const wchar_t* c_meshshader_filename = L"DefaultMS.cso";
-        static constexpr const wchar_t* c_pixelshader_filename = L"BasicLightingPS.cso";
 
-        std::size_t get_vertexbuffersize() const { return m_vertices.size() * sizeof(geometry::vertex); }
+        template<gfx::topology primitive_t> static constexpr const wchar_t* c_ampshader_filename = L"DefaultAS.cso";
+        template<gfx::topology primitive_t> static constexpr const wchar_t* c_meshshader_filename = L"DefaultMS.cso";
+        template<gfx::topology primitive_t> static constexpr const wchar_t* c_pixelshader_filename = L"BasicLightingPS.cso";
+
+        template<> static constexpr const wchar_t* c_ampshader_filename<gfx::topology::line> = L"";
+        template<> static constexpr const wchar_t* c_meshshader_filename<gfx::topology::line> = L"linesMS.cso";
+        template<> static constexpr const wchar_t* c_pixelshader_filename<gfx::topology::line> = L"BasicPS.cso";
+
+        uint get_vertexbuffersize() const { return m_vertices.size() * sizeof(decltype(m_vertices)::value_type); }
     public:
-        body_dynamic(body_type const& _body);
-        void create_static_resources() override;
+        
+        template<typename = std::enable_if_t<!std::is_lvalue_reference_v<geometry_t>>>
+        body_dynamic(geometry_t _body);
+        body_dynamic(geometry_t const& _body, vertexfetch_r (std::decay_t<geometry_t>::*fun)() const);
+
         std::vector<ComPtr<ID3D12Resource>> create_resources() override;
+
         void update(float dt) override;
         void update_vertexbuffer();
 
-        body_type const& get_body() const { return body; }
-        body_type & get_body() { return body; }
+        constexpr geometry_t &get() { return body; }
+        constexpr geometry_t const &get() const { return body; }
+        constexpr geometry_t &operator*() { return body; }
+        constexpr geometry_t const &operator*() const { return body; }
+        constexpr geometry_t &operator->() { return body; }
+        constexpr geometry_t const &operator->() const { return body; }
+
         unsigned get_numvertices() const { return static_cast<unsigned>(m_vertices.size()); }
-        pipeline_objects const& get_pipelineobjects() const override { return body_dynamic<body_type>::get_static_pipelineobjects(); }
+        pipeline_objects const& get_pipelineobjects() const override { return body_dynamic<geometry_t>::get_static_pipelineobjects(); }
         D3D12_GPU_VIRTUAL_ADDRESS get_vertexbuffer_gpuaddress() const override;
-        static pipeline_objects const& get_static_pipelineobjects() { return pipelineobjects; }
+        static pipeline_objects const& get_static_pipelineobjects();
     };
 }
 

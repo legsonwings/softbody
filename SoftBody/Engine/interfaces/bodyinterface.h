@@ -19,8 +19,7 @@ namespace gfx
 	{
 	public:
 		virtual void update(float dt) {};
-		virtual void create_static_resources() = 0;
-		virtual std::vector<ComPtr<ID3D12Resource>> create_resources() = 0;
+		virtual std::vector<ComPtr<ID3D12Resource>> create_resources() { return {}; };
 		virtual pipeline_objects const& get_pipelineobjects() const = 0;
 		virtual D3D12_GPU_VIRTUAL_ADDRESS get_vertexbuffer_gpuaddress() const = 0;
 	};

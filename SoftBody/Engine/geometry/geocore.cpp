@@ -1,13 +1,19 @@
 #include "stdafx.h"
 #include "geocore.h"
+#include "geoutils.h"
 
 using namespace DirectX::SimpleMath;
 using namespace geometry;
 
+std::vector<vec3> geometry::box::get_vertices()
+{
+    return geoutils::create_box(center, extents);
+}
+
 aabb::aabb(std::vector<vec3> const& points)
 {
     min_pt = vec3{ std::numeric_limits<float>::max() };
-    max_pt = vec3{ std::numeric_limits<float>::min() };
+    max_pt = vec3{ std::numeric_limits<float>::lowest() };
 
     for (auto const& pt : points)
     {

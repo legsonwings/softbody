@@ -6,8 +6,9 @@
 namespace geoutils
 {
     vec4 create_vec4(vec3 const& v, float w = 1.f);
-    matrix get_planematrix(vec3 translation, vec3 normal);
-    std::vector<vec3> create_marker(vec3 point, float scale);
+    matrix get_planematrix(vec3 const &translation, vec3 const &normal);
+	std::vector<vec3> create_box(vec3 const &center, vec3 const& extents);
+	std::vector<vec3> create_cube(vec3 const &center, float scale);
     bool are_equal(float const& l, float const& r);
     bool are_equal(vec3 const& l, vec3 const& r);
 

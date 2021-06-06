@@ -22,10 +22,8 @@ namespace geometry
 
     class ffd_object
     {
-        sphere ball;
     public:
         ffd_object() = default;
-
         ffd_object(sphere const& _sphere) : ball(_sphere), center(_sphere.position)
         {
             ball.position = vec3::Zero;
@@ -109,11 +107,7 @@ namespace geometry
         }
 
         std::vector<vec3> get_control_point_visualization() const;
-
-        std::vector<vec3> const& get_control_net() const 
-        { 
-            return control_points; 
-        }
+        std::vector<gfx::instance_data> get_controlnet_instancedata() const;
 
         std::vector<vertex> const& get_vertices() const
         {
@@ -154,6 +148,9 @@ namespace geometry
             return result;
         }
 
+        box getbox() const;
+        aabb const& getboundingbox() const;
+        std::vector<vec3> getbox_vertices() const;
         vec3 compute_wholebody_forces() const;
         void set_velocity(vec3 const vel);
         void resolve_collision(ffd_object &r, float dt);
@@ -161,12 +158,9 @@ namespace geometry
         std::vector<linesegment> intersect(ffd_object const& r) const;
         std::vector<vec3> compute_contacts(ffd_object const&) const;
 
-        // todo : remove
-        vec3 accel = {};
-        float penetration_duration;
-        //
-
+    private:
         aabb box;
+        sphere ball;
         vec3 center = {};
         vec3 velocity = {};
         std::vector<vec3> physx_verts;

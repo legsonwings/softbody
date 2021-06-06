@@ -15,7 +15,6 @@ using namespace geometry;
 
 void ffd_object::update(float dt)
 {
-    box = std::move(aabb{ control_points });
     velocity += compute_wholebody_forces() * dt;
 
     auto const delta_pos = velocity * dt;
@@ -43,6 +42,8 @@ void ffd_object::update(float dt)
         control_points[ctrl_pt_idx] = rest_pt + delta_pos;
     }
 
+    box = std::move(aabb{ control_points });
+
     physx_verts.clear();
     evaluated_verts.clear();
     for (auto const& vert : vertices)
@@ -57,7 +58,7 @@ void ffd_object::update(float dt)
 
 std::vector<vec3> ffd_object::get_control_point_visualization() const
 {
-    auto const marker_vec3 = geoutils::create_marker(vec3::Zero, 0.1f);
+    auto const marker_vec3 = geoutils::create_cube(vec3::Zero, 0.1f);
 
     std::vector<vec3> marker;
     marker.reserve(marker_vec3.size());
@@ -69,9 +70,31 @@ std::vector<vec3> ffd_object::get_control_point_visualization() const
     return marker;
 }
 
+std::vector<gfx::instance_data> geometry::ffd_object::get_controlnet_instancedata() const
+{
+    std::vector<gfx::instance_data> instances_info(control_points.size());
+    std::transform(control_points.begin(), control_points.end(), instances_info.begin(), [](auto const& pt) { return gfx::instance_data{ pt, {1.f, 1.f, 1.f} }; });
+    return instances_info;
+}
+
+std::vector<vec3> geometry::ffd_object::getbox_vertices() const
+{
+    return getbox().get_vertices();
+}
+
+box geometry::ffd_object::getbox() const
+{
+    return box;
+}
+
+aabb const& geometry::ffd_object::getboundingbox() const
+{
+    return box;
+}
+
 vec3 geometry::ffd_object::compute_wholebody_forces() const
 {
-    auto const drag = -velocity * 0.5f;
+    auto const drag = -velocity * 0.7f;
     return drag;
 }
 

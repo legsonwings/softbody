@@ -1,20 +1,11 @@
 
+#include "..\..\..\Engine\Assets\Common.hlsli"
+
 #define ROOT_SIG "CBV(b0), \
-                  RootConstants(b1, num32bitconstants=6), \
+                  RootConstants(b1, num32bitconstants=2), \
                   RootConstants(b2, num32bitconstants=1), \
                   SRV(t0), \
                   SRV(t1)"
-
-struct Constants
-{
-    float3 CamPos;
-    uint Padding0;
-    float4x4 World;
-    float4x4 WorldView;
-    float4x4 WorldViewProj;
-    uint NumTriangles;
-    uint TrianglesPerInstance;
-};
 
 struct instance_data
 {
@@ -24,7 +15,6 @@ struct instance_data
 
 struct instances_information
 {
-    float4 color;
     uint num_instances;
     uint num_primitives_per_instance;
 };
@@ -39,7 +29,6 @@ struct Vertex
     float3 position;
 };
 
-ConstantBuffer<Constants> Globals : register(b0);
 ConstantBuffer<instances_information> instances_info : register(b1);
 ConstantBuffer<meshshader_info> group_info : register(b2);
 StructuredBuffer<Vertex> Vertices : register(t0);
