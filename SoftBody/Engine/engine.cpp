@@ -12,7 +12,8 @@
 #include "stdafx.h"
 #include "Engine.h"
 #include "GameUtils.h"
-#include "..\SharedConstants.h"
+#include "engine/graphics/gfxutils.h"
+#include "../SharedConstants.h"
 
 #include <random>
 #include <algorithm>

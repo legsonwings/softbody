@@ -64,6 +64,8 @@
     <ClCompile Include="Engine\graphics\body.cpp" />
     <ClCompile Include="Engine\interfaces\bodyinterface.cpp" />
     <ClCompile Include="Engine\interfaces\engineinterface.cpp" />
+    <ClCompile Include="Engine\graphics\gfxmemory.cpp" />
+    <ClCompile Include="Engine\graphics\gfxutils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\DXSample.h">
@@ -112,6 +114,8 @@
     <ClInclude Include="Engine\graphics\gfxcore.h" />
     <ClInclude Include="Engine\interfaces\bodyinterface.h" />
     <ClInclude Include="Engine\interfaces\engineinterface.h" />
+    <ClInclude Include="Engine\graphics\gfxmemory.h" />
+    <ClInclude Include="Engine\graphics\gfxutils.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Engine\SimpleMath.inl">

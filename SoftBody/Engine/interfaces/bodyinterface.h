@@ -6,6 +6,8 @@
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 
+struct renderparams;
+
 namespace gfx
 {
 	struct pipeline_objects
@@ -19,6 +21,7 @@ namespace gfx
 	{
 	public:
 		virtual void update(float dt) {};
+		virtual void render(float dt, renderparams const &) {};
 		virtual std::vector<ComPtr<ID3D12Resource>> create_resources() { return {}; };
 		virtual pipeline_objects const& get_pipelineobjects() const = 0;
 		virtual D3D12_GPU_VIRTUAL_ADDRESS get_vertexbuffer_gpuaddress() const = 0;

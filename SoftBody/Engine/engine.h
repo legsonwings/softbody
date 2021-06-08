@@ -18,6 +18,7 @@
 #include "SimpleMath.h"
 #include "GameBase.h"
 #include "engineutils.h"
+#include "graphics/gfxmemory.h"
 
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
@@ -45,6 +46,11 @@ public:
 
 private:
 
+    // Synchronization objects.
+    HANDLE m_fenceEvent;
+    ComPtr<ID3D12Fence> m_fence;
+    UINT64 m_fenceValues[configurable_properties::frame_count];
+
     // Pipeline objects.
     CD3DX12_VIEWPORT m_viewport;
     CD3DX12_RECT m_scissorRect;
@@ -57,30 +63,21 @@ private:
     ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
     ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
 
+    ComPtr<ID3D12GraphicsCommandList6> m_commandList;
+
     unsigned m_rtvDescriptorSize;
     unsigned m_dsvDescriptorSize;
 
-    ComPtr<ID3D12GraphicsCommandList6> m_commandList;
-
     StepTimer m_timer;
-    
-    // Synchronization objects.
+    std::wstring m_assetsPath;
+    std::unique_ptr<game_base> game;
+    configurable_properties config_properties;
+
     unsigned m_frameIndex;
     unsigned m_frameCounter;
-    HANDLE m_fenceEvent;
-    ComPtr<ID3D12Fence> m_fence;
-    UINT64 m_fenceValues[configurable_properties::frame_count];
 
     void load_pipeline();
     void load_assetsandgeometry();
     void moveto_nextframe();
     void waitforgpu();
-
-private:
-
-    configurable_properties config_properties;
-    std::unique_ptr<game_base> game;
-
-    // Root assets path.
-    std::wstring m_assetsPath;
 };

@@ -36,7 +36,14 @@ namespace gfx
 
         static pipeline_objects pipelineobjects;
 
-        template<gfx::topology primitive_t> static constexpr const wchar_t* c_ampshader_filename = L"InstancesAS.cso";
+        template<gfx::topology primitive_t> static constexpr uint32_t vb_slot = 2;
+        template<> static constexpr uint32_t vb_slot<gfx::topology::line> = 3;
+        template<gfx::topology primitive_t> static constexpr uint32_t numverts_perprim = 3;
+        template<> static constexpr uint32_t numverts_perprim<gfx::topology::line> = 2;
+        template<gfx::topology primitive_t> static constexpr vec3 color = { 1.f, 0.3f, 0.1f };
+        template<> static constexpr vec3 color<gfx::topology::line> = { 1.f, 1.f, 0.f };
+
+        template<gfx::topology primitive_t> static constexpr  wchar_t* c_ampshader_filename = L"InstancesAS.cso";
         template<gfx::topology primitive_t> static constexpr const wchar_t* c_meshshader_filename = L"InstancesMS.cso";
         template<gfx::topology primitive_t> static constexpr const wchar_t* c_pixelshader_filename = L"BasicLightingPS.cso";
 
@@ -52,12 +59,13 @@ namespace gfx
         body_static(geometry_t const& _body, vertexfetch_r(std::decay_t<geometry_t>::* vfun)() const, instancedatafetch_r(std::decay_t<geometry_t>::* ifun)() const);
 
         std::vector<ComPtr<ID3D12Resource>> create_resources() override;
-        D3D12_GPU_VIRTUAL_ADDRESS get_instancebuffer_gpuaddress() const;
+        void render(float dt, renderparams const&) override;
         void update_instancebuffer();
 
         uint get_numinstances() const { return num_instances; }
         uint get_numvertices() const { return m_vertices.size(); }
         pipeline_objects const& get_pipelineobjects() const override { return body_static<geometry_t, primitive_t>::get_static_pipelineobjects(); }
+        D3D12_GPU_VIRTUAL_ADDRESS get_instancebuffer_gpuaddress() const;
         D3D12_GPU_VIRTUAL_ADDRESS get_vertexbuffer_gpuaddress() const override { return m_vertexbuffer->GetGPUVirtualAddress(); }
         static pipeline_objects const& get_static_pipelineobjects();
     };
@@ -79,6 +87,13 @@ namespace gfx
 
         static pipeline_objects pipelineobjects;
 
+        template<gfx::topology primitive_t> static constexpr uint32_t vb_slot = 2;
+        template<> static constexpr uint32_t vb_slot<gfx::topology::line> = 3;
+        template<gfx::topology primitive_t> static constexpr uint32_t numverts_perprim = 3;
+        template<> static constexpr uint32_t numverts_perprim<gfx::topology::line> = 2;
+        template<gfx::topology primitive_t> static constexpr vec3 color = { 1.f, 0.3f, 0.1f };
+        template<> static constexpr vec3 color<gfx::topology::line> = { 1.f, 1.f, 0.f };
+
         template<gfx::topology primitive_t> static constexpr const wchar_t* c_ampshader_filename = L"DefaultAS.cso";
         template<gfx::topology primitive_t> static constexpr const wchar_t* c_meshshader_filename = L"DefaultMS.cso";
         template<gfx::topology primitive_t> static constexpr const wchar_t* c_pixelshader_filename = L"BasicLightingPS.cso";
@@ -97,6 +112,7 @@ namespace gfx
         std::vector<ComPtr<ID3D12Resource>> create_resources() override;
 
         void update(float dt) override;
+        void render(float dt, renderparams const&) override;
         void update_vertexbuffer();
 
         constexpr geometry_t &get() { return body; }

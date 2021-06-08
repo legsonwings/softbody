@@ -4,6 +4,7 @@
 
 using namespace DirectX;
 
+struct constant_buffer;
 struct configurable_properties;
 
 class game_engine

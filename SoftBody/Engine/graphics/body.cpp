@@ -1,7 +1,59 @@
 #include "stdafx.h"
 #include "body.h"
+#include "gfxutils.h"
 #include "Engine/DXSampleHelper.h"
 #include "Engine/interfaces/engineinterface.h"
+
+namespace gfx
+{
+    void update_allframebuffers(uint8_t* mapped_buffer, void* data_start, std::size_t const perframe_buffersize, std::size_t framecount)
+    {
+        for (size_t i = 0; i < framecount; ++i)
+        {
+            memcpy(mapped_buffer + perframe_buffersize * i, data_start, perframe_buffersize);
+        }
+    }
+}
+
+void gfx::dispatch(resource_bindings const& bindings)
+{
+    auto engine = game_engine::g_engine;
+    auto cmd_list = engine->get_command_list();
+
+    cmd_list->SetPipelineState(bindings.pso.Get());
+    cmd_list->SetGraphicsRootSignature(bindings.root_signature.Get());
+    cmd_list->SetGraphicsRootConstantBufferView(bindings.constant.slot, bindings.constant.address);
+    cmd_list->SetGraphicsRootShaderResourceView(bindings.vertex.slot, bindings.vertex.address);
+    cmd_list->SetGraphicsRoot32BitConstants(bindings.rootconstants.slot, static_cast<UINT>(bindings.rootconstants.values.size() / 4), bindings.rootconstants.values.data(), 0);
+    cmd_list->DispatchMesh(1, 1, 1);
+}
+
+void gfx::dispatch_lines(resource_bindings const& bindings, uint32_t numlines)
+{
+    auto engine = game_engine::g_engine;
+    auto cmd_list = engine->get_command_list();
+
+    cmd_list->SetPipelineState(bindings.pso.Get());
+    cmd_list->SetGraphicsRootSignature(bindings.root_signature.Get());
+    cmd_list->SetGraphicsRootConstantBufferView(bindings.constant.slot, bindings.constant.address);
+    cmd_list->SetGraphicsRootShaderResourceView(bindings.vertex.slot, bindings.vertex.address);
+
+    if(bindings.instance.address != 0)
+        cmd_list->SetGraphicsRootShaderResourceView(bindings.instance.slot, bindings.instance.address);
+
+    cmd_list->SetGraphicsRoot32BitConstants(bindings.rootconstants.slot, static_cast<UINT>(bindings.rootconstants.values.size() / 4), bindings.rootconstants.values.data(), 0);
+
+    unsigned const num_ms = (numlines / MAX_LINES_PER_MS) + ((numlines % MAX_LINES_PER_MS) == 0 ? 0 : 1);
+
+    unsigned num_lines_processed = 0;
+    for (unsigned ms_idx = 0; ms_idx < num_ms; ++ms_idx)
+    {
+        cmd_list->SetGraphicsRoot32BitConstant(2, num_lines_processed, 0);
+        cmd_list->DispatchMesh(1, 1, 1);
+
+        num_lines_processed += MAX_LINES_PER_MS;
+    }
+}
 
 gfx::pipeline_objects gfx::create_pipelineobjects(std::wstring const& as, std::wstring const& ms, std::wstring const& ps)
 {
@@ -22,8 +74,6 @@ gfx::pipeline_objects gfx::create_pipelineobjects(std::wstring const& as, std::w
 
     D3DX12_MESH_SHADER_PIPELINE_STATE_DESC pso_desc = engine->get_pso_desc();
 
-    // todo : debug code
-    pso_desc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
     pso_desc.pRootSignature = result.root_signature.Get();
 
     if (!as.empty()) 
@@ -121,30 +171,4 @@ void gfx::update_perframebuffer(uint8_t* mapped_buffer, void* data_start, std::s
 {
     auto frame_idx = game_engine::g_engine->get_frame_index();
     memcpy(mapped_buffer + perframe_buffersize * frame_idx, data_start, perframe_buffersize);
-}
-
-void gfx::update_allframebuffers(uint8_t* mapped_buffer, void* data_start, std::size_t const perframe_buffersize, std::size_t framecount)
-{
-    for (size_t i = 0; i < framecount; ++i)
-    {
-        memcpy(mapped_buffer + perframe_buffersize * i, data_start, perframe_buffersize);
-    }
-}
-
-ComPtr<ID3D12Resource> gfx::create_uploadbuffer(uint8_t** mapped_buffer, std::size_t const buffersize)
-{
-    auto device = game_engine::g_engine->get_device();
-
-    ComPtr<ID3D12Resource> vb_upload;
-    if (buffersize > 0)
-    {
-        auto resource_desc = CD3DX12_RESOURCE_DESC::Buffer(buffersize);
-        auto heap_props = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-        ThrowIfFailed(device->CreateCommittedResource(&heap_props, D3D12_HEAP_FLAG_NONE, &resource_desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(vb_upload.GetAddressOf())));
-
-        // We do not intend to read from this resource on the CPU.
-        ThrowIfFailed(vb_upload->Map(0, nullptr, reinterpret_cast<void**>(mapped_buffer)));
-    }
-
-    return vb_upload;
 }
