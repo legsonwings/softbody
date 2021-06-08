@@ -1,5 +1,5 @@
 #include "body.h"
-#include "SharedConstants.h"
+#include "sharedconstants.h"
 
 #include <string>
 #include <functional>

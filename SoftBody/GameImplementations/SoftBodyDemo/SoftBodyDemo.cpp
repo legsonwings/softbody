@@ -1,12 +1,12 @@
 #include "stdafx.h"
-#include "SoftBodyDemo.h"
-#include "GameUtils.h"
-#include "SharedConstants.h"
-#include "Engine/interfaces/engineinterface.h"
-#include "Engine/DXSample.h"
-#include "Engine/engineutils.h"
-#include "Engine/graphics/body.h"
-#include "Engine/graphics/gfxmemory.h"
+#include "softbodydemo.h"
+#include "gameutils.h"
+#include "sharedconstants.h"
+#include "engine/interfaces/engineinterface.h"
+#include "engine/DXSample.h"
+#include "engine/engineutils.h"
+#include "engine/graphics/body.h"
+#include "engine/graphics/gfxmemory.h"
 
 #include <random>
 #include <algorithm>

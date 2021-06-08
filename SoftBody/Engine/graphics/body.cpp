@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "body.h"
 #include "gfxutils.h"
-#include "Engine/DXSampleHelper.h"
-#include "Engine/interfaces/engineinterface.h"
+#include "engine/DXSampleHelper.h"
+#include "engine/interfaces/engineinterface.h"
 
 namespace gfx
 {

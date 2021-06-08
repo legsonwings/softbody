@@ -1,11 +1,11 @@
 #pragma once
 
 #include "gfxcore.h"
-#include "Engine/geometry/geocore.h"
-#include "Engine/engineutils.h"
-#include "Engine/interfaces/bodyinterface.h"
-#include "Engine/SimpleMath.h"
-#include "Engine/geometry/Shapes.h"
+#include "engine/geometry/geocore.h"
+#include "engine/engineutils.h"
+#include "engine/interfaces/bodyinterface.h"
+#include "engine/SimpleMath.h"
+#include "engine/geometry/shapes.h"
 
 #include <type_traits>
 #include <memory>
@@ -53,6 +53,12 @@ namespace gfx
 
         uint get_vertexbuffersize() const { return m_vertices.size() * sizeof(decltype(m_vertices)::value_type); }
         uint get_instancebuffersize() const { return num_instances * sizeof(instance_data); }
+        void update_instancebuffer();
+        uint get_numinstances() const { return num_instances; }
+        uint get_numvertices() const { return m_vertices.size(); }
+        pipeline_objects const& get_pipelineobjects() const override { return body_static<geometry_t, primitive_t>::get_static_pipelineobjects(); }
+        D3D12_GPU_VIRTUAL_ADDRESS get_instancebuffer_gpuaddress() const;
+        D3D12_GPU_VIRTUAL_ADDRESS get_vertexbuffer_gpuaddress() const override { return m_vertexbuffer->GetGPUVirtualAddress(); }
     public:
         template<typename = std::enable_if_t<!std::is_lvalue_reference_v<geometry_t>>>
         body_static(geometry_t _body);
@@ -60,13 +66,7 @@ namespace gfx
 
         std::vector<ComPtr<ID3D12Resource>> create_resources() override;
         void render(float dt, renderparams const&) override;
-        void update_instancebuffer();
 
-        uint get_numinstances() const { return num_instances; }
-        uint get_numvertices() const { return m_vertices.size(); }
-        pipeline_objects const& get_pipelineobjects() const override { return body_static<geometry_t, primitive_t>::get_static_pipelineobjects(); }
-        D3D12_GPU_VIRTUAL_ADDRESS get_instancebuffer_gpuaddress() const;
-        D3D12_GPU_VIRTUAL_ADDRESS get_vertexbuffer_gpuaddress() const override { return m_vertexbuffer->GetGPUVirtualAddress(); }
         static pipeline_objects const& get_static_pipelineobjects();
     };
 
@@ -102,7 +102,11 @@ namespace gfx
         template<> static constexpr const wchar_t* c_meshshader_filename<gfx::topology::line> = L"linesMS.cso";
         template<> static constexpr const wchar_t* c_pixelshader_filename<gfx::topology::line> = L"BasicPS.cso";
 
+        void update_vertexbuffer();
+        unsigned get_numvertices() const { return static_cast<unsigned>(m_vertices.size()); }
         uint get_vertexbuffersize() const { return m_vertices.size() * sizeof(decltype(m_vertices)::value_type); }
+        D3D12_GPU_VIRTUAL_ADDRESS get_vertexbuffer_gpuaddress() const override;
+        pipeline_objects const& get_pipelineobjects() const override { return body_dynamic<geometry_t>::get_static_pipelineobjects(); }
     public:
         
         template<typename = std::enable_if_t<!std::is_lvalue_reference_v<geometry_t>>>
@@ -113,7 +117,6 @@ namespace gfx
 
         void update(float dt) override;
         void render(float dt, renderparams const&) override;
-        void update_vertexbuffer();
 
         constexpr geometry_t &get() { return body; }
         constexpr geometry_t const &get() const { return body; }
@@ -122,9 +125,6 @@ namespace gfx
         constexpr geometry_t &operator->() { return body; }
         constexpr geometry_t const &operator->() const { return body; }
 
-        unsigned get_numvertices() const { return static_cast<unsigned>(m_vertices.size()); }
-        pipeline_objects const& get_pipelineobjects() const override { return body_dynamic<geometry_t>::get_static_pipelineobjects(); }
-        D3D12_GPU_VIRTUAL_ADDRESS get_vertexbuffer_gpuaddress() const override;
         static pipeline_objects const& get_static_pipelineobjects();
     };
 }

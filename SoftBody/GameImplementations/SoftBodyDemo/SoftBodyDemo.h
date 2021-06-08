@@ -1,10 +1,10 @@
 #pragma once
 
-#include "GameBase.h"
-#include "Engine/SimpleMath.h"
-#include "Engine/SimpleCamera.h"
+#include "gamebase.h"
+#include "engine/SimpleMath.h"
+#include "engine/SimpleCamera.h"
 #include "engine/graphics/gfxmemory.h"
-#include "Engine/geometry/Shapes.h"
+#include "Engine/geometry/shapes.h"
 
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
