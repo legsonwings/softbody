@@ -105,6 +105,9 @@ void geometry::ffd_object::set_velocity(vec3 const vel)
 
 void geometry::ffd_object::resolve_collision(ffd_object & r, float dt)
 {
+    auto const &isect = box.intersect(r.getboundingbox());
+    if (!isect) return;
+
     auto const contacts = compute_contacts(r);
 
     if (contacts.size() <= 0)

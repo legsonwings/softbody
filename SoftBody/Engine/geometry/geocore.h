@@ -3,6 +3,7 @@
 #include "Engine/SimpleMath.h"
 
 #include <vector>
+#include <optional>
 
 using vec2 = DirectX::SimpleMath::Vector2;
 using vec3 = DirectX::SimpleMath::Vector3;
@@ -45,6 +46,8 @@ namespace geometry
 
         vec3 span() const { return max_pt - min_pt; }
         operator box() const { return { (min_pt + max_pt) / 2.f, max_pt - min_pt }; }
+        std::optional<aabb> intersect(aabb const& r) const;
+
 
         // Top left back is min, bot right front max
         vec3 min_pt;

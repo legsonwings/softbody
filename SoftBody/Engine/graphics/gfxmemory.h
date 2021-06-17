@@ -30,9 +30,7 @@ public:
 
 struct cb_memory
 {
-private:
 	static constexpr uint buffermemory_size = 4096;
-public:
 	static uint8_t constant_buffer_memory[buffermemory_size];
 };
 
@@ -47,6 +45,6 @@ inline void constant_buffer::set_data(data_t const *_cbdata)
 {
 	assert(cbdata_start);
 	assert(sizeof(data_t) == cb_size);
-	assert(cb_size + cb_alignment <= buffermemory_size);
+	assert(cb_size + cb_alignment <= cb_memory::buffermemory_size);
 	set_data(reinterpret_cast<uint8_t const*>(_cbdata));
 }
