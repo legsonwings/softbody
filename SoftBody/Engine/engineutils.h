@@ -19,3 +19,22 @@ struct configurable_properties
 		return static_cast<float>(width) / static_cast<float>(height);
 	}
 };
+
+template<typename b, typename e>
+struct ext
+{
+	b base;
+	e ext;
+
+public:
+	constexpr operator b() { return base; }
+	constexpr operator b const() const { return base; }
+	constexpr e &ex() { return ext; }
+	constexpr e const &ex() const { return ext; }
+	constexpr b &get() { return base; }
+	constexpr b const &get() const { return base; }
+	constexpr b &operator*() { return base; }
+	constexpr b const &operator*() const { return base; }
+	constexpr b *operator->() { return &base; }
+	constexpr b const *operator->() const { return &base; }
+};

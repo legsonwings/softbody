@@ -36,6 +36,7 @@ namespace geometry
     struct aabb
     {
         aabb() = default;
+        aabb(vec3 const *tri);
         aabb(aabb const&) = default;
         aabb(aabb&&) = default;
         aabb& operator=(const aabb&) = default;
@@ -47,7 +48,6 @@ namespace geometry
         vec3 span() const { return max_pt - min_pt; }
         operator box() const { return { (min_pt + max_pt) / 2.f, max_pt - min_pt }; }
         std::optional<aabb> intersect(aabb const& r) const;
-
 
         // Top left back is min, bot right front max
         vec3 min_pt;

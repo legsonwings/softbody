@@ -40,6 +40,9 @@ void soft_body::update(float dt)
 {
     m_camera.Update(dt);
 
+    for (auto& body : dynamicbodies_tri) { body.update(dt); }
+    for (auto& body : dynamicbodies_line) { body.update(dt); }
+
     static std::size_t const num_dynamicbodies = dynamicbodies_tri.size();
     for (std::size_t i = 0; i < num_dynamicbodies; ++i)
     {
@@ -48,9 +51,6 @@ void soft_body::update(float dt)
             dynamicbodies_tri[i].get().resolve_collision(dynamicbodies_tri[j].get(), dt);
         }
     }
-
-    for (auto& body : dynamicbodies_tri) { body.update(dt); }
-    for (auto& body : dynamicbodies_line) { body.update(dt); }
 
     XMMATRIX world = XMMATRIX(g_XMIdentityR0, g_XMIdentityR1, g_XMIdentityR2, g_XMIdentityR3);
     XMMATRIX view = m_camera.GetViewMatrix();
@@ -82,7 +82,7 @@ game_base::resourcelist soft_body::load_assets_and_geometry()
     //Vector3 const color = { color_dist(mt), color_dist(mt), color_dist(mt) };
 
     Vector3 const lposition = { -5.f, 0.f, 0.f };
-    Vector3 const rposition = {5.f, 0.f, 0.f};
+    Vector3 const rposition = { 5.f, 0.f, 0.f };
 
     using geometry::ffd_object;
     dynamicbodies_tri.emplace_back(ffd_object{ { lposition, 1.f } });
@@ -93,8 +93,8 @@ game_base::resourcelist soft_body::load_assets_and_geometry()
     staticbodies_lines.emplace_back(*dynamicbodies_tri[0], &ffd_object::get_control_point_visualization, &ffd_object::get_controlnet_instancedata);
     staticbodies_lines.emplace_back(*dynamicbodies_tri[1], &ffd_object::get_control_point_visualization, &ffd_object::get_controlnet_instancedata);
 
-    dynamicbodies_tri[0].get().set_velocity({ 8.f, 0.f, 0.f });
-    dynamicbodies_tri[1].get().set_velocity({ -8.f, 0.f, 0.f });
+    dynamicbodies_tri[0].get().set_velocity({ 3.f, 0.f, 0.f });
+    dynamicbodies_tri[1].get().set_velocity({ -3.f, 0.f, 0.f });
 
     game_base::resourcelist retvalues;
     retvalues.reserve(dynamicbodies_tri.size() + staticbodies_lines.size());

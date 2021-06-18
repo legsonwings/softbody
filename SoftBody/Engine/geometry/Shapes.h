@@ -114,7 +114,7 @@ namespace geometry
             return evaluated_verts;
         }
 
-        std::vector<vec3> const& get_physx_traingles() const
+        std::vector<vec3> const& get_physx_triangles() const
         {
             return physx_verts;
         }

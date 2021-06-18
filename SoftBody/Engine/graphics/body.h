@@ -122,8 +122,6 @@ namespace gfx
         constexpr geometry_t const &get() const { return body; }
         constexpr geometry_t &operator*() { return body; }
         constexpr geometry_t const &operator*() const { return body; }
-        constexpr geometry_t &operator->() { return body; }
-        constexpr geometry_t const &operator->() const { return body; }
 
         static pipeline_objects const& get_static_pipelineobjects();
     };

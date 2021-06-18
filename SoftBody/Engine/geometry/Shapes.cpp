@@ -105,9 +105,6 @@ void geometry::ffd_object::set_velocity(vec3 const vel)
 
 void geometry::ffd_object::resolve_collision(ffd_object & r, float dt)
 {
-    auto const &isect = box.intersect(r.getboundingbox());
-    if (!isect) return;
-
     auto const contacts = compute_contacts(r);
 
     if (contacts.size() <= 0)
@@ -173,8 +170,17 @@ uint geometry::ffd_object::closest_controlpoint(vec3 const& point) const
 
 std::vector<linesegment> geometry::ffd_object::intersect(ffd_object const& r) const
 {
-    auto const& ltris = get_physx_traingles();
-    auto const& rtris = r.get_physx_traingles();
+    auto const& isect = box.intersect(r.getboundingbox());
+    if (!isect) 
+        return {};
+
+    auto const& ltris = get_physx_triangles();
+    auto const& rtris = r.get_physx_triangles();
+
+    std::vector<ext<aabb, uint>> laabbs, raabbs;
+
+    laabbs.reserve(ltris.size() / 30);
+    raabbs.reserve(rtris.size() / 30);
 
     auto const lnum_verts = ltris.size();
     auto const rnum_verts = rtris.size();
@@ -182,13 +188,29 @@ std::vector<linesegment> geometry::ffd_object::intersect(ffd_object const& r) co
     assert(lnum_verts % 3 == 0);
     assert(rnum_verts % 3 == 0);
 
+    for (uint idx = 0; idx < lnum_verts / 3; idx +=3)
+    {
+        ext<aabb, uint> box{ &ltris[idx], idx };
+        if (isect.value().intersect(*box)) { laabbs.emplace_back(box); }
+    }
+
+    for (uint idx = 0; idx < rnum_verts / 3; idx += 3)
+    {
+        ext<aabb, uint> box{ &rtris[idx], idx };
+        if (isect.value().intersect(*box)) { raabbs.emplace_back(box); }
+    }
+
     std::vector<linesegment> result;
-    for(int lidx = 0; lidx < lnum_verts; lidx+=3)
-        for (int ridx = 0; ridx < lnum_verts; ridx += 3)
+    // todo : can optimize this by hashing triangles on the spherical domain
+    // may need tiling the sphere with polygons
+
+    for (uint lidx = 0; lidx < laabbs.size(); lidx++)
+        for (uint ridx = 0; ridx < raabbs.size(); ridx++)
         {
-            if (auto const& isect = triangle::intersect(&ltris[lidx], &rtris[ridx]))
+            if (laabbs[lidx]->intersect(raabbs[ridx]))
             {
-                result.push_back(isect.value());
+                if(auto const& isect = triangle::intersect(&ltris[laabbs[lidx].ex()], &rtris[raabbs[ridx].ex()]))
+                    result.push_back(isect.value());
             }
         }
 
