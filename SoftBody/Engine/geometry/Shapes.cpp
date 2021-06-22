@@ -58,16 +58,7 @@ void ffd_object::update(float dt)
 
 std::vector<vec3> ffd_object::get_control_point_visualization() const
 {
-    auto const marker_vec3 = geoutils::create_cube(vec3::Zero, 0.1f);
-
-    std::vector<vec3> marker;
-    marker.reserve(marker_vec3.size());
-    for (auto const& point : marker_vec3)
-    {
-        marker.push_back(point);
-    }
-
-    return marker;
+    return geoutils::create_cube(vec3::Zero, 0.1f);
 }
 
 std::vector<gfx::instance_data> geometry::ffd_object::get_controlnet_instancedata() const
@@ -158,7 +149,7 @@ uint geometry::ffd_object::closest_controlpoint(vec3 const& point) const
     float distsqr_min = std::numeric_limits<float>::max();
     for (uint i = 0; i < num_control_points; ++i)
     {
-        if (auto distsqr = vec3::DistanceSquared(point, control_points[i]); distsqr < distsqr_min)
+        if (auto const distsqr = vec3::DistanceSquared(point, control_points[i]); distsqr < distsqr_min)
         {
             distsqr_min = distsqr;
             ctrlpt_idx = i;
@@ -170,8 +161,8 @@ uint geometry::ffd_object::closest_controlpoint(vec3 const& point) const
 
 std::vector<linesegment> geometry::ffd_object::intersect(ffd_object const& r) const
 {
-    auto const& isect = box.intersect(r.getboundingbox());
-    if (!isect) 
+    auto const& isect_box = box.intersect(r.getboundingbox());
+    if (!isect_box)
         return {};
 
     auto const& ltris = get_physx_triangles();
@@ -179,8 +170,8 @@ std::vector<linesegment> geometry::ffd_object::intersect(ffd_object const& r) co
 
     std::vector<ext<aabb, uint>> laabbs, raabbs;
 
-    laabbs.reserve(ltris.size() / 30);
-    raabbs.reserve(rtris.size() / 30);
+    laabbs.reserve(10);
+    raabbs.reserve(10);
 
     auto const lnum_verts = ltris.size();
     auto const rnum_verts = rtris.size();
@@ -188,31 +179,26 @@ std::vector<linesegment> geometry::ffd_object::intersect(ffd_object const& r) co
     assert(lnum_verts % 3 == 0);
     assert(rnum_verts % 3 == 0);
 
-    for (uint idx = 0; idx < lnum_verts / 3; idx +=3)
+    for (uint lidx = 0; lidx < lnum_verts; lidx +=3)
     {
-        ext<aabb, uint> box{ &ltris[idx], idx };
-        if (isect.value().intersect(*box)) { laabbs.emplace_back(box); }
+        ext<aabb, uint> lbox{ &ltris[lidx], lidx }; 
+        if (isect_box.value().intersect(*lbox)) { laabbs.emplace_back(lbox); }
     }
 
-    for (uint idx = 0; idx < rnum_verts / 3; idx += 3)
+    for (uint ridx = 0; ridx < rnum_verts; ridx += 3)
     {
-        ext<aabb, uint> box{ &rtris[idx], idx };
-        if (isect.value().intersect(*box)) { raabbs.emplace_back(box); }
+        ext<aabb, uint> rbox{ &rtris[ridx], ridx };
+        if (isect_box.value().intersect(*rbox)) { raabbs.emplace_back(rbox); }
     }
 
     std::vector<linesegment> result;
     // todo : can optimize this by hashing triangles on the spherical domain
     // may need tiling the sphere with polygons
-
     for (uint lidx = 0; lidx < laabbs.size(); lidx++)
         for (uint ridx = 0; ridx < raabbs.size(); ridx++)
-        {
-            if (laabbs[lidx]->intersect(raabbs[ridx]))
-            {
-                if(auto const& isect = triangle::intersect(&ltris[laabbs[lidx].ex()], &rtris[raabbs[ridx].ex()]))
+            if(laabbs[lidx]->intersect(raabbs[ridx]))
+                if(auto const& isect = triangle::intersect(&(ltris[laabbs[lidx].ex()]), &rtris[raabbs[ridx].ex()]))
                     result.push_back(isect.value());
-            }
-        }
 
     return result;
 }
@@ -238,12 +224,9 @@ std::vector<vec3> geometry::ffd_object::compute_contacts(ffd_object const& other
 
     std::vector<vec3> mids;
     mids.reserve(lines.size() / 2);
-    for (uint i = 0; i < lines.size(); i++)
-    {
-        mids.push_back((lines[i].v0 + lines[i].v1) / 2.f);
-    }
+    for (uint i = 0; i < lines.size(); i++) { mids.push_back((lines[i].v0 + lines[i].v1) / 2.f); }
 
-    auto constexpr contact_radius = 0.3f;
+    auto constexpr contact_radius = 0.1f;
     auto constexpr contact_radius_squared2 = 2 * contact_radius * contact_radius;
     std::vector<vec3> contacts;
 
@@ -288,10 +271,7 @@ std::vector<vertex> circle::get_triangles() const
     matrix plane_tx = geoutils::get_planematrix(center, normal);
 
     std::vector<vertex> result;
-    for (auto& vert : vertices)
-    {
-        result.push_back({ vec3::Transform(vert, plane_tx), normal });
-    }
+    for (auto& vert : vertices) { result.push_back({ vec3::Transform(vert, plane_tx), normal }); }
 
     return result;
 }

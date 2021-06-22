@@ -26,7 +26,8 @@ struct ext
 	b base;
 	e ext;
 
-public:
+	constexpr ext(b const& _b, e const& _e) : base(_b), ext(_e) {}
+
 	constexpr operator b() { return base; }
 	constexpr operator b const() const { return base; }
 	constexpr e &ex() { return ext; }

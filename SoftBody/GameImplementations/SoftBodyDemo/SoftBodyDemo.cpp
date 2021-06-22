@@ -93,8 +93,8 @@ game_base::resourcelist soft_body::load_assets_and_geometry()
     staticbodies_lines.emplace_back(*dynamicbodies_tri[0], &ffd_object::get_control_point_visualization, &ffd_object::get_controlnet_instancedata);
     staticbodies_lines.emplace_back(*dynamicbodies_tri[1], &ffd_object::get_control_point_visualization, &ffd_object::get_controlnet_instancedata);
 
-    dynamicbodies_tri[0].get().set_velocity({ 3.f, 0.f, 0.f });
-    dynamicbodies_tri[1].get().set_velocity({ -3.f, 0.f, 0.f });
+    dynamicbodies_tri[0].get().set_velocity({ 8.f, 0.f, 0.f });
+    dynamicbodies_tri[1].get().set_velocity({ -8.f, 0.f, 0.f });
 
     game_base::resourcelist retvalues;
     retvalues.reserve(dynamicbodies_tri.size() + staticbodies_lines.size());

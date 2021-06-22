@@ -135,7 +135,7 @@ namespace gfx
     template<typename geometry_t, gfx::topology primitive_t>
     inline body_dynamic<geometry_t, primitive_t>::body_dynamic(geometry_t const& _body, vertexfetch_r (std::decay_t<geometry_t>::*fun)() const) : body(_body)
     {
-        // todo : add support for data member pointers
+        // todo : add support for data member pointers and any callable(lambdas, functors)
         get_vertices = [fun](geometry_t const& geom) { return std::invoke(fun, geom); };
     }
 

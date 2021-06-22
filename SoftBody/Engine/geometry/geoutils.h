@@ -12,16 +12,16 @@ namespace geoutils
     bool are_equal(float const& l, float const& r);
     bool are_equal(vec3 const& l, vec3 const& r);
 
-	template <typename T>
-	T constexpr tolerance = T(1e-4f);
+	template <typename t = float>
+	t constexpr tolerance = t(1e-4f);
 
 	// todo : error for non-numeric types including char, maybe use concepts
-	template <typename T>
+	template <typename t>
 	struct invalid
 	{
-		constexpr operator T() const { return std::numeric_limits<T>::max(); }
+		constexpr operator t() const { return std::numeric_limits<t>::max(); }
 	};
 
-	template <typename T>
-	bool constexpr isvalid(T const& val) { return std::numeric_limits<T>::max() - val >= tolerance<T>; }
+	template <typename t>
+	bool constexpr isvalid(t const& val) { return std::numeric_limits<t>::max() - val >= tolerance<t>; }
 }
