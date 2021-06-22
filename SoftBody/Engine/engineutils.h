@@ -28,8 +28,8 @@ struct ext
 
 	constexpr ext(b const& _b, e const& _e) : base(_b), ext(_e) {}
 
-	constexpr operator b() { return base; }
-	constexpr operator b const() const { return base; }
+	constexpr operator b&() { return base; }
+	constexpr operator b const&() const { return base; }
 	constexpr e &ex() { return ext; }
 	constexpr e const &ex() const { return ext; }
 	constexpr b &get() { return base; }
