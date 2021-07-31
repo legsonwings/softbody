@@ -314,6 +314,28 @@ struct CD3DX12_DEPTH_STENCIL_DESC1 : public D3D12_DEPTH_STENCIL_DESC1
 };
 
 //------------------------------------------------------------------------------------------------
+
+struct CD3DX12_RENDER_TARGET_BLEND_DESC : public D3D12_RENDER_TARGET_BLEND_DESC
+{
+    CD3DX12_RENDER_TARGET_BLEND_DESC() = default;
+    explicit CD3DX12_RENDER_TARGET_BLEND_DESC(const D3D12_RENDER_TARGET_BLEND_DESC& o) noexcept :
+        D3D12_RENDER_TARGET_BLEND_DESC(o)
+    {}
+    explicit CD3DX12_RENDER_TARGET_BLEND_DESC(CD3DX12_DEFAULT) noexcept
+    {
+        BlendEnable = FALSE;
+        LogicOpEnable = FALSE;
+        SrcBlend = D3D12_BLEND_ONE;
+        DestBlend = D3D12_BLEND_ZERO;
+        BlendOp = D3D12_BLEND_OP_ADD;
+        SrcBlendAlpha = D3D12_BLEND_ONE;
+        DestBlendAlpha = D3D12_BLEND_ZERO;
+        BlendOpAlpha = D3D12_BLEND_OP_ADD;
+        LogicOp = D3D12_LOGIC_OP_NOOP;
+        RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+    }
+};
+
 struct CD3DX12_BLEND_DESC : public D3D12_BLEND_DESC
 {
     CD3DX12_BLEND_DESC() = default;
@@ -324,14 +346,7 @@ struct CD3DX12_BLEND_DESC : public D3D12_BLEND_DESC
     {
         AlphaToCoverageEnable = FALSE;
         IndependentBlendEnable = FALSE;
-        const D3D12_RENDER_TARGET_BLEND_DESC defaultRenderTargetBlendDesc =
-        {
-            FALSE,FALSE,
-            D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
-            D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
-            D3D12_LOGIC_OP_NOOP,
-            D3D12_COLOR_WRITE_ENABLE_ALL,
-        };
+        const D3D12_RENDER_TARGET_BLEND_DESC defaultRenderTargetBlendDesc = CD3DX12_RENDER_TARGET_BLEND_DESC(D3D12_DEFAULT);
         for (UINT i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
             RenderTarget[ i ] = defaultRenderTargetBlendDesc;
     }

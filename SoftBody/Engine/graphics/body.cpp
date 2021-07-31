@@ -5,7 +5,7 @@
 #include "engine/interfaces/engineinterface.h"
 
 namespace gfx
-{
+{    
     void update_allframebuffers(uint8_t* mapped_buffer, void* data_start, std::size_t const perframe_buffersize, std::size_t framecount)
     {
         for (size_t i = 0; i < framecount; ++i)
@@ -22,9 +22,14 @@ void gfx::dispatch(resource_bindings const& bindings)
 
     cmd_list->SetPipelineState(bindings.pso.Get());
     cmd_list->SetGraphicsRootSignature(bindings.root_signature.Get());
+
     cmd_list->SetGraphicsRootConstantBufferView(bindings.constant.slot, bindings.constant.address);
     cmd_list->SetGraphicsRootShaderResourceView(bindings.vertex.slot, bindings.vertex.address);
     cmd_list->SetGraphicsRoot32BitConstants(bindings.rootconstants.slot, static_cast<UINT>(bindings.rootconstants.values.size() / 4), bindings.rootconstants.values.data(), 0);
+
+    if (bindings.instance.address != 0)
+        cmd_list->SetGraphicsRootShaderResourceView(bindings.instance.slot, bindings.instance.address);
+
     cmd_list->DispatchMesh(1, 1, 1);
 }
 
@@ -35,13 +40,13 @@ void gfx::dispatch_lines(resource_bindings const& bindings, uint32_t numlines)
 
     cmd_list->SetPipelineState(bindings.pso.Get());
     cmd_list->SetGraphicsRootSignature(bindings.root_signature.Get());
+
     cmd_list->SetGraphicsRootConstantBufferView(bindings.constant.slot, bindings.constant.address);
     cmd_list->SetGraphicsRootShaderResourceView(bindings.vertex.slot, bindings.vertex.address);
+    cmd_list->SetGraphicsRoot32BitConstants(bindings.rootconstants.slot, static_cast<UINT>(bindings.rootconstants.values.size() / 4), bindings.rootconstants.values.data(), 0);
 
     if(bindings.instance.address != 0)
         cmd_list->SetGraphicsRootShaderResourceView(bindings.instance.slot, bindings.instance.address);
-
-    cmd_list->SetGraphicsRoot32BitConstants(bindings.rootconstants.slot, static_cast<UINT>(bindings.rootconstants.values.size() / 4), bindings.rootconstants.values.data(), 0);
 
     unsigned const num_ms = (numlines / MAX_LINES_PER_MS) + ((numlines % MAX_LINES_PER_MS) == 0 ? 0 : 1);
 
@@ -53,53 +58,6 @@ void gfx::dispatch_lines(resource_bindings const& bindings, uint32_t numlines)
 
         num_lines_processed += MAX_LINES_PER_MS;
     }
-}
-
-gfx::pipeline_objects gfx::create_pipelineobjects(std::wstring const& as, std::wstring const& ms, std::wstring const& ps)
-{
-    auto engine = game_engine::g_engine;
-    auto device = engine->get_device();
-    shader ampshader, meshshader, pixelshader;
-
-    if (!as.empty())
-        ReadDataFromFile(engine->get_asset_fullpath(as).c_str(), &ampshader.data, &ampshader.size);
-
-    ReadDataFromFile(engine->get_asset_fullpath(ms).c_str(), &meshshader.data, &meshshader.size);
-    ReadDataFromFile(engine->get_asset_fullpath(ps).c_str(), &pixelshader.data, &pixelshader.size);
-
-    pipeline_objects result;
-
-    // Pull root signature from the precompiled mesh shaders.
-    ThrowIfFailed(device->CreateRootSignature(0, meshshader.data, meshshader.size, IID_PPV_ARGS(result.root_signature.GetAddressOf())));
-
-    D3DX12_MESH_SHADER_PIPELINE_STATE_DESC pso_desc = engine->get_pso_desc();
-
-    pso_desc.pRootSignature = result.root_signature.Get();
-
-    if (!as.empty()) 
-        pso_desc.AS = { ampshader.data, ampshader.size };
-
-    pso_desc.MS = { meshshader.data, meshshader.size };
-    pso_desc.PS = { pixelshader.data, pixelshader.size };
-
-    auto psostream = CD3DX12_PIPELINE_MESH_STATE_STREAM(pso_desc);
-
-    D3D12_PIPELINE_STATE_STREAM_DESC stream_desc;
-    stream_desc.pPipelineStateSubobjectStream = &psostream;
-    stream_desc.SizeInBytes = sizeof(psostream);
-
-    ThrowIfFailed(device->CreatePipelineState(&stream_desc, IID_PPV_ARGS(result.pso.GetAddressOf())));
-
-    // Setup the Wireframe pso
-    pso_desc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
-    auto psostream_wire = CD3DX12_PIPELINE_MESH_STATE_STREAM(pso_desc);
-
-    stream_desc.pPipelineStateSubobjectStream = &psostream_wire;
-    stream_desc.SizeInBytes = sizeof(psostream_wire);
-
-    ThrowIfFailed(device->CreatePipelineState(&stream_desc, IID_PPV_ARGS(result.pso_wireframe.GetAddressOf())));
-
-    return result;
 }
 
 gfx::default_and_upload_buffers gfx::create_vertexbuffer_default(void* vertexdata_start, std::size_t const vb_size)

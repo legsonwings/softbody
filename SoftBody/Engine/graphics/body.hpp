@@ -1,4 +1,5 @@
 #include "body.h"
+#include "gfxutils.h"
 #include "sharedconstants.h"
 
 #include <string>
@@ -6,17 +7,10 @@
 
 namespace gfx
 {
-    struct shader
-    {
-        byte* data;
-        uint32_t size;
-    };
-
     using default_and_upload_buffers = std::pair<ComPtr<ID3D12Resource>, ComPtr<ID3D12Resource>>;
 
     void dispatch(resource_bindings const &bindings);
     void dispatch_lines(resource_bindings const& bindings, uint32_t numlines);
-    pipeline_objects create_pipelineobjects(std::wstring const& as, std::wstring const& ms, std::wstring const& ps);
     default_and_upload_buffers create_vertexbuffer_default(void* vertexdata_start, std::size_t const vb_size);
     ComPtr<ID3D12Resource> create_vertexbuffer_upload(uint8_t** mapped_buffer, void* vertexdata_start, std::size_t const perframe_buffersize);
     ComPtr<ID3D12Resource> create_instancebuffer(uint8_t** mapped_buffer, void* data_start, std::size_t const perframe_buffersize);
@@ -24,18 +18,14 @@ namespace gfx
     void update_perframebuffer(uint8_t* mapped_buffer, void* data_start, std::size_t const perframe_buffersize);
     
     template<typename geometry_t, gfx::topology primitive_t>
-    pipeline_objects body_static<geometry_t, primitive_t>::pipelineobjects;
-
-
-    template<typename geometry_t, gfx::topology primitive_t>
     template<typename>
-    inline body_static<geometry_t, primitive_t>::body_static(geometry_t _body) : body(_body) 
+    inline body_static<geometry_t, primitive_t>::body_static(geometry_t _body, bodyparams const& _params) : bodyinterface(_params), body(_body)
     {
         get_vertices = [](geometry_t const& geom) { return geom.get_vertices(); };
     }
 
     template<typename geometry_t, gfx::topology primitive_t>
-    inline body_static<geometry_t, primitive_t>::body_static(geometry_t const& _body, vertexfetch_r (std::decay_t<geometry_t>::* vfun)() const, instancedatafetch_r (std::decay_t<geometry_t>::* ifun)() const) : body(_body)
+    inline body_static<geometry_t, primitive_t>::body_static(geometry_t const& _body, vertexfetch_r (std::decay_t<geometry_t>::* vfun)() const, instancedatafetch_r (std::decay_t<geometry_t>::* ifun)() const, bodyparams const& _params) : bodyinterface(_params), body(_body)
     {
         // todo : add support for data member pointers
         get_vertices = [vfun](geometry_t const& geom) { return std::invoke(vfun, geom); };
@@ -66,9 +56,14 @@ namespace gfx
     template<typename geometry_t, gfx::topology primitive_t>
     inline void body_static<geometry_t, primitive_t>::render(float dt, renderparams const &params)
     {
-        update_instancebuffer();
+        auto const foundpso = gfx::getpsomap().find(getparams().psoname);
+        if (foundpso == gfx::getpsomap().cend())
+        {
+            assert("pso not found");
+            return;
+        }
 
-        auto const& pipelineobjects = get_static_pipelineobjects();
+        update_instancebuffer();
 
         // todo : can there be any alignment issues?
         struct
@@ -87,8 +82,8 @@ namespace gfx
         bindings.constant = { 0, params.cbaddress };
         bindings.vertex = { vb_slot<primitive_t>, get_vertexbuffer_gpuaddress() };
         bindings.instance = { vb_slot<primitive_t> + 1, get_instancebuffer_gpuaddress() };
-        bindings.root_signature = pipelineobjects.root_signature;
-        bindings.pso = (params.wireframe && pipelineobjects.pso_wireframe) ? pipelineobjects.pso_wireframe : pipelineobjects.pso;
+        bindings.root_signature = foundpso->second.root_signature;
+        bindings.pso = foundpso->second.pso;
         bindings.rootconstants.slot = 1;
         bindings.rootconstants.values.resize(sizeof(info));
 
@@ -96,15 +91,6 @@ namespace gfx
 
         // todo : this should be determined using specializations
         (primitive_t == gfx::topology::line) ? dispatch_lines(std::move(bindings), numprims) : dispatch(std::move(bindings));
-    }
-
-    template<typename geometry_t, gfx::topology primitive_t>
-    inline pipeline_objects const& body_static<geometry_t, primitive_t>::get_static_pipelineobjects()
-    {
-        if (!pipelineobjects.root_signature)
-            pipelineobjects = create_pipelineobjects(c_ampshader_filename<primitive_t>, c_meshshader_filename<primitive_t>, c_pixelshader_filename<primitive_t>);
-
-        return pipelineobjects;
     }
 
     template<typename geometry_t, gfx::topology primitive_t>
@@ -123,29 +109,17 @@ namespace gfx
     }
 
     template<typename geometry_t, gfx::topology primitive_t>
-    pipeline_objects body_dynamic<geometry_t, primitive_t>::pipelineobjects;
-
-    template<typename geometry_t, gfx::topology primitive_t>
     template<typename>
-    inline body_dynamic<geometry_t, primitive_t>::body_dynamic(geometry_t _body)  : body(_body)
+    inline body_dynamic<geometry_t, primitive_t>::body_dynamic(geometry_t _body, bodyparams const& _params)  : bodyinterface(_params), body(_body)
     {
         get_vertices = [](geometry_t const& geom) { return geom.get_vertices(); };
     }
 
     template<typename geometry_t, gfx::topology primitive_t>
-    inline body_dynamic<geometry_t, primitive_t>::body_dynamic(geometry_t const& _body, vertexfetch_r (std::decay_t<geometry_t>::*fun)() const) : body(_body)
+    inline body_dynamic<geometry_t, primitive_t>::body_dynamic(geometry_t const& _body, vertexfetch_r (std::decay_t<geometry_t>::*fun)() const, bodyparams const& _params) : bodyinterface(_params), body(_body)
     {
         // todo : add support for data member pointers and any callable(lambdas, functors)
         get_vertices = [fun](geometry_t const& geom) { return std::invoke(fun, geom); };
-    }
-
-    template<typename geometry_t, gfx::topology primitive_t>
-    inline pipeline_objects const& body_dynamic<geometry_t, primitive_t>::get_static_pipelineobjects()
-    {
-        if (!pipelineobjects.root_signature)
-            pipelineobjects = create_pipelineobjects(c_ampshader_filename<primitive_t>, c_meshshader_filename<primitive_t>, c_pixelshader_filename<primitive_t>);
-
-        return pipelineobjects;
     }
 
     template<typename geometry_t, gfx::topology primitive_t>
@@ -176,9 +150,14 @@ namespace gfx
     template<typename geometry_t, gfx::topology primitive_t>
     inline void body_dynamic<geometry_t, primitive_t>::render(float dt, renderparams const &params)
     {
-        update_vertexbuffer();
+        auto const foundpso = gfx::getpsomap().find(getparams().psoname);
+        if (foundpso == gfx::getpsomap().cend())
+        {
+            assert("pso not found");
+            return;
+        }
 
-        auto const& pipelineobjects = get_static_pipelineobjects();
+        update_vertexbuffer();
         
         // todo : can there be any alignment issues?
         struct
@@ -193,8 +172,8 @@ namespace gfx
         resource_bindings bindings;
         bindings.constant = { 0, params.cbaddress };
         bindings.vertex = { vb_slot<primitive_t>, get_vertexbuffer_gpuaddress() };
-        bindings.root_signature = pipelineobjects.root_signature;
-        bindings.pso = (params.wireframe && pipelineobjects.pso_wireframe) ? pipelineobjects.pso_wireframe : pipelineobjects.pso;
+        bindings.root_signature = foundpso->second.root_signature;
+        bindings.pso = foundpso->second.pso;
         bindings.rootconstants.slot = 1;
         bindings.rootconstants.values.resize(sizeof(dispatch_params));
 

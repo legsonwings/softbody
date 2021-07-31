@@ -14,11 +14,11 @@
 
 namespace game_creator
 {
-	template <>
-	std::unique_ptr<game_base> create_instance<game_types::soft_body_demo>(game_engine const* engine)
-	{
-		return std::move(std::make_unique<soft_body>(engine));
-	}
+    template <>
+    std::unique_ptr<game_base> create_instance<game_types::soft_body_demo>(game_engine const* engine)
+    {
+        return std::move(std::make_unique<soft_body>(engine));
+    }
 }
 
 using namespace DirectX;
@@ -67,8 +67,9 @@ void soft_body::update(float dt)
 
 void soft_body::render(float dt)
 {
-    for (auto& body : dynamicbodies_tri) { body.render(dt, { m_wireframe_toggle, cbuffer.get_gpuaddress()}); }
+    for (auto& body : staticbodies_boxes) { body.render(dt, { m_wireframe_toggle, cbuffer.get_gpuaddress() }); }
     for (auto& body : dynamicbodies_line) { body.render(dt, { m_wireframe_toggle, cbuffer.get_gpuaddress() }); }
+    for (auto& body : dynamicbodies_tri) { body.render(dt, { m_wireframe_toggle, cbuffer.get_gpuaddress() }); }
     for (auto& body : staticbodies_lines) { body.render(dt, { m_wireframe_toggle, cbuffer.get_gpuaddress() }); }
 }
 
@@ -84,22 +85,24 @@ game_base::resourcelist soft_body::load_assets_and_geometry()
     Vector3 const lposition = { -5.f, 0.f, 0.f };
     Vector3 const rposition = { 5.f, 0.f, 0.f };
 
+    using geometry::cube;
+    using gfx::bodyparams;
     using geometry::ffd_object;
-    dynamicbodies_tri.emplace_back(ffd_object{ { lposition, 1.f } });
-    dynamicbodies_tri.emplace_back(ffd_object{ { rposition, 1.f } });
+    dynamicbodies_tri.emplace_back(ffd_object{ { lposition, 1.f } }, bodyparams{ "default" });
+    dynamicbodies_tri.emplace_back(ffd_object{ { rposition, 1.f } }, bodyparams{ "default" });
 
-    dynamicbodies_line.emplace_back(*dynamicbodies_tri[0], &ffd_object::getbox_vertices);
-    dynamicbodies_line.emplace_back(*dynamicbodies_tri[1], &ffd_object::getbox_vertices);
-    staticbodies_lines.emplace_back(*dynamicbodies_tri[0], &ffd_object::get_control_point_visualization, &ffd_object::get_controlnet_instancedata);
-    staticbodies_lines.emplace_back(*dynamicbodies_tri[1], &ffd_object::get_control_point_visualization, &ffd_object::get_controlnet_instancedata);
+   /* dynamicbodies_line.emplace_back(*dynamicbodies_tri[0], &ffd_object::getbox_vertices, bodyparams{ "lines" });
+    dynamicbodies_line.emplace_back(*dynamicbodies_tri[1], &ffd_object::getbox_vertices, bodyparams{ "lines" });
+    staticbodies_lines.emplace_back(*dynamicbodies_tri[0], &ffd_object::get_control_point_visualization, &ffd_object::get_controlnet_instancedata, bodyparams{ "instancedlines" });
+    staticbodies_lines.emplace_back(*dynamicbodies_tri[1], &ffd_object::get_control_point_visualization, &ffd_object::get_controlnet_instancedata, bodyparams{ "instancedlines" });*/
+    staticbodies_boxes.emplace_back(cube{ {vec3::Zero}, vec3{20.f} }, &cube::get_vertices_invertednormals, &cube::getinstancedata, bodyparams{ "instanced" });
 
     dynamicbodies_tri[0].get().set_velocity({ 8.f, 0.f, 0.f });
     dynamicbodies_tri[1].get().set_velocity({ -8.f, 0.f, 0.f });
 
     game_base::resourcelist retvalues;
-    retvalues.reserve(dynamicbodies_tri.size() + staticbodies_lines.size());
 
-    // todo : provide helpers to append
+    // todo : implement iteratable type that can construct a range from existing ones
     for (auto &b : dynamicbodies_tri) 
     { 
         auto const& body_res = b.create_resources();
@@ -113,6 +116,12 @@ game_base::resourcelist soft_body::load_assets_and_geometry()
     };
     
     for (auto &b : staticbodies_lines) 
+    {
+        auto const& body_res = b.create_resources();
+        retvalues.insert(retvalues.end(), body_res.begin(), body_res.end());
+    };
+
+    for (auto& b : staticbodies_boxes)
     {
         auto const& body_res = b.create_resources();
         retvalues.insert(retvalues.end(), body_res.begin(), body_res.end());

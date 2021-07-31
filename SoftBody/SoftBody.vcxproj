@@ -170,6 +170,7 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Engine\geometry\cube.cpp" />
     <ClCompile Include="Engine\DXSample.cpp" />
     <ClCompile Include="Engine\engine.cpp" />
     <ClCompile Include="Engine\geometry\geocore.cpp" />
@@ -194,6 +195,7 @@
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Engine\geometry\cube.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="Engine\DXSample.h" />
     <ClInclude Include="Engine\DXSampleHelper.h" />

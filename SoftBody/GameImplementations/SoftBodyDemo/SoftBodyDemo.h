@@ -5,6 +5,7 @@
 #include "engine/SimpleCamera.h"
 #include "engine/graphics/gfxmemory.h"
 #include "Engine/geometry/shapes.h"
+#include "engine/geometry/cube.h"
 
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
@@ -64,6 +65,7 @@ private:
 	SceneConstantBuffer constbufferdata;
 
 	std::vector<gfx::body_dynamic<geometry::ffd_object>> dynamicbodies_tri;
+	std::vector<gfx::body_static<geometry::cube>> staticbodies_boxes;
 	std::vector<gfx::body_dynamic<geometry::ffd_object const&, gfx::topology::line>> dynamicbodies_line;
 	std::vector<gfx::body_static<geometry::ffd_object const&, gfx::topology::line>> staticbodies_lines;
 };

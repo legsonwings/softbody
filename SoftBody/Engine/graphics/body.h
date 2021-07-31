@@ -9,6 +9,7 @@
 
 #include <type_traits>
 #include <memory>
+#include <unordered_map>
 
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
@@ -16,7 +17,7 @@ using Microsoft::WRL::ComPtr;
 namespace gfx
 {
     template<typename geometry_t, gfx::topology primitive_t>
-    class body_static : public body
+    class body_static : public bodyinterface
     {
         geometry_t body;
         uint num_instances;
@@ -34,8 +35,6 @@ namespace gfx
         vertexfetch get_vertices;
         instancedatafetch get_instancedata;
 
-        static pipeline_objects pipelineobjects;
-
         template<gfx::topology primitive_t> static constexpr uint32_t vb_slot = 2;
         template<> static constexpr uint32_t vb_slot<gfx::topology::line> = 3;
         template<gfx::topology primitive_t> static constexpr uint32_t numverts_perprim = 3;
@@ -43,35 +42,24 @@ namespace gfx
         template<gfx::topology primitive_t> static constexpr vec3 color = { 1.f, 0.3f, 0.1f };
         template<> static constexpr vec3 color<gfx::topology::line> = { 1.f, 1.f, 0.f };
 
-        template<gfx::topology primitive_t> static constexpr  wchar_t* c_ampshader_filename = L"InstancesAS.cso";
-        template<gfx::topology primitive_t> static constexpr const wchar_t* c_meshshader_filename = L"InstancesMS.cso";
-        template<gfx::topology primitive_t> static constexpr const wchar_t* c_pixelshader_filename = L"BasicLightingPS.cso";
-
-        template<> static constexpr const wchar_t* c_ampshader_filename<gfx::topology::line> = L"";
-        template<> static constexpr const wchar_t* c_meshshader_filename<gfx::topology::line> = L"linesinstancesMS.cso";
-        template<> static constexpr const wchar_t* c_pixelshader_filename<gfx::topology::line> = L"BasicPS.cso";
-
         uint get_vertexbuffersize() const { return m_vertices.size() * sizeof(decltype(m_vertices)::value_type); }
         uint get_instancebuffersize() const { return num_instances * sizeof(instance_data); }
         void update_instancebuffer();
         uint get_numinstances() const { return num_instances; }
         uint get_numvertices() const { return m_vertices.size(); }
-        pipeline_objects const& get_pipelineobjects() const override { return body_static<geometry_t, primitive_t>::get_static_pipelineobjects(); }
         D3D12_GPU_VIRTUAL_ADDRESS get_instancebuffer_gpuaddress() const;
         D3D12_GPU_VIRTUAL_ADDRESS get_vertexbuffer_gpuaddress() const override { return m_vertexbuffer->GetGPUVirtualAddress(); }
     public:
         template<typename = std::enable_if_t<!std::is_lvalue_reference_v<geometry_t>>>
-        body_static(geometry_t _body);
-        body_static(geometry_t const& _body, vertexfetch_r(std::decay_t<geometry_t>::* vfun)() const, instancedatafetch_r(std::decay_t<geometry_t>::* ifun)() const);
+        body_static(geometry_t _body, bodyparams const & _params);
+        body_static(geometry_t const& _body, vertexfetch_r(std::decay_t<geometry_t>::* vfun)() const, instancedatafetch_r(std::decay_t<geometry_t>::* ifun)() const, bodyparams const& _params);
 
         std::vector<ComPtr<ID3D12Resource>> create_resources() override;
         void render(float dt, renderparams const&) override;
-
-        static pipeline_objects const& get_static_pipelineobjects();
     };
 
     template<typename geometry_t, gfx::topology primitive_t>
-    class body_dynamic : public body
+    class body_dynamic : public bodyinterface
     {
         static_assert(!std::is_rvalue_reference_v<geometry_t>, "storing rvalue reference types is prohibited.");
 
@@ -85,8 +73,6 @@ namespace gfx
 
         vertexfetch get_vertices;
 
-        static pipeline_objects pipelineobjects;
-
         template<gfx::topology primitive_t> static constexpr uint32_t vb_slot = 2;
         template<> static constexpr uint32_t vb_slot<gfx::topology::line> = 3;
         template<gfx::topology primitive_t> static constexpr uint32_t numverts_perprim = 3;
@@ -94,24 +80,15 @@ namespace gfx
         template<gfx::topology primitive_t> static constexpr vec3 color = { 1.f, 0.3f, 0.1f };
         template<> static constexpr vec3 color<gfx::topology::line> = { 1.f, 1.f, 0.f };
 
-        template<gfx::topology primitive_t> static constexpr const wchar_t* c_ampshader_filename = L"DefaultAS.cso";
-        template<gfx::topology primitive_t> static constexpr const wchar_t* c_meshshader_filename = L"DefaultMS.cso";
-        template<gfx::topology primitive_t> static constexpr const wchar_t* c_pixelshader_filename = L"BasicLightingPS.cso";
-
-        template<> static constexpr const wchar_t* c_ampshader_filename<gfx::topology::line> = L"";
-        template<> static constexpr const wchar_t* c_meshshader_filename<gfx::topology::line> = L"linesMS.cso";
-        template<> static constexpr const wchar_t* c_pixelshader_filename<gfx::topology::line> = L"BasicPS.cso";
-
         void update_vertexbuffer();
         unsigned get_numvertices() const { return static_cast<unsigned>(m_vertices.size()); }
         uint get_vertexbuffersize() const { return m_vertices.size() * sizeof(decltype(m_vertices)::value_type); }
         D3D12_GPU_VIRTUAL_ADDRESS get_vertexbuffer_gpuaddress() const override;
-        pipeline_objects const& get_pipelineobjects() const override { return body_dynamic<geometry_t>::get_static_pipelineobjects(); }
     public:
         
         template<typename = std::enable_if_t<!std::is_lvalue_reference_v<geometry_t>>>
-        body_dynamic(geometry_t _body);
-        body_dynamic(geometry_t const& _body, vertexfetch_r (std::decay_t<geometry_t>::*fun)() const);
+        body_dynamic(geometry_t _body, bodyparams const& _params);
+        body_dynamic(geometry_t const& _body, vertexfetch_r (std::decay_t<geometry_t>::*fun)() const, bodyparams const& _params);
 
         std::vector<ComPtr<ID3D12Resource>> create_resources() override;
 
@@ -124,8 +101,6 @@ namespace gfx
         constexpr geometry_t const &operator*() const { return body; }
         constexpr std::decay_t<geometry_t> *operator->() { return &body; }
         constexpr std::decay_t<geometry_t> const *operator->() const { return &body; }
-
-        static pipeline_objects const& get_static_pipelineobjects();
     };
 }
 

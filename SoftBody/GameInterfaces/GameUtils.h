@@ -5,7 +5,7 @@ enum class game_types
 	soft_body_demo
 };
 
-auto constexpr currrent_game = game_types::soft_body_demo;
+auto constexpr current_game = game_types::soft_body_demo;
 
 #include "GameBase.h"
 
@@ -26,5 +26,5 @@ namespace game_creator
 	std::unique_ptr<game_base> create_instance(game_engine const * engine);
 
 	template <>
-	std::unique_ptr<game_base> create_instance<game_types::soft_body_demo>(game_engine const* engine);
+	std::unique_ptr<game_base> create_instance<current_game>(game_engine const* engine);
 }

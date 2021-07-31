@@ -8,7 +8,7 @@ MeshShaderVertex GetVertAttribute(VertexIn vertex, uint instance_idx)
     MeshShaderVertex outVert;
     
     outVert.projected_position = mul(float4(vertex.position + Instances[instance_idx].Position, 1), Globals.WorldViewProj);
-    outVert.color = float4(Instances[instance_idx].Color, 1);
+    outVert.color = float4(Instances[instance_idx].Color, 1.f);
     outVert.position = vertex.position;
     outVert.normal = mul(float4(vertex.normal, 0), Globals.World).xyz;
     

@@ -58,7 +58,7 @@ void ffd_object::update(float dt)
 
 std::vector<vec3> ffd_object::get_control_point_visualization() const
 {
-    return geoutils::create_cube(vec3::Zero, 0.1f);
+    return geoutils::create_cube_lines(vec3::Zero, 0.1f);
 }
 
 std::vector<gfx::instance_data> geometry::ffd_object::get_controlnet_instancedata() const

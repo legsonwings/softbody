@@ -20,6 +20,7 @@ struct configurable_properties
 	}
 };
 
+// todo : move these to cpp utils or sth
 template<typename b, typename e>
 struct ext
 {

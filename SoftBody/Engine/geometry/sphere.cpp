@@ -81,7 +81,7 @@ void sphere::addquad(float theta, float phi, float step_theta, float step_phi)
     lbv = create_spherevertex(phi, theta + step_theta);
     rbv = create_spherevertex(phi + step_phi, theta + step_theta);
 
-    if (!geoutils::are_equal(lbv.position, ltv.position) && !geoutils::are_equal(lbv.position, rtv.position) && !geoutils::are_equal(ltv.position, rtv.position))
+    if (!geoutils::nearlyequal(lbv.position, ltv.position) && !geoutils::nearlyequal(lbv.position, rtv.position) && !geoutils::nearlyequal(ltv.position, rtv.position))
     {
         triangulated_sphere.push_back(lbv);
         triangulated_sphere.push_back(ltv);
@@ -91,7 +91,7 @@ void sphere::addquad(float theta, float phi, float step_theta, float step_phi)
         triangulated_sphere_polar.push_back({ theta, phi + step_phi });
     }
 
-    if (!geoutils::are_equal(lbv.position, rtv.position) && !geoutils::are_equal(lbv.position, rbv.position) && !geoutils::are_equal(rtv.position, rbv.position))
+    if (!geoutils::nearlyequal(lbv.position, rtv.position) && !geoutils::nearlyequal(lbv.position, rbv.position) && !geoutils::nearlyequal(rtv.position, rbv.position))
     {
         triangulated_sphere.push_back(lbv);
         triangulated_sphere.push_back(rtv);

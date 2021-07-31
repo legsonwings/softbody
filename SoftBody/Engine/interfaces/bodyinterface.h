@@ -10,20 +10,21 @@ struct renderparams;
 
 namespace gfx
 {
-	struct pipeline_objects
+	struct bodyparams
 	{
-		ComPtr<ID3D12PipelineState> pso;
-		ComPtr<ID3D12PipelineState> pso_wireframe;
-		ComPtr<ID3D12RootSignature> root_signature;
+		std::string psoname;
 	};
 
-	class body
+	class bodyinterface
 	{
+		bodyparams params;
 	public:
+		bodyinterface(bodyparams const& _bodyparams) : params(_bodyparams) {}
+
+		bodyparams const& getparams() const { return params;  }
 		virtual void update(float dt) {};
 		virtual void render(float dt, renderparams const &) {};
 		virtual std::vector<ComPtr<ID3D12Resource>> create_resources() { return {}; };
-		virtual pipeline_objects const& get_pipelineobjects() const = 0;
 		virtual D3D12_GPU_VIRTUAL_ADDRESS get_vertexbuffer_gpuaddress() const = 0;
 	};
 }

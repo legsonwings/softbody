@@ -9,7 +9,7 @@ using namespace geometry;
 
 std::vector<vec3> geometry::box::get_vertices()
 {
-    return geoutils::create_box(center, extents);
+    return geoutils::create_box_lines(center, extents);
 }
 
 geometry::aabb::aabb(vec3 const* tri)

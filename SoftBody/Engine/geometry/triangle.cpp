@@ -87,7 +87,7 @@ std::optional<linesegment> geometry::triangle::intersect(vec3 const* t0, vec3 co
     for (auto const& edge : edges)
     {
         // ignore intersections with parallel edge
-        if (geoutils::are_equal(std::fabsf(edge.dir.Dot(isect_line.dir)), 1.f))
+        if (geoutils::nearlyequal(std::fabsf(edge.dir.Dot(isect_line.dir)), 1.f))
             continue;
 
         // the points on intersection of two triangles will be on both triangles
@@ -98,7 +98,7 @@ std::optional<linesegment> geometry::triangle::intersect(vec3 const* t0, vec3 co
     // remove duplicates, naively, maybe improve this
     for (uint i = 0; i < std::max(uint(1), isect_linesegment.size()) - 1; ++i)
         for (uint j = i + 1; j < isect_linesegment.size(); ++j)
-            if (geoutils::are_equal(isect_linesegment[i], isect_linesegment[j]))
+            if (geoutils::nearlyequal(isect_linesegment[i], isect_linesegment[j]))
             {
                 std::swap(isect_linesegment[j], isect_linesegment[isect_linesegment.size() - 1]);
                 isect_linesegment.pop_back();

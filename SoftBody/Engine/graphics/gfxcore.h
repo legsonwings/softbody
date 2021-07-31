@@ -1,18 +1,34 @@
 #pragma once
 
-#include "Engine/SimpleMath.h"
+#include "engine/engineutils.h"
+#include "engine/SimpleMath.h"
 
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 
 struct ID3D12PipelineState;
 struct ID3D12RootSignature;
+
 namespace gfx
 {
     enum class topology
     {
         triangle,
         line
+    };
+
+    enum psoflags
+    {
+        none = 0x0,
+        wireframe = 0x1,
+        transparent = 0x2,
+        count
+    };
+
+    struct shader
+    {
+        byte* data;
+        uint32_t size;
     };
 
     struct renderparams
@@ -45,6 +61,12 @@ namespace gfx
         buffer vertex;
         buffer instance;
         rootconstants rootconstants;
+        ComPtr<ID3D12PipelineState> pso;
+        ComPtr<ID3D12RootSignature> root_signature;
+    };
+
+    struct pipeline_objects
+    {
         ComPtr<ID3D12PipelineState> pso;
         ComPtr<ID3D12RootSignature> root_signature;
     };

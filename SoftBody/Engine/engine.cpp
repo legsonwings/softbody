@@ -38,7 +38,7 @@ softbody::softbody(configurable_properties const& config_props)
     , m_fenceEvent{}
     , m_fenceValues{}
 {
-    game = game_creator::create_instance<currrent_game>(this);
+    game = game_creator::create_instance<current_game>(this);
 
     WCHAR assetsPath[512];
     GetAssetsPath(assetsPath, _countof(assetsPath));
@@ -215,6 +215,8 @@ void softbody::load_pipeline()
 
         m_device->CreateDepthStencilView(m_depthStencil.Get(), &depthStencilDesc, m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
     }
+
+    gfx::init_pipelineobjects();
 }
 
 // Load the sample assets.
@@ -316,6 +318,8 @@ void softbody::OnRender()
 
 void softbody::OnDestroy()
 {
+    gfx::deinit_pipelineobjects();
+
     // Ensure that the GPU is no longer referencing resources that are about to be
     // cleaned up by the destructor.
     waitforgpu();

@@ -7,7 +7,7 @@ MeshShaderVertex GetVertAttribute(VertexIn vertex)
     MeshShaderVertex outVert;
     
     outVert.projected_position = mul(float4(vertex.position, 1), Globals.WorldViewProj);
-    outVert.color = float4(dispatch_params.color, 1);
+    outVert.color = float4(dispatch_params.color, 1.f);
     outVert.position = vertex.position;
     
     //Should this be inverse transformed?
