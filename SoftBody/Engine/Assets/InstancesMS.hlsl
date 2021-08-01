@@ -1,16 +1,17 @@
-#include "Instances.hlsli"
+#include "Common.hlsli"
 
-StructuredBuffer<instance_data> Instances : register(t1);
-StructuredBuffer<VertexIn> TriangleVertices : register(t0);
+StructuredBuffer<instance_data> instances : register(t1);
+StructuredBuffer<VertexIn> triangle_vertices : register(t0);
 
 MeshShaderVertex GetVertAttribute(VertexIn vertex, uint instance_idx)
 {
     MeshShaderVertex outVert;
     
-    outVert.projected_position = mul(float4(vertex.position + Instances[instance_idx].Position, 1), Globals.WorldViewProj);
-    outVert.color = float4(Instances[instance_idx].Color, 1.f);
+    float4 const posw = mul(float4(vertex.position, 1), instances[instance_idx].mat);
+    outVert.projected_position = mul(posw, Globals.viewproj);
+    outVert.color = float4(instances[instance_idx].color, 1.f);
     outVert.position = vertex.position;
-    outVert.normal = mul(float4(vertex.normal, 0), Globals.World).xyz;
+    outVert.normal = mul(float4(vertex.normal, 0), instances[instance_idx].mat).xyz;
     
     return outVert;
 }
@@ -28,10 +29,10 @@ void main(
     out vertices MeshShaderVertex verts[MAX_VERTICES_PER_GROUP]
 )
 {
-    const uint numPrimitives = payload.NumPrimitives[gid];
-    SetMeshOutputCounts(numPrimitives * 3, numPrimitives);
+    const uint num_prims = payload.numprims[gid];
+    SetMeshOutputCounts(num_prims * 3, num_prims);
 
-    if (gtid < numPrimitives)
+    if (gtid < num_prims)
     {
         // The out buffers are local to group but input buffer is global
         int v0Idx = gtid * 3;
@@ -39,10 +40,10 @@ void main(
         int v2Idx = v0Idx + 2;
 
         tris[gtid] = uint3(v0Idx, v1Idx, v2Idx);
-        int inVertStart = payload.StartingVertIndices[gid] + gtid * 3;
+        int inVertStart = payload.starting_vertindices[gid] + gtid * 3;
         
-        verts[v0Idx] = GetVertAttribute(TriangleVertices[inVertStart], payload.InstanceIndices[gid]);
-        verts[v1Idx] = GetVertAttribute(TriangleVertices[inVertStart + 1], payload.InstanceIndices[gid]);
-        verts[v2Idx] = GetVertAttribute(TriangleVertices[inVertStart + 2], payload.InstanceIndices[gid]);
+        verts[v0Idx] = GetVertAttribute(triangle_vertices[inVertStart], payload.instance_indices[gid]);
+        verts[v1Idx] = GetVertAttribute(triangle_vertices[inVertStart + 1], payload.instance_indices[gid]);
+        verts[v2Idx] = GetVertAttribute(triangle_vertices[inVertStart + 2], payload.instance_indices[gid]);
     }
 }

@@ -41,11 +41,10 @@ private:
 
 	_declspec(align(256u)) struct SceneConstantBuffer
 	{
-		XMFLOAT3 CamPos;
+		XMFLOAT3 campos;
 		uint8_t padding0[4];
-		XMFLOAT4X4 World;
-		XMFLOAT4X4 WorldView;
-		XMFLOAT4X4 WorldViewProj;
+		XMFLOAT4X4 view;
+		XMFLOAT4X4 viewproj;
 	};
 
 	ComPtr<ID3D12RootSignature> m_rootsignature;

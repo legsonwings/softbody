@@ -148,6 +148,7 @@ namespace geometry
             return result;
         }
         
+        vec3 const& getcenter() const { return center; }
         box getbox() const;
         aabb const& getboundingbox() const;
         std::vector<vec3> getbox_vertices() const;

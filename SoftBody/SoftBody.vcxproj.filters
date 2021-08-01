@@ -7,12 +7,6 @@
     <FxCompile Include="DefaultPS.hlsl">
       <Filter>Engine\Assets</Filter>
     </FxCompile>
-    <FxCompile Include="GameImplementations\SoftBodyDemo\Assets\BasicPS.hlsl">
-      <Filter>GameImplementations\SoftBodyDemo\Assets</Filter>
-    </FxCompile>
-    <FxCompile Include="GameImplementations\SoftBodyDemo\Assets\linesinstancesMS.hlsl">
-      <Filter>GameImplementations\SoftBodyDemo\Assets</Filter>
-    </FxCompile>
     <FxCompile Include="GameImplementations\SoftBodyDemo\Assets\SoftBodyAS.hlsl">
       <Filter>GameImplementations\SoftBodyDemo\Assets</Filter>
     </FxCompile>
@@ -28,6 +22,8 @@
     <FxCompile Include="Engine\Assets\InstancesMS.hlsl" />
     <FxCompile Include="Engine\Assets\InstancesAS.hlsl" />
     <FxCompile Include="Engine\Assets\linesMS.hlsl" />
+    <FxCompile Include="Engine\Assets\linesinstances_ms.hlsl" />
+    <FxCompile Include="Engine\Assets\basic_ps.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\DXSample.cpp">
@@ -118,6 +114,7 @@
     <ClInclude Include="Engine\graphics\gfxmemory.h" />
     <ClInclude Include="Engine\graphics\gfxutils.h" />
     <ClInclude Include="Engine\geometry\cube.h" />
+    <ClInclude Include="Engine\geometry\geodefines.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Engine\SimpleMath.inl">
@@ -127,8 +124,6 @@
       <Filter>GameImplementations\SoftBodyDemo\Assets</Filter>
     </None>
     <None Include="Engine\Assets\Common.hlsli" />
-    <None Include="Engine\Assets\Instances.hlsli" />
-    <None Include="Engine\Assets\Default.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="GameImplementations">

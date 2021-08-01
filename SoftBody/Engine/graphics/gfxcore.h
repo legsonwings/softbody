@@ -1,5 +1,6 @@
 #pragma once
 
+#include "engine/geometry/geodefines.h"
 #include "engine/engineutils.h"
 #include "engine/SimpleMath.h"
 
@@ -39,8 +40,10 @@ namespace gfx
 
     struct instance_data
     {
-        DirectX::SimpleMath::Vector3 position = {};
-        DirectX::SimpleMath::Vector3 color = { 1.f, 0.f, 0.f };
+        matrix mat;
+        vec3 color = { 1.f, 0.f, 0.f };
+        instance_data() = default;
+        instance_data(matrix const& m, vec3 const& c) : mat(m.Transpose()), color(c) {}
     };
 
     struct buffer
@@ -58,6 +61,7 @@ namespace gfx
     struct resource_bindings
     {
         buffer constant;
+        buffer objectconstant;
         buffer vertex;
         buffer instance;
         rootconstants rootconstants;

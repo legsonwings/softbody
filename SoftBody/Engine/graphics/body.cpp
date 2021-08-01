@@ -20,10 +20,13 @@ void gfx::dispatch(resource_bindings const& bindings)
     auto engine = game_engine::g_engine;
     auto cmd_list = engine->get_command_list();
 
+    // todo : not good, ideally objects sharing a rootsignature/pso should be rendered in sequence
     cmd_list->SetPipelineState(bindings.pso.Get());
     cmd_list->SetGraphicsRootSignature(bindings.root_signature.Get());
 
     cmd_list->SetGraphicsRootConstantBufferView(bindings.constant.slot, bindings.constant.address);
+    if(bindings.objectconstant.address != 0)
+        cmd_list->SetGraphicsRootConstantBufferView(bindings.objectconstant.slot, bindings.objectconstant.address);
     cmd_list->SetGraphicsRootShaderResourceView(bindings.vertex.slot, bindings.vertex.address);
     cmd_list->SetGraphicsRoot32BitConstants(bindings.rootconstants.slot, static_cast<UINT>(bindings.rootconstants.values.size() / 4), bindings.rootconstants.values.data(), 0);
 
@@ -31,33 +34,6 @@ void gfx::dispatch(resource_bindings const& bindings)
         cmd_list->SetGraphicsRootShaderResourceView(bindings.instance.slot, bindings.instance.address);
 
     cmd_list->DispatchMesh(1, 1, 1);
-}
-
-void gfx::dispatch_lines(resource_bindings const& bindings, uint32_t numlines)
-{
-    auto engine = game_engine::g_engine;
-    auto cmd_list = engine->get_command_list();
-
-    cmd_list->SetPipelineState(bindings.pso.Get());
-    cmd_list->SetGraphicsRootSignature(bindings.root_signature.Get());
-
-    cmd_list->SetGraphicsRootConstantBufferView(bindings.constant.slot, bindings.constant.address);
-    cmd_list->SetGraphicsRootShaderResourceView(bindings.vertex.slot, bindings.vertex.address);
-    cmd_list->SetGraphicsRoot32BitConstants(bindings.rootconstants.slot, static_cast<UINT>(bindings.rootconstants.values.size() / 4), bindings.rootconstants.values.data(), 0);
-
-    if(bindings.instance.address != 0)
-        cmd_list->SetGraphicsRootShaderResourceView(bindings.instance.slot, bindings.instance.address);
-
-    unsigned const num_ms = (numlines / MAX_LINES_PER_MS) + ((numlines % MAX_LINES_PER_MS) == 0 ? 0 : 1);
-
-    unsigned num_lines_processed = 0;
-    for (unsigned ms_idx = 0; ms_idx < num_ms; ++ms_idx)
-    {
-        cmd_list->SetGraphicsRoot32BitConstant(2, num_lines_processed, 0);
-        cmd_list->DispatchMesh(1, 1, 1);
-
-        num_lines_processed += MAX_LINES_PER_MS;
-    }
 }
 
 gfx::default_and_upload_buffers gfx::create_vertexbuffer_default(void* vertexdata_start, std::size_t const vb_size)
@@ -103,15 +79,7 @@ gfx::default_and_upload_buffers gfx::create_vertexbuffer_default(void* vertexdat
     return { vb, vb_upload };
 }
 
-ComPtr<ID3D12Resource> gfx::create_vertexbuffer_upload(uint8_t** mapped_buffer, void* vertexdata_start, std::size_t const perframe_buffersize)
-{
-    auto result = create_uploadbuffer(mapped_buffer, configurable_properties::frame_count * perframe_buffersize);
-    update_perframebuffer(*mapped_buffer, vertexdata_start, perframe_buffersize);
-
-    return result;
-}
-
-ComPtr<ID3D12Resource> gfx::create_instancebuffer(uint8_t** mapped_buffer, void* data_start, std::size_t const perframe_buffersize)
+ComPtr<ID3D12Resource> gfx::createupdate_uploadbuffer(uint8_t** mapped_buffer, void* data_start, std::size_t const perframe_buffersize)
 {
     auto result = create_uploadbuffer(mapped_buffer, configurable_properties::frame_count * perframe_buffersize);
     update_allframebuffers(*mapped_buffer, data_start, perframe_buffersize, configurable_properties::frame_count);

@@ -63,8 +63,9 @@ std::vector<vec3> ffd_object::get_control_point_visualization() const
 
 std::vector<gfx::instance_data> geometry::ffd_object::get_controlnet_instancedata() const
 {
-    std::vector<gfx::instance_data> instances_info(control_points.size());
-    std::transform(control_points.begin(), control_points.end(), instances_info.begin(), [](auto const& pt) { return gfx::instance_data{ pt, {1.f, 1.f, 1.f} }; });
+    std::vector<gfx::instance_data> instances_info;
+    instances_info.reserve(control_points.size());
+    for (auto const& ctrl_pt : control_points) { instances_info.emplace_back(matrix::CreateTranslation(ctrl_pt), vec3{ 1.f, 1.f, 1.f }); }
     return instances_info;
 }
 
@@ -278,7 +279,7 @@ std::vector<vertex> circle::get_triangles() const
 
 std::vector<gfx::instance_data> circle::get_instance_data() const
 {
-    return { {center, {1.f,1.f,1.f } } };
+    return { gfx::instance_data{matrix::CreateTranslation(center), vec3{1.f,1.f,1.f}} };
 }
 
 vec3 transform_point_local(vec3 const& x, vec3 const& y, vec3 const& origin, vec3 const& point)

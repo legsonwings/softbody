@@ -1,45 +1,18 @@
 
-#include "..\..\..\Engine\Assets\Common.hlsli"
+#include "../../../Engine/Assets/Common.hlsli"
 
-#define ROOT_SIG "CBV(b0), \
-                  RootConstants(b1, num32bitconstants=2), \
-                  RootConstants(b2, num32bitconstants=1), \
-                  SRV(t0), \
-                  SRV(t1)"
-
-struct instance_data
-{
-    float3 position;
-    float3 color;
-};
-
-struct instances_information
-{
-    uint num_instances;
-    uint num_primitives_per_instance;
-};
-
-struct meshshader_info
-{
-    uint starting_prim_idx;
-};
-
-struct Vertex
+struct vertexin
 {
     float3 position;
 };
 
-ConstantBuffer<instances_information> instances_info : register(b1);
-ConstantBuffer<meshshader_info> group_info : register(b2);
-StructuredBuffer<Vertex> Vertices : register(t0);
+StructuredBuffer<vertexin> vertices : register(t0);
 StructuredBuffer<instance_data> instances : register(t1);
 
-struct VertexOut
+struct vertexout
 {
     float4 position : SV_Position;
 };
-
-#define MAX_PRIMS_SUPPORTED 64
 
 [RootSignature(ROOT_SIG)]
 [NumThreads(128, 1, 1)]
@@ -47,29 +20,30 @@ struct VertexOut
 void main(
     uint gtid : SV_GroupThreadID,
     uint gid : SV_GroupID,
-    out indices uint2 lines[MAX_PRIMS_SUPPORTED],
-    out vertices VertexOut verts[MAX_PRIMS_SUPPORTED * 2]
+    in payload payload_instances payload,
+    out indices uint2 lines[MAX_LINES_PER_GROUP],
+    out vertices vertexout verts[MAX_LINES_PER_GROUP * 2]
 )
 {  
-    uint const num_prims_remaining = (instances_info.num_instances * instances_info.num_primitives_per_instance) - group_info.starting_prim_idx;
-    uint const num_prims = min(num_prims_remaining, MAX_PRIMS_SUPPORTED);
-    uint const num_verts = num_prims * 2;
-
-    SetMeshOutputCounts(num_verts, num_prims);
-
-    if(gtid < num_verts)
-    {
-        uint const instance_idx = (group_info.starting_prim_idx + (gtid / 2)) / instances_info.num_primitives_per_instance;
-        float3 const inst_pos = instances[instance_idx].position;
-        uint const vert_idx = (group_info.starting_prim_idx * 2 + gtid) % (instances_info.num_primitives_per_instance * 2);
-        float4 const final_pos = float4(Vertices[vert_idx].position + inst_pos, 1.f);
-        float4 const proj_pos = mul(final_pos, Globals.WorldViewProj);
-        verts[gtid].position = proj_pos;
-    }
+    const uint num_prims = payload.numprims[gid];
+    SetMeshOutputCounts(num_prims * 2, num_prims);
 
     if(gtid < num_prims)
     {
-        uint start_idx = gtid * 2;
-        lines[gtid] = uint2(start_idx, start_idx + 1);
+        int const outv0Idx = gtid * 2;
+        int const outv1Idx = outv0Idx + 1;
+
+        lines[gtid] = uint2(outv0Idx, outv1Idx);
+        int const inputvert_start = payload.starting_vertindices[gid] + gtid * 2;
+
+        float4x4 instmat = instances[payload.instance_indices[gid]].mat;
+        float4x4 proj = Globals.viewproj;
+        float4 v0 = mul(float4(vertices[inputvert_start].position, 1), instmat);
+        float4 v1 = mul(float4(vertices[inputvert_start + 1].position, 1), instmat);
+        float4 v0f = mul(float4(vertices[inputvert_start].position, 1), proj);
+        float4 v1f = mul(float4(vertices[inputvert_start + 1].position, 1), proj);
+
+        verts[outv0Idx].position = mul(mul(float4(vertices[inputvert_start].position, 1), instances[payload.instance_indices[gid]].mat), Globals.viewproj);
+        verts[outv1Idx].position = mul(mul(float4(vertices[inputvert_start + 1].position, 1), instances[payload.instance_indices[gid]].mat), Globals.viewproj);
     }
 }

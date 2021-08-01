@@ -22,14 +22,13 @@ namespace geoutils
 	requires arithmetic_c<t> || arithmeticvector_c<t>
 	t constexpr tolerance = t(1e-4f);
 
-	template <std::equality_comparable t>
+	template <typename t>
 	requires arithmetic_c<t> || arithmeticvector_c<t>
 	struct invalid
 	{
 		constexpr operator t() const { return std::numeric_limits<t>::max(); }
 	};
 
-	
 	template <typename t>
 	requires arithmeticvector_c<t>
 	struct arithmeticvector {};

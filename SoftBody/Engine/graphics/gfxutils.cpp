@@ -15,11 +15,11 @@ gfx::psomapref gfx::getpsomap()
 
 void gfx::init_pipelineobjects()
 {
-    addpso("lines", L"", L"linesMS.cso", L"BasicPS.cso");
-    addpso("instancedlines", L"", L"linesinstancesMS.cso", L"BasicPS.cso");
+    addpso("lines", L"DefaultAS.cso", L"linesMS.cso", L"basic_ps.cso");
     addpso("default", L"DefaultAS.cso", L"DefaultMS.cso", L"BasicLightingPS.cso");
-    addpso("transparent", L"DefaultAS.cso", L"DefaultMS.cso", L"BasicLightingPS.cso", psoflags::transparent);
+    addpso("instancedlines", L"InstancesAS.cso", L"linesinstances_ms.cso", L"basic_ps.cso");
     addpso("instanced", L"InstancesAS.cso", L"InstancesMS.cso", L"BasicLightingPS.cso");
+    addpso("transparent", L"DefaultAS.cso", L"DefaultMS.cso", L"BasicLightingPS.cso", psoflags::transparent);
     addpso("wireframe", L"InstancesAS.cso", L"InstancesMS.cso", L"BasicLightingPS.cso", psoflags::wireframe);
     addpso("instancedtransparent", L"InstancesAS.cso", L"InstancesMS.cso", L"BasicLightingPS.cso", psoflags::transparent);
 }
@@ -74,7 +74,7 @@ void gfx::addpso(std::string const& name, std::wstring const& as, std::wstring c
     pso_desc.pRootSignature = psos[name].root_signature.Get();
 
     if (!as.empty())
-    pso_desc.AS = { ampshader.data, ampshader.size };
+        pso_desc.AS = { ampshader.data, ampshader.size };
 
     pso_desc.MS = { meshshader.data, meshshader.size };
     pso_desc.PS = { pixelshader.data, pixelshader.size };

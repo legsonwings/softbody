@@ -52,15 +52,13 @@ void soft_body::update(float dt)
         }
     }
 
-    XMMATRIX world = XMMATRIX(g_XMIdentityR0, g_XMIdentityR1, g_XMIdentityR2, g_XMIdentityR3);
     XMMATRIX view = m_camera.GetViewMatrix();
     XMMATRIX proj = m_camera.GetProjectionMatrix(XM_PI / 3.0f, engine->get_config_properties().get_aspect_ratio());
 
     XMFLOAT3 cameraPos = m_camera.GetCurrentPosition();
-    XMStoreFloat3(&(constbufferdata.CamPos), XMLoadFloat3(&cameraPos));
-    XMStoreFloat4x4(&(constbufferdata.World), XMMatrixTranspose(world));
-    XMStoreFloat4x4(&(constbufferdata.WorldView), XMMatrixTranspose(world * view));
-    XMStoreFloat4x4(&(constbufferdata.WorldViewProj), XMMatrixTranspose(world * view * proj));
+    XMStoreFloat3(&(constbufferdata.campos), XMLoadFloat3(&cameraPos));
+    XMStoreFloat4x4(&(constbufferdata.view), XMMatrixTranspose(view));
+    XMStoreFloat4x4(&(constbufferdata.viewproj), XMMatrixTranspose(view * proj));
 
     cbuffer.set_data(&constbufferdata);
 }
@@ -91,10 +89,10 @@ game_base::resourcelist soft_body::load_assets_and_geometry()
     dynamicbodies_tri.emplace_back(ffd_object{ { lposition, 1.f } }, bodyparams{ "default" });
     dynamicbodies_tri.emplace_back(ffd_object{ { rposition, 1.f } }, bodyparams{ "default" });
 
-   /* dynamicbodies_line.emplace_back(*dynamicbodies_tri[0], &ffd_object::getbox_vertices, bodyparams{ "lines" });
+    dynamicbodies_line.emplace_back(*dynamicbodies_tri[0], &ffd_object::getbox_vertices, bodyparams{ "lines" });
     dynamicbodies_line.emplace_back(*dynamicbodies_tri[1], &ffd_object::getbox_vertices, bodyparams{ "lines" });
     staticbodies_lines.emplace_back(*dynamicbodies_tri[0], &ffd_object::get_control_point_visualization, &ffd_object::get_controlnet_instancedata, bodyparams{ "instancedlines" });
-    staticbodies_lines.emplace_back(*dynamicbodies_tri[1], &ffd_object::get_control_point_visualization, &ffd_object::get_controlnet_instancedata, bodyparams{ "instancedlines" });*/
+    staticbodies_lines.emplace_back(*dynamicbodies_tri[1], &ffd_object::get_control_point_visualization, &ffd_object::get_controlnet_instancedata, bodyparams{ "instancedlines" });
     staticbodies_boxes.emplace_back(cube{ {vec3::Zero}, vec3{20.f} }, &cube::get_vertices_invertednormals, &cube::getinstancedata, bodyparams{ "instanced" });
 
     dynamicbodies_tri[0].get().set_velocity({ 8.f, 0.f, 0.f });

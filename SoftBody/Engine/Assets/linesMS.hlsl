@@ -1,37 +1,16 @@
-
 #include "Common.hlsli"
 
-#define ROOT_SIG "CBV(b0), \
-                  RootConstants(b1, num32bitconstants=4), \
-                  RootConstants(b2, num32bitconstants=1), \
-                  SRV(t0)"
-
-struct dispatch_params
-{
-    uint num_prims;
-    float3 color;
-};
-
-struct meshshader_info
-{
-    uint starting_prim_idx;
-};
-
-struct Vertex
+struct vertexin
 {
     float3 position;
 };
 
-ConstantBuffer<dispatch_params> params : register(b1);
-ConstantBuffer<meshshader_info> group_info : register(b2);
-StructuredBuffer<Vertex> Vertices : register(t0);
+StructuredBuffer<vertexin> in_vertices : register(t0);
 
-struct VertexOut
+struct vertexout
 {
     float4 position : SV_Position;
 };
-
-#define MAX_PRIMS_SUPPORTED 64
 
 [RootSignature(ROOT_SIG)]
 [NumThreads(128, 1, 1)]
@@ -39,27 +18,23 @@ struct VertexOut
 void main(
     uint gtid : SV_GroupThreadID,
     uint gid : SV_GroupID,
-    out indices uint2 lines[MAX_PRIMS_SUPPORTED],
-    out vertices VertexOut verts[MAX_PRIMS_SUPPORTED * 2]
+    in payload payload_default payload,
+    out indices uint2 lines[MAX_LINES_PER_GROUP],
+    out vertices vertexout verts[MAX_LINES_PER_GROUP * 2]
 )
-{  
-    uint const num_prims_remaining = params.num_prims - group_info.starting_prim_idx;
-    uint const num_prims = min(num_prims_remaining, MAX_PRIMS_SUPPORTED);
-    uint const num_verts = num_prims * 2;
+{
+    uint const num_prims = payload.numprims[gid];
+    SetMeshOutputCounts(num_prims * 2, num_prims);
 
-    SetMeshOutputCounts(num_verts, num_prims);
-
-    if(gtid < num_verts)
+    if (gtid < num_prims)
     {
-        uint const vert_idx = (group_info.starting_prim_idx * 2 + gtid);
-        float4 const final_pos = float4(Vertices[vert_idx].position, 1.f);
-        float4 const proj_pos = mul(final_pos, Globals.WorldViewProj);
-        verts[gtid].position = proj_pos;
-    }
+        uint const outv0Idx = gtid * 2;
+        uint const outv1Idx = outv0Idx + 1;
 
-    if(gtid < num_prims)
-    {
-        uint start_idx = gtid * 2;
-        lines[gtid] = uint2(start_idx, start_idx + 1);
+        lines[gtid] = uint2(outv0Idx, outv1Idx);
+        uint const inputvert_start = payload.startingvert_indices[gid] + gtid * 2;
+
+        verts[outv0Idx].position = mul(mul(float4(in_vertices[inputvert_start].position, 1), objectconstants.mat), Globals.viewproj);
+        verts[outv1Idx].position = mul(mul(float4(in_vertices[inputvert_start + 1].position, 1), objectconstants.mat), Globals.viewproj);
     }
 }
