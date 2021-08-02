@@ -71,10 +71,10 @@ namespace gfx
             uint32_t numprims_perinstance;
         } dispatch_params;
 
-        dispatch_params.numverts_perprim = topologyconstants::numverts_perprim<primitive_t>;
-        dispatch_params.numprims_perinstance = static_cast<uint32_t>(get_numvertices() / topologyconstants::numverts_perprim<primitive_t>);
+        dispatch_params.numverts_perprim = topologyconstants<primitive_t>::numverts_perprim;
+        dispatch_params.numprims_perinstance = static_cast<uint32_t>(get_numvertices() / topologyconstants<primitive_t>::numverts_perprim);
         dispatch_params.numprims = static_cast<uint32_t>(get_numinstances() * dispatch_params.numprims_perinstance);
-        dispatch_params.maxprims_permsgroup = topologyconstants::maxprims_permsgroup<primitive_t>;
+        dispatch_params.maxprims_permsgroup = topologyconstants<primitive_t>::maxprims_permsgroup;
 
         resource_bindings bindings;
         bindings.constant = { 0, params.cbaddress };
@@ -164,9 +164,9 @@ namespace gfx
             uint32_t numprims_perinstance;
         } dispatch_params;
 
-        dispatch_params.numverts_perprim = topologyconstants::numverts_perprim<primitive_t>;
-        dispatch_params.numprims = static_cast<uint32_t>(get_numvertices() / topologyconstants::numverts_perprim<primitive_t>);
-        dispatch_params.maxprims_permsgroup = topologyconstants::maxprims_permsgroup<primitive_t>;
+        dispatch_params.numverts_perprim = topologyconstants<primitive_t>::numverts_perprim;
+        dispatch_params.numprims = static_cast<uint32_t>(get_numvertices() / topologyconstants<primitive_t>::numverts_perprim);
+        dispatch_params.maxprims_permsgroup = topologyconstants<primitive_t>::maxprims_permsgroup;
 
         resource_bindings bindings;
         bindings.constant = { 0, params.cbaddress };

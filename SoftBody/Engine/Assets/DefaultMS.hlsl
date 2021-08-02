@@ -6,8 +6,7 @@ MeshShaderVertex GetVertAttribute(VertexIn vertex)
 {
     MeshShaderVertex outVert;
     
-    outVert.projected_position = mul(mul(float4(vertex.position, 1), objectconstants.matx), Globals.viewproj);
-    outVert.color = objectconstants.mat.diffusealbedo;
+    outVert.positionh = mul(mul(float4(vertex.position, 1), objectconstants.matx), Globals.viewproj);
     outVert.position = vertex.position;
     outVert.normal = mul(float4(vertex.normal, 0), objectconstants.invmatx).xyz;
     

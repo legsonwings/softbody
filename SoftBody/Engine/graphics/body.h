@@ -27,13 +27,21 @@ namespace gfx
         objectconstants(matrix const& m, material const& _material) : matx(m.Transpose()), invmatx(m.Invert()), mat(_material) {}
     };
 
-    namespace topologyconstants
+    template<topology primitive_t = topology::triangle>
+    struct topologyconstants
     {
-        template<topology primitive_t> static constexpr uint32_t numverts_perprim = 3;
-        template<> static constexpr uint32_t numverts_perprim<topology::line> = 2;
-        template<topology primitive_t> static constexpr uint32_t maxprims_permsgroup = MAX_TRIANGLES_PER_GROUP;
-        template<> static constexpr uint32_t maxprims_permsgroup<topology::line> = MAX_LINES_PER_GROUP;
-    }
+        using vertextype = geometry::vertex;
+        static constexpr uint32_t numverts_perprim = 3;
+        static constexpr uint32_t maxprims_permsgroup = MAX_TRIANGLES_PER_GROUP;
+    };
+
+    template<>
+    struct topologyconstants<topology::line>
+    {
+        using vertextype = vec3;
+        static constexpr uint32_t numverts_perprim = 2;
+        static constexpr uint32_t maxprims_permsgroup = MAX_LINES_PER_GROUP;
+    };
 
     template<typename geometry_t, topology primitive_t>
     class body_static : public bodyinterface
@@ -43,7 +51,7 @@ namespace gfx
         ComPtr<ID3D12Resource> m_vertexbuffer;
         ComPtr<ID3D12Resource> m_instance_buffer;
         uint8_t* m_instancebuffer_mapped = nullptr;
-        std::vector<std::conditional_t<primitive_t == topology::triangle, geometry::vertex, vec3>> m_vertices;
+        std::vector<typename topologyconstants<primitive_t>::vertextype> m_vertices;
         std::unique_ptr<instance_data[]> m_cpu_instance_data;
 
         using vertexfetch_r = decltype(m_vertices);
@@ -80,7 +88,7 @@ namespace gfx
         ComPtr<ID3D12Resource> m_vertexbuffer;
         // todo : move these to upload buffer helper type
         uint8_t* m_vertexbuffer_databegin = nullptr;
-        std::vector<std::conditional_t<primitive_t == topology::triangle, geometry::vertex, vec3>> m_vertices;
+        std::vector<typename topologyconstants<primitive_t>::vertextype> m_vertices;
         
         using vertexfetch_r = decltype(m_vertices);
         using vertexfetch = std::function<vertexfetch_r (std::decay_t<geometry_t> const&)>;

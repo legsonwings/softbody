@@ -32,12 +32,12 @@ gfx::material const& gfx::getmat(std::string const& name)
 void gfx::init_pipelineobjects()
 {
     addpso("lines", L"DefaultAS.cso", L"linesMS.cso", L"basic_ps.cso");
-    addpso("default", L"DefaultAS.cso", L"DefaultMS.cso", L"BasicLightingPS.cso");
+    addpso("default", L"DefaultAS.cso", L"DefaultMS.cso", L"default_ps.cso");
     addpso("instancedlines", L"InstancesAS.cso", L"linesinstances_ms.cso", L"basic_ps.cso");
-    addpso("instanced", L"InstancesAS.cso", L"InstancesMS.cso", L"BasicLightingPS.cso");
-    addpso("transparent", L"DefaultAS.cso", L"DefaultMS.cso", L"BasicLightingPS.cso", psoflags::transparent);
-    addpso("wireframe", L"InstancesAS.cso", L"InstancesMS.cso", L"BasicLightingPS.cso", psoflags::wireframe);
-    addpso("instancedtransparent", L"InstancesAS.cso", L"InstancesMS.cso", L"BasicLightingPS.cso", psoflags::transparent);
+    addpso("instanced", L"InstancesAS.cso", L"InstancesMS.cso", L"instances_ps.cso");
+    addpso("transparent", L"DefaultAS.cso", L"DefaultMS.cso", L"default_ps.cso", psoflags::transparent);
+    addpso("wireframe", L"DefaultAS.cso", L"DefaultMS.cso", L"default_ps.cso", psoflags::wireframe);
+    addpso("instancedtransparent", L"InstancesAS.cso", L"InstancesMS.cso", L"instances_ps.cso", psoflags::transparent);
 
     materials.insert({ "ball", material().roughness(0.2f).diffusealbedo({1.f, 0.3f, 0.25f, 1.f })});
     materials.insert({ "room", material().diffusealbedo({0.2f, 1.f, 0.1f, 1.f}) });

@@ -9,12 +9,13 @@
     </FxCompile>
     <FxCompile Include="Engine\Assets\DefaultAS.hlsl" />
     <FxCompile Include="Engine\Assets\DefaultMS.hlsl" />
-    <FxCompile Include="Engine\Assets\BasicLightingPS.hlsl" />
     <FxCompile Include="Engine\Assets\InstancesMS.hlsl" />
     <FxCompile Include="Engine\Assets\InstancesAS.hlsl" />
     <FxCompile Include="Engine\Assets\linesMS.hlsl" />
     <FxCompile Include="Engine\Assets\linesinstances_ms.hlsl" />
     <FxCompile Include="Engine\Assets\basic_ps.hlsl" />
+    <FxCompile Include="Engine\Assets\instances_ps.hlsl" />
+    <FxCompile Include="Engine\Assets\default_ps.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\DXSample.cpp">

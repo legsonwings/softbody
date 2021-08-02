@@ -1,19 +1,18 @@
 #include "Common.hlsli"
 
-StructuredBuffer<instance_data> instances : register(t1);
 StructuredBuffer<VertexIn> triangle_vertices : register(t0);
+StructuredBuffer<instance_data> instances : register(t1);
 
 MeshShaderVertex GetVertAttribute(VertexIn vertex, uint instance_idx)
 {
-    MeshShaderVertex outVert;
+    MeshShaderVertex outvert;
     
-    float4 const posw = mul(float4(vertex.position, 1), instances[instance_idx].matx);
-    outVert.projected_position = mul(posw, Globals.viewproj);
-    outVert.color = instances[instance_idx].mat.diffusealbedo;
-    outVert.position = vertex.position;
-    outVert.normal = mul(float4(vertex.normal, 0), instances[instance_idx].invmatx).xyz;
+    outvert.instanceid = instance_idx;
+    outvert.positionh = mul(mul(float4(vertex.position, 1), instances[instance_idx].matx), Globals.viewproj);
+    outvert.position = vertex.position;
+    outvert.normal = mul(float4(vertex.normal, 0), instances[instance_idx].invmatx).xyz;
     
-    return outVert;
+    return outvert;
 }
 
 #define MAX_VERTICES_PER_GROUP (MAX_TRIANGLES_PER_GROUP * 3)

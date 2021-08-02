@@ -65,9 +65,8 @@ struct object_constants
 
 struct MeshShaderVertex
 {
-    float4 projected_position : SV_Position;
-    // todo : Move this to primitive attribute instead or pass instance id to ps
-    float4 color : COLOR0;
+    uint instanceid : instance_id;
+    float4 positionh : SV_Position;
     float3 position : POSITION0;
     float3 normal : NORMAL0;
 };
