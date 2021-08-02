@@ -3,6 +3,7 @@
 #include "line.h"
 #include "triangle.h"
 #include "geoutils.h"
+#include "engine/graphics/gfxutils.h"
 
 #include <algorithm>
 
@@ -65,7 +66,7 @@ std::vector<gfx::instance_data> geometry::ffd_object::get_controlnet_instancedat
 {
     std::vector<gfx::instance_data> instances_info;
     instances_info.reserve(control_points.size());
-    for (auto const& ctrl_pt : control_points) { instances_info.emplace_back(matrix::CreateTranslation(ctrl_pt), vec3{ 1.f, 1.f, 1.f }); }
+    for (auto const& ctrl_pt : control_points) { instances_info.emplace_back(matrix::CreateTranslation(ctrl_pt), gfx::getmat("")); }
     return instances_info;
 }
 
@@ -279,7 +280,7 @@ std::vector<vertex> circle::get_triangles() const
 
 std::vector<gfx::instance_data> circle::get_instance_data() const
 {
-    return { gfx::instance_data{matrix::CreateTranslation(center), vec3{1.f,1.f,1.f}} };
+    return { gfx::instance_data{matrix::CreateTranslation(center), gfx::getmat("")}};
 }
 
 vec3 transform_point_local(vec3 const& x, vec3 const& y, vec3 const& origin, vec3 const& point)

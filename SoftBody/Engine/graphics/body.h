@@ -20,10 +20,20 @@ namespace gfx
 {
     _declspec(align(256u)) struct objectconstants
     {
-        XMFLOAT4X4 mat;
+        matrix matx;
+        matrix invmatx;
+        material mat;
         objectconstants() = default;
-        objectconstants(matrix const& m) : mat(m.Transpose()) {}
+        objectconstants(matrix const& m, material const& _material) : matx(m.Transpose()), invmatx(m.Invert()), mat(_material) {}
     };
+
+    namespace topologyconstants
+    {
+        template<topology primitive_t> static constexpr uint32_t numverts_perprim = 3;
+        template<> static constexpr uint32_t numverts_perprim<topology::line> = 2;
+        template<topology primitive_t> static constexpr uint32_t maxprims_permsgroup = MAX_TRIANGLES_PER_GROUP;
+        template<> static constexpr uint32_t maxprims_permsgroup<topology::line> = MAX_LINES_PER_GROUP;
+    }
 
     template<typename geometry_t, topology primitive_t>
     class body_static : public bodyinterface
@@ -43,13 +53,6 @@ namespace gfx
 
         vertexfetch get_vertices;
         instancedatafetch get_instancedata;
-
-        template<topology primitive_t> static constexpr uint32_t numverts_perprim = 3;
-        template<> static constexpr uint32_t numverts_perprim<topology::line> = 2;
-        template<topology primitive_t> static constexpr vec3 color = { 1.f, 0.3f, 0.1f };
-        template<> static constexpr vec3 color<topology::line> = { 1.f, 1.f, 0.f };
-        template<topology primitive_t> static constexpr uint32_t maxprims_permsgroup = MAX_TRIANGLES_PER_GROUP;
-        template<> static constexpr uint32_t maxprims_permsgroup<topology::line> = MAX_LINES_PER_GROUP;
 
         uint get_vertexbuffersize() const { return m_vertices.size() * sizeof(decltype(m_vertices)::value_type); }
         uint get_instancebuffersize() const { return num_instances * sizeof(instance_data); }
@@ -83,13 +86,6 @@ namespace gfx
         using vertexfetch = std::function<vertexfetch_r (std::decay_t<geometry_t> const&)>;
 
         vertexfetch get_vertices;
-
-        template<topology primitive_t> static constexpr uint32_t numverts_perprim = 3;
-        template<> static constexpr uint32_t numverts_perprim<topology::line> = 2;
-        template<topology primitive_t> static constexpr vec3 color = { 1.f, 0.3f, 0.f };
-        template<> static constexpr vec3 color<topology::line> = { 1.f, 1.f, 0.f };
-        template<topology primitive_t> static constexpr uint32_t maxprims_permsgroup = MAX_TRIANGLES_PER_GROUP;
-        template<> static constexpr uint32_t maxprims_permsgroup<topology::line> = MAX_LINES_PER_GROUP;
 
         void update_constbuffer();
         void update_vertexbuffer();

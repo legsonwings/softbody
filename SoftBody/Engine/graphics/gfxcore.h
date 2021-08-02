@@ -4,6 +4,8 @@
 #include "engine/engineutils.h"
 #include "engine/SimpleMath.h"
 
+#include <string>
+
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 
@@ -34,16 +36,33 @@ namespace gfx
 
     struct renderparams
     {
+        // todo : this is not used now
         bool wireframe = false;
         D3D12_GPU_VIRTUAL_ADDRESS cbaddress;
     };
 
+    struct material
+    {
+        // this can be used in constant buffers so order is deliberate
+        vec3 fr = { 0.01f, 0.01f, 0.01f };
+        float r = 0.25f;
+        vec4 a = vec4::One;
+
+        material& roughness(float _r) { r = _r; return *this; }
+        material& diffusealbedo(vec4 const& _a) { a = _a; return *this; }
+        material& fresnelr(vec3 const& _fr) { fr = _fr; return *this; }
+
+        static material defaultmat;
+    };
+
     struct instance_data
     {
-        matrix mat;
-        vec3 color = { 1.f, 0.f, 0.f };
+        matrix matx;
+        matrix invmatx;
+        material mat;
+
         instance_data() = default;
-        instance_data(matrix const& m, vec3 const& c) : mat(m.Transpose()), color(c) {}
+        instance_data(matrix const& m, material const& _material) : matx(m.Transpose()), invmatx(m.Invert()), mat(_material) {}
     };
 
     struct buffer

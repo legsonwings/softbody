@@ -6,11 +6,27 @@
 namespace gfx
 {
     std::unordered_map<std::string, pipeline_objects> psos;
+    std::unordered_map<std::string, material> materials;
+
+    material material::defaultmat;
 }
 
 gfx::psomapref gfx::getpsomap()
 {
     return psos;
+}
+
+gfx::maetrialmapref gfx::getmatmap()
+{
+    return materials;
+}
+
+gfx::material const& gfx::getmat(std::string const& name)
+{
+    if (auto const& found = materials.find(name); found != materials.end())
+        return found->second;
+
+    return material::defaultmat;
 }
 
 void gfx::init_pipelineobjects()
@@ -22,6 +38,9 @@ void gfx::init_pipelineobjects()
     addpso("transparent", L"DefaultAS.cso", L"DefaultMS.cso", L"BasicLightingPS.cso", psoflags::transparent);
     addpso("wireframe", L"InstancesAS.cso", L"InstancesMS.cso", L"BasicLightingPS.cso", psoflags::wireframe);
     addpso("instancedtransparent", L"InstancesAS.cso", L"InstancesMS.cso", L"BasicLightingPS.cso", psoflags::transparent);
+
+    materials.insert({ "ball", material().roughness(0.2f).diffusealbedo({1.f, 0.3f, 0.25f, 1.f })});
+    materials.insert({ "room", material().diffusealbedo({0.2f, 1.f, 0.1f, 1.f}) });
 }
 
 void gfx::deinit_pipelineobjects()

@@ -6,12 +6,10 @@ MeshShaderVertex GetVertAttribute(VertexIn vertex)
 {
     MeshShaderVertex outVert;
     
-    outVert.projected_position = mul(mul(float4(vertex.position, 1), objectconstants.mat), Globals.viewproj);
-    outVert.color = float4(dispatch_params.color, 1.f);
+    outVert.projected_position = mul(mul(float4(vertex.position, 1), objectconstants.matx), Globals.viewproj);
+    outVert.color = objectconstants.mat.diffusealbedo;
     outVert.position = vertex.position;
-    
-    //Should this be inverse transformed?
-    outVert.normal = mul(float4(vertex.normal, 0), objectconstants.mat).xyz;
+    outVert.normal = mul(float4(vertex.normal, 0), objectconstants.invmatx).xyz;
     
     return outVert;
 }

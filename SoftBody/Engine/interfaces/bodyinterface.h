@@ -13,6 +13,7 @@ namespace gfx
 	struct bodyparams
 	{
 		std::string psoname;
+		std::string matname;
 	};
 
 	class bodyinterface

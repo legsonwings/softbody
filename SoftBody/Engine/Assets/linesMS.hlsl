@@ -34,7 +34,7 @@ void main(
         lines[gtid] = uint2(outv0Idx, outv1Idx);
         uint const inputvert_start = payload.startingvert_indices[gid] + gtid * 2;
 
-        verts[outv0Idx].position = mul(mul(float4(in_vertices[inputvert_start].position, 1), objectconstants.mat), Globals.viewproj);
-        verts[outv1Idx].position = mul(mul(float4(in_vertices[inputvert_start + 1].position, 1), objectconstants.mat), Globals.viewproj);
+        verts[outv0Idx].position = mul(mul(float4(in_vertices[inputvert_start].position, 1), objectconstants.matx), Globals.viewproj);
+        verts[outv1Idx].position = mul(mul(float4(in_vertices[inputvert_start + 1].position, 1), objectconstants.matx), Globals.viewproj);
     }
 }

@@ -7,15 +7,6 @@
     <FxCompile Include="DefaultPS.hlsl">
       <Filter>Engine\Assets</Filter>
     </FxCompile>
-    <FxCompile Include="GameImplementations\SoftBodyDemo\Assets\SoftBodyAS.hlsl">
-      <Filter>GameImplementations\SoftBodyDemo\Assets</Filter>
-    </FxCompile>
-    <FxCompile Include="GameImplementations\SoftBodyDemo\Assets\SoftBodyMS.hlsl">
-      <Filter>GameImplementations\SoftBodyDemo\Assets</Filter>
-    </FxCompile>
-    <FxCompile Include="GameImplementations\SoftBodyDemo\Assets\SoftBodyPS.hlsl">
-      <Filter>GameImplementations\SoftBodyDemo\Assets</Filter>
-    </FxCompile>
     <FxCompile Include="Engine\Assets\DefaultAS.hlsl" />
     <FxCompile Include="Engine\Assets\DefaultMS.hlsl" />
     <FxCompile Include="Engine\Assets\BasicLightingPS.hlsl" />
@@ -119,9 +110,6 @@
   <ItemGroup>
     <None Include="Engine\SimpleMath.inl">
       <Filter>Engine</Filter>
-    </None>
-    <None Include="GameImplementations\SoftBodyDemo\Assets\SoftbodyShared.hlsli">
-      <Filter>GameImplementations\SoftBodyDemo\Assets</Filter>
     </None>
     <None Include="Engine\Assets\Common.hlsli" />
   </ItemGroup>

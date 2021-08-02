@@ -63,20 +63,18 @@ namespace gfx
 
         update_instancebuffer();
 
-        // todo : can there be any alignment issues?
         struct
         {
             uint32_t numprims;
             uint32_t numverts_perprim;
             uint32_t maxprims_permsgroup;
             uint32_t numprims_perinstance;
-            vec3 color = { 1.f, 1.f, 0.1f };
         } dispatch_params;
 
-        dispatch_params.numverts_perprim = numverts_perprim<primitive_t>;
-        dispatch_params.numprims_perinstance = static_cast<uint32_t>(get_numvertices() / numverts_perprim<primitive_t>);
+        dispatch_params.numverts_perprim = topologyconstants::numverts_perprim<primitive_t>;
+        dispatch_params.numprims_perinstance = static_cast<uint32_t>(get_numvertices() / topologyconstants::numverts_perprim<primitive_t>);
         dispatch_params.numprims = static_cast<uint32_t>(get_numinstances() * dispatch_params.numprims_perinstance);
-        dispatch_params.maxprims_permsgroup = maxprims_permsgroup<primitive_t>;
+        dispatch_params.maxprims_permsgroup = topologyconstants::maxprims_permsgroup<primitive_t>;
 
         resource_bindings bindings;
         bindings.constant = { 0, params.cbaddress };
@@ -158,20 +156,17 @@ namespace gfx
         update_constbuffer();
         update_vertexbuffer();
         
-        // todo : can there be any alignment issues?
         struct
         {
             uint32_t numprims;
             uint32_t numverts_perprim;
             uint32_t maxprims_permsgroup;
             uint32_t numprims_perinstance;
-            vec3 color = { 1.f, 1.f, 0.1f };
         } dispatch_params;
 
-        dispatch_params.numverts_perprim = numverts_perprim<primitive_t>;
-        dispatch_params.numprims = static_cast<uint32_t>(get_numvertices() / numverts_perprim<primitive_t>);
-        dispatch_params.maxprims_permsgroup = maxprims_permsgroup<primitive_t>;
-        dispatch_params.color = color<primitive_t>;
+        dispatch_params.numverts_perprim = topologyconstants::numverts_perprim<primitive_t>;
+        dispatch_params.numprims = static_cast<uint32_t>(get_numvertices() / topologyconstants::numverts_perprim<primitive_t>);
+        dispatch_params.maxprims_permsgroup = topologyconstants::maxprims_permsgroup<primitive_t>;
 
         resource_bindings bindings;
         bindings.constant = { 0, params.cbaddress };
@@ -190,7 +185,7 @@ namespace gfx
     inline void body_dynamic<geometry_t, primitive_t>::update_constbuffer()
     {
         // todo : vertices are already in world space so create matrix at origin
-        objectconstants objconsts = { matrix::CreateTranslation(vec3::Zero) };
+        objectconstants objconsts = { matrix::CreateTranslation(vec3::Zero), gfx::getmat(getparams().matname)};
         cbuffer.set_data(&objconsts);
     }
 

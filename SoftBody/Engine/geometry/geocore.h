@@ -32,10 +32,6 @@ namespace geometry
     {
         aabb() = default;
         aabb(vec3 const *tri);
-        aabb(aabb const&) = default;
-        aabb(aabb&&) = default;
-        aabb& operator=(const aabb&) = default;
-        aabb& operator=(aabb&&) = default;
 
         aabb(std::vector<vec3> const& points);
         constexpr aabb(vec3 const& _min, vec3 const& _max) : min_pt(_min), max_pt(_max) {}

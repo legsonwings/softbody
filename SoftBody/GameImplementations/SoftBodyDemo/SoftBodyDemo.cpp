@@ -22,7 +22,6 @@ namespace game_creator
 }
 
 using namespace DirectX;
-using namespace DirectX::SimpleMath;
 
 std::random_device rd;
 std::mt19937 mt(rd());
@@ -52,10 +51,10 @@ void soft_body::update(float dt)
         }
     }
 
-    XMMATRIX view = m_camera.GetViewMatrix();
-    XMMATRIX proj = m_camera.GetProjectionMatrix(XM_PI / 3.0f, engine->get_config_properties().get_aspect_ratio());
+    matrix view = m_camera.GetViewMatrix();
+    matrix proj = m_camera.GetProjectionMatrix(XM_PI / 3.0f, engine->get_config_properties().get_aspect_ratio());
 
-    XMFLOAT3 cameraPos = m_camera.GetCurrentPosition();
+    vec3 cameraPos = m_camera.GetCurrentPosition();
     XMStoreFloat3(&(constbufferdata.campos), XMLoadFloat3(&cameraPos));
     XMStoreFloat4x4(&(constbufferdata.view), XMMatrixTranspose(view));
     XMStoreFloat4x4(&(constbufferdata.viewproj), XMMatrixTranspose(view * proj));
@@ -78,54 +77,38 @@ game_base::resourcelist soft_body::load_assets_and_geometry()
     cbuffer.createresources<SceneConstantBuffer>();
 
     //static const std::uniform_real_distribution<float> color_dist(0.f, 1.f);
-    //Vector3 const color = { color_dist(mt), color_dist(mt), color_dist(mt) };
+    //vec3 const color = { color_dist(mt), color_dist(mt), color_dist(mt) };
 
-    Vector3 const lposition = { -5.f, 0.f, 0.f };
-    Vector3 const rposition = { 5.f, 0.f, 0.f };
+    vec3 const lposition = { -5.f, 0.f, 0.f };
+    vec3 const rposition = { 5.f, 0.f, 0.f };
 
     using geometry::cube;
     using gfx::bodyparams;
     using geometry::ffd_object;
-    dynamicbodies_tri.emplace_back(ffd_object{ { lposition, 1.f } }, bodyparams{ "default" });
-    dynamicbodies_tri.emplace_back(ffd_object{ { rposition, 1.f } }, bodyparams{ "default" });
+    dynamicbodies_tri.emplace_back(ffd_object{ { lposition, 1.f } }, bodyparams{ "default", "ball" });
+    dynamicbodies_tri.emplace_back(ffd_object{ { rposition, 1.f } }, bodyparams{ "default", "ball" });
 
-    dynamicbodies_line.emplace_back(*dynamicbodies_tri[0], &ffd_object::getbox_vertices, bodyparams{ "lines" });
-    dynamicbodies_line.emplace_back(*dynamicbodies_tri[1], &ffd_object::getbox_vertices, bodyparams{ "lines" });
+    dynamicbodies_line.emplace_back(*dynamicbodies_tri[0], &ffd_object::getbox_vertices, bodyparams{ "lines"});
+    dynamicbodies_line.emplace_back(*dynamicbodies_tri[1], &ffd_object::getbox_vertices, bodyparams{ "lines",});
     staticbodies_lines.emplace_back(*dynamicbodies_tri[0], &ffd_object::get_control_point_visualization, &ffd_object::get_controlnet_instancedata, bodyparams{ "instancedlines" });
     staticbodies_lines.emplace_back(*dynamicbodies_tri[1], &ffd_object::get_control_point_visualization, &ffd_object::get_controlnet_instancedata, bodyparams{ "instancedlines" });
-    staticbodies_boxes.emplace_back(cube{ {vec3::Zero}, vec3{20.f} }, &cube::get_vertices_invertednormals, &cube::getinstancedata, bodyparams{ "instanced" });
+    staticbodies_boxes.emplace_back(cube{ {vec3::Zero}, vec3{20.f} }, &cube::get_vertices_invertednormals, &cube::getinstancedata, bodyparams{ "instanced", "room" });
 
     dynamicbodies_tri[0].get().set_velocity({ 8.f, 0.f, 0.f });
     dynamicbodies_tri[1].get().set_velocity({ -8.f, 0.f, 0.f });
 
     game_base::resourcelist retvalues;
-
-    // todo : implement iteratable type that can construct a range from existing ones
-    for (auto &b : dynamicbodies_tri) 
-    { 
-        auto const& body_res = b.create_resources();
-        retvalues.insert(retvalues.end(), body_res.begin(), body_res.end());
-    };
-
-    for (auto& b : dynamicbodies_line)
-    {
-        auto const& body_res = b.create_resources();
-        retvalues.insert(retvalues.end(), body_res.begin(), body_res.end());
-    };
-    
-    for (auto &b : staticbodies_lines) 
-    {
-        auto const& body_res = b.create_resources();
-        retvalues.insert(retvalues.end(), body_res.begin(), body_res.end());
-    };
-
-    for (auto& b : staticbodies_boxes)
-    {
-        auto const& body_res = b.create_resources();
-        retvalues.insert(retvalues.end(), body_res.begin(), body_res.end());
-    };
+    for (auto& b : dynamicbodies_tri) { xstd::append(b.create_resources(), retvalues); };
+    for (auto& b : dynamicbodies_line) { xstd::append(b.create_resources(), retvalues); };
+    for (auto& b : staticbodies_lines) { xstd::append(b.create_resources(), retvalues); };
+    for (auto& b : staticbodies_boxes) { xstd::append(b.create_resources(), retvalues); };
 
     return retvalues;
+}
+
+void appenda(std::vector<int>&& source, std::vector<int>& dest)
+{
+    for (auto&& v : source) { dest.insert(dest.end(), v); }
 }
 
 void soft_body::switch_cameraview()

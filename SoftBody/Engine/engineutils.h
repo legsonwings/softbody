@@ -2,6 +2,11 @@
 
 #include <string>
 
+// move these to cpputills or sth
+#include <vector>
+#include <ranges>
+#include <iterator>
+
 class game_engine;
 
 using uint = std::size_t;
@@ -40,3 +45,20 @@ struct ext
 	constexpr b *operator->() { return &base; }
 	constexpr b const *operator->() const { return &base; }
 };
+
+namespace xstd
+{
+	template<typename t>
+	void append(std::vector<t>&& source, std::vector<t>& dest)
+	{
+		dest.reserve(dest.size() + source.size());
+		std::move(source.begin(), source.end(), std::back_inserter(dest));
+	}
+
+	template<typename t>
+	void append(std::vector<t> const& source, std::vector<t>& dest)
+	{
+		dest.reserve(dest.size() + source.size());
+		for (auto const& e : source) { dest.emplace_back(e); }
+	}
+}

@@ -7,11 +7,11 @@ MeshShaderVertex GetVertAttribute(VertexIn vertex, uint instance_idx)
 {
     MeshShaderVertex outVert;
     
-    float4 const posw = mul(float4(vertex.position, 1), instances[instance_idx].mat);
+    float4 const posw = mul(float4(vertex.position, 1), instances[instance_idx].matx);
     outVert.projected_position = mul(posw, Globals.viewproj);
-    outVert.color = float4(instances[instance_idx].color, 1.f);
+    outVert.color = instances[instance_idx].mat.diffusealbedo;
     outVert.position = vertex.position;
-    outVert.normal = mul(float4(vertex.normal, 0), instances[instance_idx].mat).xyz;
+    outVert.normal = mul(float4(vertex.normal, 0), instances[instance_idx].invmatx).xyz;
     
     return outVert;
 }

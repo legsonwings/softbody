@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "cube.h"
 #include "geoutils.h"
+#include "engine/graphics/gfxutils.h"
 
 using namespace geometry;
 
@@ -31,5 +32,5 @@ std::vector<vertex> cube::get_vertices_invertednormals() const
 
 std::vector<gfx::instance_data> geometry::cube::getinstancedata() const
 {
-    return { gfx::instance_data(matrix::CreateTranslation(center), vec3{0.2f, 0.5f, 0.35f} ) };
+    return { gfx::instance_data(matrix::CreateTranslation(center), gfx::getmat("room"))};
 }

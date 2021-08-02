@@ -1,16 +1,14 @@
 #include "stdafx.h"
 #include "gfxmemory.h"
 #include "gfxutils.h"
-#include "Engine/interfaces/engineinterface.h"
-
-uint8_t cb_memory::constant_buffer_memory[buffermemory_size] = {};
+#include "engine/interfaces/engineinterface.h"
 
 void constant_buffer::createresources(uint _cb_size)
 {
 	cb_size = _cb_size;
 	cb_resource = gfx::create_uploadbuffer(&cbupload_start, cb_size * configurable_properties::frame_count);
 
-	uintptr_t const temp = reinterpret_cast<uintptr_t>(cb_memory::constant_buffer_memory) + cb_alignment - 1;
+	uintptr_t const temp = reinterpret_cast<uintptr_t>(buffermemory.constant_buffer_memory) + cb_alignment - 1;
 	cbdata_start = reinterpret_cast<uint8_t*>(temp & ~static_cast<uintptr_t>(cb_alignment - 1));
 }
 

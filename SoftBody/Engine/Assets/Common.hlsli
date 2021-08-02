@@ -6,6 +6,7 @@
                   SRV(t0), \
                   SRV(t1)"
 
+// todo : these should be array of structs for ease of debugging and efficiency
 struct payload_default
 {
     uint startingvert_indices[MAX_MSGROUPS_PER_ASGROUP];
@@ -25,7 +26,13 @@ struct dispatch_parameters
     uint numverts_perprim;
     uint maxprims_permsgroup;
     uint numprims_perinstance;
-    float3 color;
+};
+
+struct material
+{
+    float3 fresnelr;
+    float roughness;
+    float4 diffusealbedo;
 };
 
 struct Constants
@@ -44,19 +51,22 @@ struct VertexIn
 
 struct instance_data
 {
-    float4x4 mat;
-    float3 color;
+    float4x4 matx;
+    float4x4 invmatx;
+    material mat;
 };
 
 struct object_constants
 {
-    float4x4 mat;
+    float4x4 matx;
+    float4x4 invmatx;
+    material mat;
 };
 
 struct MeshShaderVertex
 {
     float4 projected_position : SV_Position;
-    // TODO : Move this to primitive attribute instead or pass instance id to ps
+    // todo : Move this to primitive attribute instead or pass instance id to ps
     float4 color : COLOR0;
     float3 position : POSITION0;
     float3 normal : NORMAL0;
