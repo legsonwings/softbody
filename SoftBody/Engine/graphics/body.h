@@ -18,15 +18,6 @@ using Microsoft::WRL::ComPtr;
 
 namespace gfx
 {
-    _declspec(align(256u)) struct objectconstants
-    {
-        matrix matx;
-        matrix invmatx;
-        material mat;
-        objectconstants() = default;
-        objectconstants(matrix const& m, material const& _material) : matx(m.Transpose()), invmatx(m.Invert()), mat(_material) {}
-    };
-
     template<topology primitive_t = topology::triangle>
     struct topologyconstants
     {

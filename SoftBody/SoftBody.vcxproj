@@ -170,6 +170,7 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Engine\engineutils.cpp" />
     <ClCompile Include="Engine\geometry\cube.cpp" />
     <ClCompile Include="Engine\DXSample.cpp" />
     <ClCompile Include="Engine\engine.cpp" />
@@ -352,6 +353,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Engine\Assets\Common.hlsli" />
+    <None Include="Engine\Assets\lighting.hlsli" />
     <None Include="Engine\SimpleMath.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

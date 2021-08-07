@@ -4,13 +4,14 @@ StructuredBuffer<VertexIn> triangle_verts : register(t0);
 
 MeshShaderVertex GetVertAttribute(VertexIn vertex)
 {
-    MeshShaderVertex outVert;
+    MeshShaderVertex outvert;
     
-    outVert.positionh = mul(mul(float4(vertex.position, 1), objectconstants.matx), Globals.viewproj);
-    outVert.position = vertex.position;
-    outVert.normal = mul(float4(vertex.normal, 0), objectconstants.invmatx).xyz;
+    float4 const pos = float4(vertex.position, 1.f);
+    outvert.position = mul(pos, objectconstants.matx).xyz;
+    outvert.positionh = mul(pos, objectconstants.mvpmatx);
+    outvert.normal = normalize(mul(float4(vertex.normal, 0), objectconstants.normalmatx).xyz);
     
-    return outVert;
+    return outvert;
 }
 
 #define MAX_VERTICES_PER_GROUP (MAX_TRIANGLES_PER_GROUP * 3)

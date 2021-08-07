@@ -12,8 +12,8 @@ namespace geometry
     {
         using polar_coords = std::pair<float, float>;
 
-        sphere() { generate_triangles(); }
-        sphere(vec3 const& _position, float _radius) : position(_position), radius(_radius) { generate_triangles(); }
+        sphere() = default;
+        sphere(vec3 const& _position, float _radius) : position(_position), radius(_radius) {}
 
         void generate_triangles();
         std::vector<vertex> const& get_triangles() const;
@@ -31,7 +31,7 @@ namespace geometry
     public:
 
         // todo : use num segments instead
-        float step_degrees = 30.f;
+        float step_degrees = 15.f;
         float radius = 1.5f;
         vec3 position = {};
     };

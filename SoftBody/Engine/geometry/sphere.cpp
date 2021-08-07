@@ -127,7 +127,7 @@ void sphere::generate_triangles()
             addquad(theta, phi, step_radians, step_radians);
         }
 
-        if (step_phi > geoutils::tolerance<float>)
+        if (step_phi > geoutils::tolerance<>)
         {
             // what are you doing step phi?
             // step phi is not a factor of 2PI, so make the last step smaller
@@ -135,14 +135,14 @@ void sphere::generate_triangles()
         }
     }
 
-    if (step_theta > geoutils::tolerance<float>)
+    if (step_theta > geoutils::tolerance<>)
     {
         for (phi = 0.f; phi < phi_end; phi += step_radians)
         {
             addquad(theta, phi, step_theta, step_radians);
         }
 
-        if (step_phi > geoutils::tolerance<float>)
+        if (step_phi > geoutils::tolerance<>)
         {
             addquad(theta, phi, step_theta, step_phi);
         }

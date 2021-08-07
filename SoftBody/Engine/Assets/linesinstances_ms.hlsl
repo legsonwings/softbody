@@ -36,7 +36,7 @@ void main(
         lines[gtid] = uint2(outv0Idx, outv1Idx);
         int inputvert_start = payload.starting_vertindices[gid] + gtid * 2;
 
-        outverts[outv0Idx].position = mul(mul(float4(in_vertices[inputvert_start].position, 1), in_instances[payload.instance_indices[gid]].matx), Globals.viewproj);
-        outverts[outv1Idx].position = mul(mul(float4(in_vertices[inputvert_start + 1].position, 1), in_instances[payload.instance_indices[gid]].matx), Globals.viewproj);
+        outverts[outv0Idx].position = mul(float4(in_vertices[inputvert_start].position, 1), in_instances[payload.instance_indices[gid]].mvpmatx);
+        outverts[outv1Idx].position = mul(float4(in_vertices[inputvert_start + 1].position, 1), in_instances[payload.instance_indices[gid]].mvpmatx);
     }
 }

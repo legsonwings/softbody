@@ -293,7 +293,7 @@ void softbody::OnRender()
     m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
     // Record commands.
-    const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
+    const float clearColor[] = { 0.254901975f, 0.254901975f, 0.254901975f, 1.f };
     m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
     m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 

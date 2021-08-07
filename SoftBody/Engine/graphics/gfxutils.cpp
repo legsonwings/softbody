@@ -1,32 +1,49 @@
 #include "stdafx.h"
 #include "gfxutils.h"
-#include "Engine/DXSampleHelper.h"
-#include "Engine/interfaces/engineinterface.h"
+#include "engine/DXSampleHelper.h"
+#include "engine/interfaces/engineinterface.h"
+#include "engine/geometry/geoutils.h"
+
+#include <utility>
 
 namespace gfx
 {
+    viewinfo view;
+    sceneconstants constbufferdata;
     std::unordered_map<std::string, pipeline_objects> psos;
-    std::unordered_map<std::string, material> materials;
-
-    material material::defaultmat;
+    std::unordered_map <std::string, xstd::ext<material, bool>> materials;
+    xstd::ext<material, bool> defaultmat(material{}, false);
 }
 
-gfx::psomapref gfx::getpsomap()
-{
-    return psos;
-}
+gfx::viewinfo& gfx::getview() { return view; }
+gfx::sceneconstants& gfx::getglobals() { return constbufferdata; }
+gfx::psomapref gfx::getpsomap() { return psos; }
 
-gfx::maetrialmapref gfx::getmatmap()
-{
-    return materials;
-}
-
-gfx::material const& gfx::getmat(std::string const& name)
+gfx::materialcref gfx::getmat(std::string const& name)
 {
     if (auto const& found = materials.find(name); found != materials.end())
         return found->second;
 
-    return material::defaultmat;
+    return defaultmat;
+}
+
+std::string const& gfx::generaterandom_matcolor(materialcref definition, std::optional<std::string> const& preferred_name)
+{
+    static constexpr uint matgenlimit = 1000u;
+    auto & re = engineutils::getrandomengine();
+    static const std::uniform_int_distribution<uint> matnumberdist(0, matgenlimit);
+    static const std::uniform_real_distribution<float> colordist(0.f, 0.6f);
+
+    vec3 const color = { colordist(re), colordist(re), colordist(re) };
+    static const std::string basename("mat");
+
+    std::string matname = preferred_name.has_value() ? preferred_name.value() : basename + std::to_string(matnumberdist(re));
+
+    while (materials.find(matname) != materials.end()) { matname = basename + std::to_string(matnumberdist(re)); }
+
+    auto m = std::make_pair(matname, definition);
+    m.second->a = geoutils::create_vec4(color, m.second->a.w);
+    return materials.insert(std::move(m)).first->first;
 }
 
 void gfx::init_pipelineobjects()
@@ -36,11 +53,17 @@ void gfx::init_pipelineobjects()
     addpso("instancedlines", L"InstancesAS.cso", L"linesinstances_ms.cso", L"basic_ps.cso");
     addpso("instanced", L"InstancesAS.cso", L"InstancesMS.cso", L"instances_ps.cso");
     addpso("transparent", L"DefaultAS.cso", L"DefaultMS.cso", L"default_ps.cso", psoflags::transparent);
-    addpso("wireframe", L"DefaultAS.cso", L"DefaultMS.cso", L"default_ps.cso", psoflags::wireframe);
+    addpso("transparent_twosided", L"DefaultAS.cso", L"DefaultMS.cso", L"default_ps.cso", psoflags::transparent | psoflags::twosided);
+    addpso("wireframe", L"DefaultAS.cso", L"DefaultMS.cso", L"default_ps.cso", psoflags::wireframe | psoflags::transparent);
     addpso("instancedtransparent", L"InstancesAS.cso", L"InstancesMS.cso", L"instances_ps.cso", psoflags::transparent);
 
-    materials.insert({ "ball", material().roughness(0.2f).diffusealbedo({1.f, 0.3f, 0.25f, 1.f })});
-    materials.insert({ "room", material().diffusealbedo({0.2f, 1.f, 0.1f, 1.f}) });
+    auto const ballmat = material().roughness(0.f).diffusealbedo({ 0.15f, 0.1f, 0.5f, 1.f }).fresnelr(vec3{ 0.6f });
+    auto const transparent_ballmat = material(ballmat).diffusealbedo({ 0.15f, 0.1f, 0.5f, 0.3f });
+
+    materials.insert({ "ball", {ballmat, false} });
+    materials.insert({ "transparentball", {transparent_ballmat, false}});
+    materials.insert({ "transparentball_twosided", {transparent_ballmat, true } });
+    materials.insert({ "room", {material().roughness(0.57f).diffusealbedo({ 0.2f, 0.1f, 0.2f, 1.f }).fresnelr(vec3{0.15f}), false }});
 }
 
 void gfx::deinit_pipelineobjects()
@@ -66,7 +89,7 @@ ComPtr<ID3D12Resource> gfx::create_uploadbuffer(uint8_t** mapped_buffer, std::si
     return vb_upload;
 }
 
-void gfx::addpso(std::string const& name, std::wstring const& as, std::wstring const& ms, std::wstring const& ps, psoflags const& flags)
+void gfx::addpso(std::string const& name, std::wstring const& as, std::wstring const& ms, std::wstring const& ps, uint flags)
 {    
     if (psos.find(name) != psos.cend())
     {
@@ -106,7 +129,6 @@ void gfx::addpso(std::string const& name, std::wstring const& as, std::wstring c
         transparency_blenddesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
 
         pso_desc.BlendState.RenderTarget[0] = transparency_blenddesc;
-        pso_desc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
     }
 
     if (flags & psoflags::wireframe)
@@ -122,4 +144,16 @@ void gfx::addpso(std::string const& name, std::wstring const& as, std::wstring c
     stream_desc.SizeInBytes = sizeof(psostream);
 
     ThrowIfFailed(device->CreatePipelineState(&stream_desc, IID_PPV_ARGS(psos[name].pso.GetAddressOf())));
+
+    if (flags & psoflags::twosided)
+    {
+        pso_desc.RasterizerState.CullMode = D3D12_CULL_MODE_FRONT;
+        auto psostream_twosides = CD3DX12_PIPELINE_MESH_STATE_STREAM(pso_desc);
+
+        D3D12_PIPELINE_STATE_STREAM_DESC stream_desc_twosides;
+        stream_desc_twosides.pPipelineStateSubobjectStream = &psostream_twosides;
+        stream_desc_twosides.SizeInBytes = sizeof(psostream_twosides);
+
+        ThrowIfFailed(device->CreatePipelineState(&stream_desc_twosides, IID_PPV_ARGS(psos[name].pso_twosided.GetAddressOf())));
+    }
 }

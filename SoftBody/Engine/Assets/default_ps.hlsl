@@ -1,9 +1,13 @@
+#include "lighting.hlsli"
 #include "Common.hlsli"
 
 float4 main(MeshShaderVertex input) : SV_TARGET
 {
-    float3 N = normalize(input.normal);
-    float3 L = normalize(input.position - Globals.campos);
+    float4 const ambientcolor = globals.ambient * objectconstants.mat.diffusealbedo;
+    float4 const color = computelighting(globals.lights, objectconstants.mat, input.position, normalize(input.normal));
 
-    return float4(abs(dot(N, L)) * objectconstants.mat.diffusealbedo);
+    float4 finalcolor = ambientcolor + color;
+    finalcolor.a = objectconstants.mat.diffusealbedo.a;
+
+    return finalcolor;
 }

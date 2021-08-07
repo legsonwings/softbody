@@ -55,6 +55,7 @@
     <ClCompile Include="Engine\graphics\gfxmemory.cpp" />
     <ClCompile Include="Engine\graphics\gfxutils.cpp" />
     <ClCompile Include="Engine\geometry\cube.cpp" />
+    <ClCompile Include="Engine\engineutils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\DXSample.h">
@@ -113,6 +114,7 @@
       <Filter>Engine</Filter>
     </None>
     <None Include="Engine\Assets\Common.hlsli" />
+    <None Include="Engine\Assets\lighting.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="GameImplementations">

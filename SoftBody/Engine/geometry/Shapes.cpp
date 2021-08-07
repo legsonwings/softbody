@@ -66,7 +66,7 @@ std::vector<gfx::instance_data> geometry::ffd_object::get_controlnet_instancedat
 {
     std::vector<gfx::instance_data> instances_info;
     instances_info.reserve(control_points.size());
-    for (auto const& ctrl_pt : control_points) { instances_info.emplace_back(matrix::CreateTranslation(ctrl_pt), gfx::getmat("")); }
+    for (auto const& ctrl_pt : control_points) { instances_info.emplace_back(matrix::CreateTranslation(ctrl_pt), gfx::getview(), gfx::getmat("")); }
     return instances_info;
 }
 
@@ -124,9 +124,13 @@ void geometry::ffd_object::resolve_collision(ffd_object & r, float dt)
 
     static auto constexpr elasticity = 0.5f;
     auto const impulse = relativevel.Dot(normal) * (1.f + elasticity) * normal;
-    
+
+    // todo : moving control points should exert forces even if whole body is not moving
+    // apply a small correction force to account for this for now
+    auto const correction_force = normal * 0.1f;
+
     // apply portion of the impulse to controlpoints
-    auto const impulse_wholebody = impulse * 0.45f;
+    auto const impulse_wholebody = impulse * 0.45f - correction_force;
 
     velocity -= impulse_wholebody;
     r.velocity += impulse_wholebody;
@@ -170,7 +174,7 @@ std::vector<linesegment> geometry::ffd_object::intersect(ffd_object const& r) co
     auto const& ltris = get_physx_triangles();
     auto const& rtris = r.get_physx_triangles();
 
-    std::vector<ext<aabb, uint>> laabbs, raabbs;
+    std::vector<xstd::ext<aabb, uint>> laabbs, raabbs;
 
     laabbs.reserve(10);
     raabbs.reserve(10);
@@ -183,13 +187,13 @@ std::vector<linesegment> geometry::ffd_object::intersect(ffd_object const& r) co
 
     for (uint lidx = 0; lidx < lnum_verts; lidx +=3)
     {
-        ext<aabb, uint> lbox{ &ltris[lidx], lidx }; 
+        xstd::ext<aabb, uint> lbox{ &ltris[lidx], lidx };
         if (isect_box.value().intersect(*lbox)) { laabbs.emplace_back(lbox); }
     }
 
     for (uint ridx = 0; ridx < rnum_verts; ridx += 3)
     {
-        ext<aabb, uint> rbox{ &rtris[ridx], ridx };
+        xstd::ext<aabb, uint> rbox{ &rtris[ridx], ridx };
         if (isect_box.value().intersect(*rbox)) { raabbs.emplace_back(rbox); }
     }
 
@@ -280,7 +284,7 @@ std::vector<vertex> circle::get_triangles() const
 
 std::vector<gfx::instance_data> circle::get_instance_data() const
 {
-    return { gfx::instance_data{matrix::CreateTranslation(center), gfx::getmat("")}};
+    return { gfx::instance_data{matrix::CreateTranslation(center), gfx::getview(), gfx::getmat("")}};
 }
 
 vec3 transform_point_local(vec3 const& x, vec3 const& y, vec3 const& origin, vec3 const& point)

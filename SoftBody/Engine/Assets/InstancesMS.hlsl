@@ -7,11 +7,12 @@ MeshShaderVertex GetVertAttribute(VertexIn vertex, uint instance_idx)
 {
     MeshShaderVertex outvert;
     
+    float4 const pos = float4(vertex.position, 1.f);
     outvert.instanceid = instance_idx;
-    outvert.positionh = mul(mul(float4(vertex.position, 1), instances[instance_idx].matx), Globals.viewproj);
-    outvert.position = vertex.position;
-    outvert.normal = mul(float4(vertex.normal, 0), instances[instance_idx].invmatx).xyz;
-    
+    outvert.position = mul(pos, instances[instance_idx].matx).xyz;
+    outvert.positionh = mul(pos, instances[instance_idx].mvpmatx);
+    outvert.normal = normalize(mul(float4(vertex.normal, 0), instances[instance_idx].normalmatx).xyz);
+
     return outvert;
 }
 

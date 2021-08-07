@@ -38,32 +38,16 @@ public:
 	void on_key_up(unsigned key) override;
 
 private:
-
-	_declspec(align(256u)) struct SceneConstantBuffer
-	{
-		XMFLOAT3 campos;
-		uint8_t padding0[4];
-		XMFLOAT4X4 view;
-		XMFLOAT4X4 viewproj;
-	};
-
-	ComPtr<ID3D12RootSignature> m_rootsignature;
-	ComPtr<ID3D12RootSignature> m_rootsignature_lines;
-	ComPtr<ID3D12PipelineState> m_pipelinestate;
-	ComPtr<ID3D12PipelineState> m_pipelinestate_wireframe;
-	ComPtr<ID3D12PipelineState> m_pipelinestate_lines;
-	ComPtr<ID3D12Resource>		m_constantbuffer;
-
 	bool m_wireframe_toggle = false;
 	bool m_debugviz_toggle = true;
 
 	uint8_t camera_view = 0;
 
-	SimpleCamera m_camera;
+	SimpleCamera m_camera;    
 	constant_buffer cbuffer;
-	SceneConstantBuffer constbufferdata;
 
-	std::vector<gfx::body_dynamic<geometry::ffd_object>> dynamicbodies_tri;
+	std::vector<gfx::body_dynamic<geometry::ffd_object>> balls;
+	std::vector<gfx::body_dynamic<geometry::ffd_object>> bubbles;
 	std::vector<gfx::body_static<geometry::cube>> staticbodies_boxes;
 	std::vector<gfx::body_dynamic<geometry::ffd_object const&, gfx::topology::line>> dynamicbodies_line;
 	std::vector<gfx::body_static<geometry::ffd_object const&, gfx::topology::line>> staticbodies_lines;

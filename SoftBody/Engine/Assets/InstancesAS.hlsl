@@ -20,7 +20,7 @@ void main(uint dtid : SV_DispatchThreadID, uint gtid : SV_GroupThreadID, uint gi
             uint primitives_to_process = min(dispatch_params.numprims_perinstance - rel_group_idx * dispatch_params.maxprims_permsgroup, dispatch_params.maxprims_permsgroup);
 
             payload.instance_indices[curr_groupid] = instance_idx;
-            payload.starting_vertindices[curr_groupid] = (num_prims_processed * dispatch_params.numverts_perprim % dispatch_params.numprims_perinstance);
+            payload.starting_vertindices[curr_groupid] = ((num_prims_processed * dispatch_params.numverts_perprim) % dispatch_params.numprims_perinstance);
             payload.numprims[curr_groupid] = primitives_to_process;
             num_prims_processed += primitives_to_process;
         }

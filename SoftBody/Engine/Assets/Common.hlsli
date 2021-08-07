@@ -1,3 +1,4 @@
+#pragma once
 #include "..\..\SharedConstants.h"
 
 #define ROOT_SIG "CBV(b0), \
@@ -28,39 +29,10 @@ struct dispatch_parameters
     uint numprims_perinstance;
 };
 
-struct material
-{
-    float3 fresnelr;
-    float roughness;
-    float4 diffusealbedo;
-};
-
-struct Constants
-{
-    float3 campos;
-    uint padding0;
-    float4x4 view;
-    float4x4 viewproj;
-};
-
 struct VertexIn
 {
     float3 position;
     float3 normal;
-};
-
-struct instance_data
-{
-    float4x4 matx;
-    float4x4 invmatx;
-    material mat;
-};
-
-struct object_constants
-{
-    float4x4 matx;
-    float4x4 invmatx;
-    material mat;
 };
 
 struct MeshShaderVertex
@@ -71,6 +43,47 @@ struct MeshShaderVertex
     float3 normal : NORMAL0;
 };
 
-ConstantBuffer<Constants> Globals : register(b0);
+struct light
+{
+    float3 color;
+    float range;
+    float3 position;
+    float padding1;
+    float3 direction;
+    float padding2;
+};
+
+struct material
+{
+    float3 fresnelr;
+    float roughness;
+    float4 diffusealbedo;
+};
+
+struct sceneconstants
+{
+    float3 campos;
+    uint padding0;
+    float4 ambient;
+    light lights[NUM_LIGHTS];
+};
+
+struct instance_data
+{
+    float4x4 matx;
+    float4x4 normalmatx;
+    float4x4 mvpmatx;
+    material mat;
+};
+
+struct object_constants
+{
+    float4x4 matx;
+    float4x4 normalmatx;
+    float4x4 mvpmatx;
+    material mat;
+};
+
+ConstantBuffer<sceneconstants> globals : register(b0);
 ConstantBuffer<object_constants> objectconstants : register(b1);
 ConstantBuffer<dispatch_parameters> dispatch_params : register(b2);

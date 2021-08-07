@@ -71,12 +71,12 @@ std::vector<vertex> geoutils::create_cube(vec3 const& center, vec3 const& extent
     auto const scale = vec3{ extents.x / 2.f, extents.y / 2.f, extents.z / 2.f };
     vec3 transformations[6][3] =
     {
-        {{0.f, 360.f, 0.f}, {0.f, 0.0f, scale.z}, {scale}},
-        {{0.f, 180.f, 0.f}, {0.f, 0.0f, -scale.z}, {scale}},
-        {{-90.f, 0.f, 0.f}, {0.f, scale.y, 0.f}, {scale}},
-        {{90.f, 0.f, 0.f}, {0.f, -scale.y, 0.f}, {scale}},
-        {{0.f, 90.f, 0.f}, {scale.x, 0.f, 0.f}, {scale}},
-        {{0.f, -90.f, 0.f}, {-scale.x, 0.0f, 0.f}, {scale}}
+        {{0.f, 180.f, 0.f}, {0.f, 0.0f, scale.z}, {scale}},
+        {{0.f, 360.f, 0.f}, {0.f, 0.0f, -scale.z}, {scale}},
+        {{90.f, 0.f, 0.f}, {0.f, scale.y, 0.f}, {scale}},
+        {{-90.f, 0.f, 0.f}, {0.f, -scale.y, 0.f}, {scale}},
+        {{0.f, -90.f, 0.f}, {scale.x, 0.f, 0.f}, {scale}},
+        {{0.f, 90.f, 0.f}, {-scale.x, 0.0f, 0.f}, {scale}}
     };
 
     std::vector<vertex> triangles;

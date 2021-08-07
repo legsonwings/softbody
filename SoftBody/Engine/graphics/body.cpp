@@ -15,14 +15,13 @@ namespace gfx
     }
 }
 
-void gfx::dispatch(resource_bindings const& bindings)
+void gfx::dispatch(resource_bindings const& bindings, bool twosided)
 {
     auto engine = game_engine::g_engine;
     auto cmd_list = engine->get_command_list();
 
     // todo : not good, ideally objects sharing a rootsignature/pso should be rendered in sequence
-    cmd_list->SetPipelineState(bindings.pso.Get());
-    cmd_list->SetGraphicsRootSignature(bindings.root_signature.Get());
+    cmd_list->SetGraphicsRootSignature(bindings.pipelineobjs.root_signature.Get());
 
     cmd_list->SetGraphicsRootConstantBufferView(bindings.constant.slot, bindings.constant.address);
     if(bindings.objectconstant.address != 0)
@@ -33,6 +32,13 @@ void gfx::dispatch(resource_bindings const& bindings)
     if (bindings.instance.address != 0)
         cmd_list->SetGraphicsRootShaderResourceView(bindings.instance.slot, bindings.instance.address);
 
+    if (twosided)
+    {
+        cmd_list->SetPipelineState(bindings.pipelineobjs.pso_twosided.Get());
+        cmd_list->DispatchMesh(1, 1, 1);
+    }
+
+    cmd_list->SetPipelineState(bindings.pipelineobjs.pso.Get());
     cmd_list->DispatchMesh(1, 1, 1);
 }
 

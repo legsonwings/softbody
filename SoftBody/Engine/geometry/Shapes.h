@@ -73,7 +73,7 @@ namespace geometry
             }
 
             box = std::move(aabb{ control_points });
-            velocities.resize(num_control_points);
+            velocities.resize(control_points.size(), vec3::Zero);
         }
 
         void update(float dt);

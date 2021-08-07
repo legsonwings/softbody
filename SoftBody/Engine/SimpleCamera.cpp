@@ -12,12 +12,14 @@
 #include "stdafx.h"
 #include "SimpleCamera.h"
 
+static constexpr XMFLOAT3 defaultlook_dir = { 0.f, 0.f, 1.f };
+
 SimpleCamera::SimpleCamera():
     m_initialPosition(0, 0, 0),
     m_position(m_initialPosition),
     m_yaw(XM_PI),
     m_pitch(0.0f),
-    m_lookDirection(0, 0, -1),
+    m_lookDirection(defaultlook_dir),
     m_upDirection(0, 1, 0),
     m_moveSpeed(20.0f),
     m_turnSpeed(XM_PIDIV2),
@@ -44,9 +46,9 @@ void SimpleCamera::SetTurnSpeed(float radiansPerSecond)
 void SimpleCamera::Reset()
 {
     m_position = m_initialPosition;
-    m_yaw = XM_PI;
+    m_yaw = 0.f;
     m_pitch = 0.0f;
-    m_lookDirection = { 0, 0, -1 };
+    m_lookDirection = { defaultlook_dir };
 }
 
 void SimpleCamera::Update(float elapsedSeconds)
@@ -74,9 +76,9 @@ void SimpleCamera::Update(float elapsedSeconds)
     float rotateInterval = m_turnSpeed * elapsedSeconds;
 
     if (m_keysPressed.left)
-        m_yaw += rotateInterval;
-    if (m_keysPressed.right)
         m_yaw -= rotateInterval;
+    if (m_keysPressed.right)
+        m_yaw += rotateInterval;
     if (m_keysPressed.up)
         m_pitch += rotateInterval;
     if (m_keysPressed.down)
@@ -87,8 +89,8 @@ void SimpleCamera::Update(float elapsedSeconds)
     //m_pitch = std::max(-XM_PIDIV4, m_pitch);
 
     // Move the camera in model space.
-    float x = move.x * -cosf(m_yaw) - move.z * sinf(m_yaw);
-    float z = move.x * sinf(m_yaw) - move.z * cosf(m_yaw);
+    float x = move.x * cosf(m_yaw) - move.z * sinf(m_yaw);
+    float z = -move.x * sinf(m_yaw) - move.z * cosf(m_yaw);
     m_position.x += x * moveInterval;
     m_position.z += z * moveInterval;
 
@@ -106,12 +108,12 @@ XMFLOAT3 SimpleCamera::GetCurrentPosition() const
 
 XMMATRIX SimpleCamera::GetViewMatrix()
 {
-    return XMMatrixLookToRH(XMLoadFloat3(&m_position), XMLoadFloat3(&m_lookDirection), XMLoadFloat3(&m_upDirection));
+    return XMMatrixLookToLH(XMLoadFloat3(&m_position), XMLoadFloat3(&m_lookDirection), XMLoadFloat3(&m_upDirection));
 }
 
 XMMATRIX SimpleCamera::GetProjectionMatrix(float fov, float aspectRatio, float nearPlane, float farPlane)
 {
-    return XMMatrixPerspectiveFovRH(fov, aspectRatio, nearPlane, farPlane);
+    return XMMatrixPerspectiveFovLH(fov, aspectRatio, nearPlane, farPlane);
 }
 
 void SimpleCamera::TopView()
