@@ -4,9 +4,10 @@
 #include "Engine/Graphics/gfxcore.h"
 #include "Engine/engineutils.h"
 #include "geocore.h"
-#include "sphere.h"
 
 #include <vector>
+
+import shapes;
 
 namespace geometry
 {
@@ -148,16 +149,19 @@ namespace geometry
             return result;
         }
         
+        void move(vec3 delta);
         vec3 const& getcenter() const { return center; }
         box getbox() const;
-        aabb const& getboundingbox() const;
+        aabb const& getaabb() const;
         std::vector<vec3> getbox_vertices() const;
         vec3 compute_wholebody_forces() const;
-        void set_velocity(vec3 const vel);
+        vec3 const& getvelocity() const { return velocity; }
+        void set_velocity(vec3 const& vel);
         void resolve_collision(ffd_object &r, float dt);
+        void resolve_collision_interior(aabb const& r, float dt);
         uint closest_controlpoint(vec3 const &point) const;
-        std::vector<linesegment> intersect(ffd_object const& r) const;
         std::vector<vec3> compute_contacts(ffd_object const&) const;
+        vec3 compute_contact(ffd_object const&) const;
 
     private:
         aabb box;
@@ -173,22 +177,7 @@ namespace geometry
 
         uint l = 2, m = 2, n = 2;
         static std::size_t constexpr num_control_points = 27;
-    };
 
-    struct Spring
-    {
-        Spring() = default;
-        Spring(float _k, float _rl, int _m1, int _m2)
-            : k(_k), rl(_rl), m1(_m1), m2(_m2)
-        {}
-
-        float k = 1.f;
-        float rl = 0.f;
-
-        int m1;
-        int m2;
-
-        float l = 0.f;
-        float v = 0.f;
+        static_assert(ffd_object::num_control_points > 0);
     };
 }

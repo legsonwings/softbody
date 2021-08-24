@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "geocore.h"
 #include "geoutils.h"
 

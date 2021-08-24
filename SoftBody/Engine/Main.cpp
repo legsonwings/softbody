@@ -9,7 +9,6 @@
 //
 //*********************************************************
 
-#include "stdafx.h"
 #include "engine.h"
 
 _Use_decl_annotations_

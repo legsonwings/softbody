@@ -9,8 +9,9 @@
 //
 //*********************************************************
 
-#include "stdafx.h"
 #include "SimpleCamera.h"
+
+using namespace DirectX;
 
 static constexpr XMFLOAT3 defaultlook_dir = { 0.f, 0.f, 1.f };
 

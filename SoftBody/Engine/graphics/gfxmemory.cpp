@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "gfxmemory.h"
 #include "gfxutils.h"
 #include "engine/interfaces/engineinterface.h"

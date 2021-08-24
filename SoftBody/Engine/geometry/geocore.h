@@ -36,8 +36,9 @@ namespace geometry
         aabb(std::vector<vec3> const& points);
         constexpr aabb(vec3 const& _min, vec3 const& _max) : min_pt(_min), max_pt(_max) {}
 
+        vec3 center() const { return (max_pt + min_pt) / 2.f; }
         vec3 span() const { return max_pt - min_pt; }
-        operator box() const { return { (min_pt + max_pt) / 2.f, max_pt - min_pt }; }
+        operator box() const { return { center(), span() }; }
         std::optional<aabb> intersect(aabb const& r) const;
 
         // Top left back is min, bot right front max

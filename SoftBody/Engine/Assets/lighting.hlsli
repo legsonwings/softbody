@@ -2,7 +2,7 @@
 
 float attenuation(float range, float distance)
 {
-	return saturate(distance / range);
+	return 1.f / (1.f + (distance * distance) / (range * range));
 }
 
 float3 specularcoefficient(float3 r0, float3 normal, float3 lightvec)
@@ -37,19 +37,16 @@ float3 pointlight(light l, material m, float3 normal, float3 pos, float3 toeye)
 {
 	float3 lightvec = l.position - pos;
 	float const d = length(lightvec);
-	if (d > l.range)
-		return 0.f;
-	
 	lightvec /= d;
 
-	float3 const lightintensity = l.color * max(dot(lightvec, normal), 0.f) * (1.f - attenuation(l.range, d));
+	float3 const lightintensity = l.color * saturate(dot(lightvec, normal)) * attenuation(l.range, d);
 
 	return blinnphong(toeye, normal, lightintensity, m, lightvec);
 }
 
 float4 computelighting(light lights[NUM_LIGHTS], material m, float3 pos, float3 normal)
 {
-	float3 result = 0.f;
+	float3 result = 0;
 	float3 const toeye = normalize(globals.campos - pos);
 
 	int i = 0;

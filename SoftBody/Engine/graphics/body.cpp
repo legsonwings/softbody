@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "body.h"
 #include "gfxutils.h"
 #include "engine/DXSampleHelper.h"

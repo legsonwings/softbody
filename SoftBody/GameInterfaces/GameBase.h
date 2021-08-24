@@ -5,7 +5,11 @@
 #include <vector>
 #include <memory>
 
+#define NOMINMAX
+#include <wrl.h>
+
 class game_engine;
+struct ID3D12Resource;
 
 // abstract base game class
 class game_base

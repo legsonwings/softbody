@@ -1,25 +1,69 @@
-#include "stdafx.h"
 #include "Shapes.h"
-#include "line.h"
-#include "triangle.h"
 #include "geoutils.h"
 #include "engine/graphics/gfxutils.h"
 
 #include <algorithm>
+#include <vector>
 
-#ifdef PROFILE_TIMING
-#include <chrono>
-#endif 
+import primitives;
 
-using namespace DirectX;
 using namespace geometry;
+using namespace DirectX;
+
+std::vector<linesegment> intersect(ffd_object const& l, ffd_object const& r)
+{
+    auto const& isect_box = l.getaabb().intersect(r.getaabb());
+    if (!isect_box)
+        return {};
+
+    auto const& ltris = l.get_physx_triangles();
+    auto const& rtris = r.get_physx_triangles();
+
+    std::vector<stdx::ext<aabb, uint>> laabbs, raabbs;
+
+    laabbs.reserve(10);
+    raabbs.reserve(10);
+
+    auto const lnum_verts = ltris.size();
+    auto const rnum_verts = rtris.size();
+
+    assert(lnum_verts % 3 == 0);
+    assert(rnum_verts % 3 == 0);
+
+    for (uint lidx = 0; lidx < lnum_verts; lidx += 3)
+    {
+        stdx::ext<aabb, uint> lbox{ &ltris[lidx], lidx };
+        if (isect_box.value().intersect(*lbox)) { laabbs.emplace_back(lbox); }
+    }
+
+    for (uint ridx = 0; ridx < rnum_verts; ridx += 3)
+    {
+        stdx::ext<aabb, uint> rbox{ &rtris[ridx], ridx };
+        if (isect_box.value().intersect(*rbox)) { raabbs.emplace_back(rbox); }
+    }
+
+    std::vector<linesegment> result;
+    // todo : can optimize this by hashing triangles on the spherical domain
+    // may need tiling the sphere with polygons
+    for (uint lidx = 0; lidx < laabbs.size(); lidx++)
+        for (uint ridx = 0; ridx < raabbs.size(); ridx++)
+            if (laabbs[lidx]->intersect(raabbs[ridx]))
+                if (auto const& isect = triangle::intersect(&(ltris[laabbs[lidx].ex()]), &rtris[raabbs[ridx].ex()]))
+                    result.push_back(isect.value());
+
+    return result;
+}
 
 void ffd_object::update(float dt)
 {
     velocity += compute_wholebody_forces() * dt;
 
     auto const delta_pos = velocity * dt;
-    center += delta_pos;
+
+    // todo : this will not be needed once the computations are not in world space
+    // update the box points as they are used in computation below
+    box.min_pt += delta_pos;
+    box.max_pt += delta_pos;
 
     for (auto& ctrl_pt : control_points)
         ctrl_pt += delta_pos;
@@ -36,14 +80,23 @@ void ffd_object::update(float dt)
         auto const displacement = control_points[ctrl_pt_idx] - rest_pt;
 
         // damped shm
-        auto delta_pos = std::powf(2.71828f, -omega * eta * dt) * (displacement * std::cos(alpha * dt) + (velocities[ctrl_pt_idx] + omega * eta * displacement) * std::sin(alpha * dt) / alpha);
-        velocities[ctrl_pt_idx] = -std::pow(2.71828f, -omega * eta * dt) * ((displacement * omega * eta - velocities[ctrl_pt_idx] - omega * eta * displacement) * cos(alpha * dt) +
-            (displacement * alpha + (velocities[ctrl_pt_idx] + omega * eta * displacement) * omega * eta / alpha) * sin(alpha * dt));
+        //auto const delta_pos_ctrlpt = std::powf(2.71828f, -omega * eta * dt) * (displacement * std::cos(alpha * dt) + (velocities[ctrl_pt_idx] + omega * eta * displacement) * std::sin(alpha * dt) / alpha);
+        //velocities[ctrl_pt_idx] = -std::pow(2.71828f, -omega * eta * dt) * ((displacement * omega * eta - velocities[ctrl_pt_idx] - omega * eta * displacement) * cos(alpha * dt) +
+        //    (displacement * alpha + (velocities[ctrl_pt_idx] + omega * eta * displacement) * omega * eta / alpha) * sin(alpha * dt));
 
-        control_points[ctrl_pt_idx] = rest_pt + delta_pos;
+        // critically damped shm
+        auto const delta_pos_ctrlpt = ((velocities[ctrl_pt_idx] + displacement * omega) * dt + displacement) * std::powf(2.71828f, -omega * dt);
+        velocities[ctrl_pt_idx] = (velocities[ctrl_pt_idx] - (velocities[ctrl_pt_idx] + displacement * omega) * omega * dt) * std::powf(2.71828f, -omega * dt);
+        
+        auto targetdir = delta_pos_ctrlpt;
+        targetdir.Normalize();
+        
+        // clamp the displacement from equilibrium to less than radius
+        control_points[ctrl_pt_idx] = rest_pt + std::min(delta_pos_ctrlpt.Length(), ball.radius * 0.99f) * targetdir;
     }
 
-    box = std::move(aabb{ control_points });
+    box = aabb{ control_points };
+    center = (box.min_pt + box.max_pt) / 2.f;
 
     physx_verts.clear();
     evaluated_verts.clear();
@@ -75,23 +128,39 @@ std::vector<vec3> geometry::ffd_object::getbox_vertices() const
     return getbox().get_vertices();
 }
 
+void geometry::ffd_object::move(vec3 delta)
+{
+    center += delta;
+    box.min_pt += delta;
+    box.max_pt += delta;
+
+    for (auto& ctrl_pt : control_points)
+        ctrl_pt += delta;
+
+    for (auto& vert : evaluated_verts)
+    {
+        vert.position += delta;
+        physx_verts.push_back(vert.position);
+    }
+}
+
 box geometry::ffd_object::getbox() const
 {
     return box;
 }
 
-aabb const& geometry::ffd_object::getboundingbox() const
+aabb const& geometry::ffd_object::getaabb() const
 {
     return box;
 }
 
 vec3 geometry::ffd_object::compute_wholebody_forces() const
 {
-    auto const drag = -velocity * 0.7f;
+    auto const drag = -velocity * 0.0001f;
     return drag;
 }
 
-void geometry::ffd_object::set_velocity(vec3 const vel)
+void geometry::ffd_object::set_velocity(vec3 const &vel)
 {
     velocity = vel;
 }
@@ -99,19 +168,17 @@ void geometry::ffd_object::set_velocity(vec3 const vel)
 void geometry::ffd_object::resolve_collision(ffd_object & r, float dt)
 {
     auto const contacts = compute_contacts(r);
-
     if (contacts.size() <= 0)
     {
         return;
     }
-
+    
     std::vector<std::pair<uint, uint>> affected_ctrlpts;
     for (uint i = 0; i < contacts.size(); ++i)
     {
-        if (uint li = closest_controlpoint(contacts[i]), ri = r.closest_controlpoint(contacts[i]); li < num_control_points && ri < num_control_points)
-        {
-            affected_ctrlpts.push_back({ li, ri });
-        }
+        uint const li = closest_controlpoint(contacts[i]);
+        uint const ri = r.closest_controlpoint(contacts[i]);
+        affected_ctrlpts.push_back({ li, ri });
     }
 
     static constexpr float body_mass = 1.f;
@@ -120,32 +187,103 @@ void geometry::ffd_object::resolve_collision(ffd_object & r, float dt)
     auto normal = center - r.center;
     normal.Normalize();
 
+    auto const pre = velocity + r.velocity;
+
     auto const relativevel = velocity - r.velocity;
 
-    static auto constexpr elasticity = 0.5f;
-    auto const impulse = relativevel.Dot(normal) * (1.f + elasticity) * normal;
+    static auto constexpr elasticity = 1.f;
+    auto const impulse = relativevel.Dot(normal) * elasticity * normal;
 
     // todo : moving control points should exert forces even if whole body is not moving
     // apply a small correction force to account for this for now
-    auto const correction_force = normal * 0.1f;
+    auto const correction_force = normal * 0.f;
 
     // apply portion of the impulse to controlpoints
-    auto const impulse_wholebody = impulse * 0.45f - correction_force;
+    auto const impulse_wholebody = (impulse + correction_force);
 
     velocity -= impulse_wholebody;
     r.velocity += impulse_wholebody;
 
-    // todo : try distributing the impulse to neighbouring control points as well, slightly reduced
-    auto const impulse_per_ctrlpt = (impulse - impulse_wholebody) / static_cast<float>(affected_ctrlpts.size());
+    // move a bit so they no longer collide
+    move(normal * 0.1f);
+    r.move(-normal * 0.1f);
+
+    auto const ctrl_impulsemultiplier = 3.f;
+    auto const impulse_per_ctrlpt = impulse * ctrl_impulsemultiplier / static_cast<float>(affected_ctrlpts.size());
     for (uint i = 0; i < affected_ctrlpts.size(); ++i)
     {
         auto const [idx, idx_other] = affected_ctrlpts[i];
 
         auto const relativev = velocities[idx] - r.velocities[idx_other];
-        auto const impulse_ctrlpts = relativev.Dot(normal) * normal * (1 + elasticity)/ num_control_points;
+        auto const impulse_ctrlpts = relativev.Dot(normal) * normal * (1.f + elasticity)/ num_control_points;
 
         velocities[idx] -= (impulse_per_ctrlpt + impulse_ctrlpts);
         r.velocities[idx_other] += (impulse_per_ctrlpt + impulse_ctrlpts);
+    }
+}
+
+void geometry::ffd_object::resolve_collision_interior(aabb const& r, float dt)
+{
+    // this checks only box-box intersection
+    auto const& isect_box = box.intersect(r);
+    if (!isect_box)
+        return;
+
+    std::vector<vec3> contacts;
+
+    if (isect_box->max_pt.x >= (r.max_pt.x - geoutils::tolerance<>))
+        contacts.emplace_back(isect_box->max_pt.x, center.y, center.z);
+
+    if (isect_box->min_pt.x <= (r.min_pt.x + geoutils::tolerance<>))
+        contacts.emplace_back(isect_box->min_pt.x, center.y, center.z);
+
+    if (isect_box->max_pt.y >= (r.max_pt.y - geoutils::tolerance<>))
+        contacts.emplace_back(center.x, isect_box->max_pt.y, center.z);
+
+    if (isect_box->min_pt.y <= (r.min_pt.y + geoutils::tolerance<>))
+        contacts.emplace_back(center.x, isect_box->min_pt.y, center.z);
+
+    if (isect_box->max_pt.z >= (r.max_pt.z - geoutils::tolerance<>))
+        contacts.emplace_back(center.x, center.y, isect_box->max_pt.z);
+
+    if (isect_box->min_pt.z <= (r.min_pt.z + geoutils::tolerance<>))
+        contacts.emplace_back(center.x, center.y, isect_box->min_pt.z);
+
+    if (contacts.size() <= 0) return;
+
+    vec3 normal = vec3::Zero;
+    std::vector<uint> affected_ctrlpts;
+    for (auto const& c : contacts)
+    {
+        normal += c;
+        affected_ctrlpts.push_back(closest_controlpoint(c));
+    }
+
+    // average the contacts to find the normal for computing new velocity
+    normal /= static_cast<float>(contacts.size());
+    normal = center - normal;
+    normal.Normalize();
+
+    static constexpr float body_mass = 1.f;
+    static constexpr float ctrlpt_mass = body_mass / num_control_points;
+
+    static auto constexpr elasticity = 1.f;
+    auto const impulse_magnitude = velocity.Dot(-normal) * elasticity;
+ 
+    // reflect along normal
+    velocity = velocity.Length() * normal;
+
+    // todo : move it away from wall. though may not be enough if dt is too big
+    move(normal * 0.1f);
+
+    auto const impulse_per_ctrlpt = 2.f * impulse_magnitude / static_cast<float>(affected_ctrlpts.size());
+
+   //  push control points in
+    for (uint i = 0; i < affected_ctrlpts.size(); ++i)
+    {
+        auto deltavel_dir = center - control_points[affected_ctrlpts[i]];
+        deltavel_dir.Normalize();
+        velocities[affected_ctrlpts[i]] += impulse_per_ctrlpt * deltavel_dir;
     }
 }
 
@@ -165,68 +303,9 @@ uint geometry::ffd_object::closest_controlpoint(vec3 const& point) const
     return ctrlpt_idx;
 }
 
-std::vector<linesegment> geometry::ffd_object::intersect(ffd_object const& r) const
-{
-    auto const& isect_box = box.intersect(r.getboundingbox());
-    if (!isect_box)
-        return {};
-
-    auto const& ltris = get_physx_triangles();
-    auto const& rtris = r.get_physx_triangles();
-
-    std::vector<xstd::ext<aabb, uint>> laabbs, raabbs;
-
-    laabbs.reserve(10);
-    raabbs.reserve(10);
-
-    auto const lnum_verts = ltris.size();
-    auto const rnum_verts = rtris.size();
-
-    assert(lnum_verts % 3 == 0);
-    assert(rnum_verts % 3 == 0);
-
-    for (uint lidx = 0; lidx < lnum_verts; lidx +=3)
-    {
-        xstd::ext<aabb, uint> lbox{ &ltris[lidx], lidx };
-        if (isect_box.value().intersect(*lbox)) { laabbs.emplace_back(lbox); }
-    }
-
-    for (uint ridx = 0; ridx < rnum_verts; ridx += 3)
-    {
-        xstd::ext<aabb, uint> rbox{ &rtris[ridx], ridx };
-        if (isect_box.value().intersect(*rbox)) { raabbs.emplace_back(rbox); }
-    }
-
-    std::vector<linesegment> result;
-    // todo : can optimize this by hashing triangles on the spherical domain
-    // may need tiling the sphere with polygons
-    for (uint lidx = 0; lidx < laabbs.size(); lidx++)
-        for (uint ridx = 0; ridx < raabbs.size(); ridx++)
-            if(laabbs[lidx]->intersect(raabbs[ridx]))
-                if(auto const& isect = triangle::intersect(&(ltris[laabbs[lidx].ex()]), &rtris[raabbs[ridx].ex()]))
-                    result.push_back(isect.value());
-
-    return result;
-}
-
 std::vector<vec3> geometry::ffd_object::compute_contacts(ffd_object const& other) const
 {
-#ifdef PROFILE_TIMING
-    static float isect_cost = 0.f;
-    auto start = std::chrono::high_resolution_clock::now();
-#endif
-    auto const lines = intersect(other);
-
-#ifdef PROFILE_TIMING
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    isect_cost += duration.count();
-
-    char buf[512];
-    sprintf_s(buf, "Intersection took [%f] ms\n", isect_cost);
-
-    OutputDebugStringA(buf);
-#endif
+    auto const lines = intersect(*this, other);
 
     std::vector<vec3> mids;
     mids.reserve(lines.size() / 2);
@@ -252,6 +331,15 @@ std::vector<vec3> geometry::ffd_object::compute_contacts(ffd_object const& other
     }
 
     return contacts;
+}
+
+vec3 geometry::ffd_object::compute_contact(ffd_object const& r) const
+{
+    auto const& isect_box = box.intersect(r.getaabb());
+    if (!isect_box)
+        return geoutils::invalid<vec3>();
+
+    return (isect_box->max_pt + isect_box->min_pt) / 2.f;
 }
 
 std::vector<vertex> circle::get_triangles() const
@@ -285,28 +373,4 @@ std::vector<vertex> circle::get_triangles() const
 std::vector<gfx::instance_data> circle::get_instance_data() const
 {
     return { gfx::instance_data{matrix::CreateTranslation(center), gfx::getview(), gfx::getmat("")}};
-}
-
-vec3 transform_point_local(vec3 const& x, vec3 const& y, vec3 const& origin, vec3 const& point)
-{
-    vec3 z = x.Cross(y);
-    z.Normalize();
-
-    matrix tx{ x, z, y };
-    tx = tx.Invert();
-    return vec3::Transform(point - origin, tx);
-}
-
-vec3 transform_point_global(vec3 const& x, vec3 const& y, vec3 const& origin, vec3 const& point)
-{
-    vec3 z = x.Cross(y);
-    z.Normalize();
-
-    matrix tx{ x, z, y };
-    return vec3::Transform(point, tx) + origin;
-}
-
-vec3 transform_point_global(vec3 const& x, vec3 const& y, vec3 const& origin, vec2 const& point)
-{
-    return transform_point_global(x, y, origin, vec3(point));
 }

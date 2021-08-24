@@ -92,8 +92,9 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <EnableModules>false</EnableModules>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -112,6 +113,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <EnableModules>false</EnableModules>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -129,11 +131,12 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>Create</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <StructMemberAlignment>Default</StructMemberAlignment>
       <AssemblerOutput>NoListing</AssemblerOutput>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <EnableModules>false</EnableModules>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -156,6 +159,7 @@
       <ConformanceMode>true</ConformanceMode>
       <StructMemberAlignment>Default</StructMemberAlignment>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <EnableModules>false</EnableModules>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -176,10 +180,10 @@
     <ClCompile Include="Engine\engine.cpp" />
     <ClCompile Include="Engine\geometry\geocore.cpp" />
     <ClCompile Include="Engine\geometry\geoutils.cpp" />
-    <ClCompile Include="Engine\geometry\line.cpp" />
+    <ClCompile Include="Engine\geometry\primitives.ixx" />
     <ClCompile Include="Engine\geometry\Shapes.cpp" />
+    <ClCompile Include="Engine\geometry\shapes.ixx" />
     <ClCompile Include="Engine\geometry\sphere.cpp" />
-    <ClCompile Include="Engine\geometry\triangle.cpp" />
     <ClCompile Include="Engine\graphics\body.cpp" />
     <ClCompile Include="Engine\graphics\gfxmemory.cpp" />
     <ClCompile Include="Engine\graphics\gfxutils.cpp" />
@@ -193,7 +197,6 @@
     <ClCompile Include="GameImplementations\SoftBodyDemo\SoftBodyDemo.cpp" />
     <ClCompile Include="GameInterfaces\GameBase.cpp" />
     <ClCompile Include="GameUtils.cpp" />
-    <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\geometry\cube.h" />
@@ -205,10 +208,8 @@
     <ClInclude Include="Engine\geometry\geocore.h" />
     <ClInclude Include="Engine\geometry\geodefines.h" />
     <ClInclude Include="Engine\geometry\geoutils.h" />
-    <ClInclude Include="Engine\geometry\line.h" />
     <ClInclude Include="Engine\geometry\Shapes.h" />
     <ClInclude Include="Engine\geometry\sphere.h" />
-    <ClInclude Include="Engine\geometry\triangle.h" />
     <ClInclude Include="Engine\graphics\body.h" />
     <ClInclude Include="Engine\graphics\body.hpp" />
     <ClInclude Include="Engine\graphics\gfxcore.h" />
@@ -225,7 +226,6 @@
     <ClInclude Include="GameInterfaces\GameBase.h" />
     <ClInclude Include="GameInterfaces\GameUtils.h" />
     <ClInclude Include="SharedConstants.h" />
-    <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="DefaultMS.hlsl">
@@ -349,6 +349,7 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.5</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.5</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Mesh</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Mesh</ShaderType>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>

@@ -67,6 +67,8 @@ namespace gfx
 
         std::vector<ComPtr<ID3D12Resource>> create_resources() override;
         void render(float dt, renderparams const&) override;
+        const geometry::aabb getaabb() const;
+
     };
 
     template<typename geometry_t, topology primitive_t>

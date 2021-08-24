@@ -9,7 +9,7 @@
 //-------------------------------------------------------------------------------------
 
 #pragma once
-
+#define NOMINMAX
 #if !defined(_XBOX_ONE) || !defined(_TITLE)
 #include <dxgi1_2.h>
 #endif

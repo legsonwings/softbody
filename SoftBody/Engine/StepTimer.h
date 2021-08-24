@@ -23,7 +23,7 @@ public:
         m_framesPerSecond(0),
         m_framesThisSecond(0),
         m_qpcSecondCounter(0),
-        m_isFixedTimeStep(false),
+        m_isFixedTimeStep(true),
         m_targetElapsedTicks(TicksPerSecond / 60)
     {
         QueryPerformanceFrequency(&m_qpcFrequency);

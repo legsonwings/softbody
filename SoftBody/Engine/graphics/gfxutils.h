@@ -12,8 +12,8 @@ using Microsoft::WRL::ComPtr;
 namespace gfx
 {
 	using psomapref = std::unordered_map<std::string, pipeline_objects> const&;
-	using materialentry = xstd::ext<material, bool>;
-	using materialcref = xstd::ext<material, bool> const&;
+	using materialentry = stdx::ext<material, bool>;
+	using materialcref = stdx::ext<material, bool> const&;
 
 	viewinfo& getview();
 	sceneconstants& getglobals();

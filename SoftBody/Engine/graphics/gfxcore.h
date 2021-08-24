@@ -5,7 +5,9 @@
 #include "engine/engineutils.h"
 #include "engine/SimpleMath.h"
 
+#include <wrl.h>
 #include <string>
+#include "d3dx12.h"
 
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;

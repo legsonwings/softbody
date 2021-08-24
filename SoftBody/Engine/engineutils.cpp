@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "engineutils.h"
 
 std::random_device rd;

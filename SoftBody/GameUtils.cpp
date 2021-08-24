@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "GameUtils.h"
 
 namespace game_creator

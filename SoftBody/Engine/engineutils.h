@@ -4,7 +4,6 @@
 
 // move these to cpputills or sth
 #include <vector>
-#include <ranges>
 #include <iterator>
 #include <random>
 
@@ -31,7 +30,7 @@ namespace engineutils
 	std::mt19937& getrandomengine();
 }
 
-namespace xstd
+namespace stdx
 {
 	template<typename b, typename e>
 	struct ext

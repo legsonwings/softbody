@@ -9,7 +9,6 @@
 //
 //*********************************************************
 
-#include "stdafx.h"
 #include "Engine.h"
 #include "GameUtils.h"
 #include "engine/graphics/gfxutils.h"

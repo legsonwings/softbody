@@ -1,8 +1,9 @@
 #pragma once
 
+#include <d3d12.h>
+#include "d3dx12.h"
 #include <string>
 #include <random>
-using namespace DirectX;
 
 struct constant_buffer;
 struct configurable_properties;

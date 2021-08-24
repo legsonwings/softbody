@@ -1,10 +1,10 @@
 #pragma once
 
+#include <d3d12.h>
+#include <wrl.h>
+#include <string>
 #include <vector>
 #include <utility>
-
-using namespace DirectX;
-using Microsoft::WRL::ComPtr;
 
 struct renderparams;
 
@@ -25,7 +25,7 @@ namespace gfx
 		bodyparams const& getparams() const { return params;  }
 		virtual void update(float dt) {};
 		virtual void render(float dt, renderparams const &) {};
-		virtual std::vector<ComPtr<ID3D12Resource>> create_resources() { return {}; };
+		virtual std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> create_resources() { return {}; };
 		virtual D3D12_GPU_VIRTUAL_ADDRESS get_vertexbuffer_gpuaddress() const = 0;
 	};
 }

@@ -37,15 +37,12 @@
     <ClCompile Include="GameImplementations\SoftBodyDemo\SoftBodyDemo.cpp">
       <Filter>GameImplementations\SoftBodyDemo</Filter>
     </ClCompile>
-    <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="GameInterfaces\GameBase.cpp">
       <Filter>GameInterfaces</Filter>
     </ClCompile>
     <ClCompile Include="Engine\physics\collision.cpp" />
     <ClCompile Include="Engine\geometry\Shapes.cpp" />
     <ClCompile Include="Engine\geometry\sphere.cpp" />
-    <ClCompile Include="Engine\geometry\line.cpp" />
-    <ClCompile Include="Engine\geometry\triangle.cpp" />
     <ClCompile Include="Engine\geometry\geocore.cpp" />
     <ClCompile Include="Engine\geometry\geoutils.cpp" />
     <ClCompile Include="Engine\engine.cpp" />
@@ -56,6 +53,8 @@
     <ClCompile Include="Engine\graphics\gfxutils.cpp" />
     <ClCompile Include="Engine\geometry\cube.cpp" />
     <ClCompile Include="Engine\engineutils.cpp" />
+    <ClCompile Include="Engine\geometry\primitives.ixx" />
+    <ClCompile Include="Engine\geometry\shapes.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\DXSample.h">
@@ -89,14 +88,11 @@
     <ClInclude Include="GameImplementations\SoftBodyDemo\SoftBodyDemo.h">
       <Filter>GameImplementations\SoftBodyDemo</Filter>
     </ClInclude>
-    <ClInclude Include="stdafx.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="Engine\physics\collision.h" />
     <ClInclude Include="Engine\geometry\Shapes.h" />
     <ClInclude Include="Engine\geometry\sphere.h" />
-    <ClInclude Include="Engine\geometry\line.h" />
     <ClInclude Include="Engine\geometry\geocore.h" />
-    <ClInclude Include="Engine\geometry\triangle.h" />
     <ClInclude Include="Engine\geometry\geoutils.h" />
     <ClInclude Include="Engine\engine.h" />
     <ClInclude Include="Engine\graphics\body.h" />

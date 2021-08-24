@@ -2,8 +2,9 @@
 
 #include "Engine/engineutils.h"
 
-using namespace DirectX;
-using Microsoft::WRL::ComPtr;
+#include <assert.h>
+#include <wrl.h>
+#include <d3d12.h>
 
 constexpr unsigned cb_alignment = D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
 
@@ -20,7 +21,7 @@ private:
 	cb_memory buffermemory;
 	uint8_t *cbdata_start = nullptr;
 	uint8_t* cbupload_start = nullptr;
-	ComPtr<ID3D12Resource> cb_resource;
+	Microsoft::WRL::ComPtr<ID3D12Resource> cb_resource;
 	void createresources(uint _cb_size);
 	void set_data(uint8_t const* data_start);
 public:

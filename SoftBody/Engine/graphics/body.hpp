@@ -85,7 +85,13 @@ namespace gfx
         bindings.rootconstants.values.resize(sizeof(dispatch_params));
 
         memcpy(bindings.rootconstants.values.data(), &dispatch_params, sizeof(dispatch_params));
-        dispatch(std::move(bindings), gfx::getmat(getparams().matname).ex());
+        dispatch(bindings, gfx::getmat(getparams().matname).ex());
+    }
+
+    template<typename geometry_t, topology primitive_t>
+    inline const geometry::aabb body_static<geometry_t, primitive_t>::getaabb() const
+    {
+        return body.getaabb();
     }
 
     template<typename geometry_t, topology primitive_t>
@@ -176,7 +182,7 @@ namespace gfx
         bindings.rootconstants.values.resize(sizeof(dispatch_params));
 
         memcpy(bindings.rootconstants.values.data(), &dispatch_params, sizeof(dispatch_params));
-        dispatch(std::move(bindings), gfx::getmat(getparams().matname).ex());
+        dispatch(bindings, gfx::getmat(getparams().matname).ex());
     }
 
     template<typename geometry_t, topology primitive_t>

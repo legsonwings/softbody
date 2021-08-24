@@ -26,7 +26,7 @@ namespace geoutils
 	requires arithmetic_c<t> || arithmeticvector_c<t>
 	struct invalid
 	{
-		constexpr operator t() const { return std::numeric_limits<t>::max(); }
+		constexpr operator t() const { return { std::numeric_limits<t>::max() }; }
 	};
 
 	template <typename t>

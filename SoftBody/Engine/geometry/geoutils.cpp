@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "geoutils.h"
 
 #include "DirectXMath.h"

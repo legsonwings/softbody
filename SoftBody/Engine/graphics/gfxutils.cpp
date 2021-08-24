@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "gfxutils.h"
 #include "engine/DXSampleHelper.h"
 #include "engine/interfaces/engineinterface.h"
@@ -11,8 +10,8 @@ namespace gfx
     viewinfo view;
     sceneconstants constbufferdata;
     std::unordered_map<std::string, pipeline_objects> psos;
-    std::unordered_map <std::string, xstd::ext<material, bool>> materials;
-    xstd::ext<material, bool> defaultmat(material{}, false);
+    std::unordered_map <std::string, stdx::ext<material, bool>> materials;
+    stdx::ext<material, bool> defaultmat(material{}, false);
 }
 
 gfx::viewinfo& gfx::getview() { return view; }
@@ -32,7 +31,7 @@ std::string const& gfx::generaterandom_matcolor(materialcref definition, std::op
     static constexpr uint matgenlimit = 1000u;
     auto & re = engineutils::getrandomengine();
     static const std::uniform_int_distribution<uint> matnumberdist(0, matgenlimit);
-    static const std::uniform_real_distribution<float> colordist(0.f, 0.6f);
+    static const std::uniform_real_distribution<float> colordist(0.f, 1.f);
 
     vec3 const color = { colordist(re), colordist(re), colordist(re) };
     static const std::string basename("mat");
@@ -57,13 +56,13 @@ void gfx::init_pipelineobjects()
     addpso("wireframe", L"DefaultAS.cso", L"DefaultMS.cso", L"default_ps.cso", psoflags::wireframe | psoflags::transparent);
     addpso("instancedtransparent", L"InstancesAS.cso", L"InstancesMS.cso", L"instances_ps.cso", psoflags::transparent);
 
-    auto const ballmat = material().roughness(0.f).diffusealbedo({ 0.15f, 0.1f, 0.5f, 1.f }).fresnelr(vec3{ 0.6f });
-    auto const transparent_ballmat = material(ballmat).diffusealbedo({ 0.15f, 0.1f, 0.5f, 0.3f });
+    auto const ballmat = material().roughness(0.95f).diffusealbedo({ 1.f, 1.f, 1.f, 1.f }).fresnelr(vec3{ 0.0f });
+    auto const transparent_ballmat = material().roughness(0.f).diffusealbedo({ 0.7f, 0.9f, 0.6f, 0.1f }).fresnelr(vec3{1.f});
 
     materials.insert({ "ball", {ballmat, false} });
     materials.insert({ "transparentball", {transparent_ballmat, false}});
     materials.insert({ "transparentball_twosided", {transparent_ballmat, true } });
-    materials.insert({ "room", {material().roughness(0.57f).diffusealbedo({ 0.2f, 0.1f, 0.2f, 1.f }).fresnelr(vec3{0.15f}), false }});
+    materials.insert({ "room", {material().roughness(0.9999999f).diffusealbedo({ 0.5f, 0.3f, 0.2f, 1.f }).fresnelr(vec3{ 0.f }), false }});
 }
 
 void gfx::deinit_pipelineobjects()
