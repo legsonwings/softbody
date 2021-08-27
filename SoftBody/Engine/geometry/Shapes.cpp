@@ -1,5 +1,4 @@
 #include "Shapes.h"
-#include "geoutils.h"
 #include "engine/graphics/gfxutils.h"
 
 #include <algorithm>
@@ -102,17 +101,12 @@ void ffd_object::update(float dt)
     evaluated_verts.clear();
     for (auto const& vert : vertices)
     {
-        auto pos = eval_bez_trivariate(vert.position.x, vert.position.y, vert.position.z);
+        auto pos = evalbez_trivariate(vert.position.x, vert.position.y, vert.position.z);
         physx_verts.push_back(pos);
 
         // todo : evaluate the normal as well
         evaluated_verts.push_back({ pos, vert.normal });
     }
-}
-
-std::vector<vec3> ffd_object::get_control_point_visualization() const
-{
-    return geoutils::create_cube_lines(vec3::Zero, 0.1f);
 }
 
 std::vector<gfx::instance_data> geometry::ffd_object::get_controlnet_instancedata() const
@@ -126,6 +120,55 @@ std::vector<gfx::instance_data> geometry::ffd_object::get_controlnet_instancedat
 std::vector<vec3> geometry::ffd_object::getbox_vertices() const
 {
     return getbox().get_vertices();
+}
+
+vec3 geometry::ffd_object::evalbez_trivariate(float s, float t, float u) const
+{
+    auto qbasis = [](float t)
+    {
+        // quadratic bezier basis
+        float const invt = 1.f - t;
+        return vec3{ invt * invt, 2.f * invt * t, t * t };
+    };
+
+    vec3 const bs = qbasis(s);
+    vec3 const bt = qbasis(t);
+    vec3 const bu = qbasis(u);
+
+    auto const& v = control_points;
+
+    vec3 result = bt.x * (bu.x * (v[0] * bs.x + v[1] * bs.y + v[2] * bs.z) + bu.y * (v[3] * bs.x + v[4] * bs.y + v[5] * bs.z) + bu.z * (v[6] * bs.x + v[7] * bs.y + v[8] * bs.z)) 
+    + bt.y * (bu.x * (v[9] * bs.x + v[10] * bs.y + v[11] * bs.z) + bu.y * (v[12] * bs.x + v[13] * bs.y + v[14] * bs.z) + bu.z * (v[15] * bs.x + v[16] * bs.y + v[17] * bs.z))
+    + bt.z * (bu.x * (v[18] * bs.x + v[19] * bs.y + v[20] * bs.z) + bu.y * (v[21] * bs.x + v[22] * bs.y + v[23] * bs.z) + bu.z * (v[24] * bs.x + v[25] * bs.y + v[26] * bs.z));
+
+    return result;
+}
+
+vec3 geometry::ffd_object::eval_bez_trivariate(float s, float t, float u) const
+{
+    vec3 result = vec3::Zero;
+    for (uint i = 0; i <= 2; ++i)
+    {
+        vec3 resultj = vec3::Zero;
+        float basis_s = (float(l) / float(fact(i) * fact(l - i))) * std::powf(float(1 - s), float(l - i)) * std::powf(float(s), float(i));
+        for (uint j = 0; j <= 2; ++j)
+        {
+            vec3 resultk = vec3::Zero;
+            float basis_t = (float(m) / float(fact(j) * fact(m - j))) * std::powf(float(1 - t), float(m - j)) * std::powf(float(t), float(j));
+            for (uint k = 0; k <= 2; ++k)
+            {
+                float basis_u = (float(n) / float(fact(k) * fact(n - k))) * std::powf(float(1 - u), float(n - k)) * std::powf(float(u), float(k));
+
+                resultk += basis_u * control_points[get1D(i, j, k)];
+            }
+
+            resultj += resultk * basis_t;
+        }
+
+        result += resultj * basis_s;
+    }
+
+    return result;
 }
 
 void geometry::ffd_object::move(vec3 delta)

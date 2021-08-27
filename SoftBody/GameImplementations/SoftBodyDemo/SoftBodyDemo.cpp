@@ -8,17 +8,30 @@
 #include "engine/graphics/body.h"
 #include "engine/graphics/gfxmemory.h"
 
+#include <set>
 #include <ranges>
 #include <algorithm>
 #include <functional>
 
-//#define PROFILE_TIMING
+#define PROFILE_TIMING
 
 #ifdef PROFILE_TIMING
 #include <chrono>
+using namespace std::chrono;
 #endif 
-#include <set>
 
+#ifdef PROFILE_TIMING
+
+#define TIMEDSCOPE(name) { steady_clock::time_point timed##name = high_resolution_clock::now();
+#define TIMEDSCOPEEND(name) { \
+auto t = duration_cast<microseconds>(high_resolution_clock::now() - timed##name);  \
+char buf[512];                                                           \
+sprintf_s(buf, "time for %s [%d]us\n", #name, static_cast<int>(t.count()));     \
+OutputDebugStringA(buf);                                                 \
+} \
+}
+
+#endif // PROFILE_TIMING
 namespace game_creator
 {
     template <>
@@ -31,8 +44,8 @@ namespace game_creator
 namespace gameparams
 {
     constexpr float speed = 15.f;
-    constexpr uint numballs = 30;
-    constexpr float ballradius = 2.f;
+    constexpr uint numballs = 75;
+    constexpr float ballradius = 1.7f;
 }
 
 struct cell
@@ -117,14 +130,21 @@ void soft_body::update(float dt)
 
     auto const& roomaabb = staticbodies_boxes[0].getaabb();
 
+    TIMEDSCOPE(selfcoll)
     for (uint i = 0; i < gameparams::numballs; ++i)
         for (uint j = i + 1; j < gameparams::numballs; ++j)
             balls[i].get().resolve_collision(balls[j].get(), dt);
+    TIMEDSCOPEEND(selfcoll)
 
+    TIMEDSCOPE(boxcoll)
     for (uint i = 0; i < gameparams::numballs; ++i)
         balls[i].get().resolve_collision_interior(roomaabb, dt);
+    TIMEDSCOPEEND(boxcoll)
 
+    TIMEDSCOPE(ballsupdate)
     for (auto& b : balls) b.update(dt);
+    TIMEDSCOPEEND(ballsupdate)
+
     for (auto& b : dynamicbodies_line) b.update(dt);
 
     auto& viewinfo = gfx::getview();
@@ -154,10 +174,12 @@ void soft_body::update(float dt)
 
 void soft_body::render(float dt)
 {
+    TIMEDSCOPE(render)
     for (auto& body : staticbodies_lines) { body.render(dt, { m_wireframe_toggle, cbuffer.get_gpuaddress() }); }
     for (auto& body : staticbodies_boxes) { body.render(dt, { m_wireframe_toggle, cbuffer.get_gpuaddress() }); }
     for (auto& body : dynamicbodies_line) { body.render(dt, { m_wireframe_toggle, cbuffer.get_gpuaddress() }); }
     for (auto& body : balls) { body.render(dt, { m_wireframe_toggle, cbuffer.get_gpuaddress() }); }
+    TIMEDSCOPEEND(render)
 }
 
 game_base::resourcelist soft_body::load_assets_and_geometry()

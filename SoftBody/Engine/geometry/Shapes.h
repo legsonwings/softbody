@@ -4,6 +4,7 @@
 #include "Engine/Graphics/gfxcore.h"
 #include "Engine/engineutils.h"
 #include "geocore.h"
+#include "geoutils.h"
 
 #include <vector>
 
@@ -25,6 +26,13 @@ namespace geometry
     {
     public:
         ffd_object() = default;
+
+        uint get1D(uint i, uint j, uint k) const { return i + k * (l + 1) + j * (l + 1) * (m + 1); }
+        std::vector<vertex> const& get_vertices() const { return evaluated_verts; }
+        std::vector<vec3> const& get_physx_triangles() const { return physx_verts; }
+        std::vector<vec3> get_control_point_visualization() const { return geoutils::create_cube_lines(vec3::Zero, 0.1f); }
+        std::vector<gfx::instance_data> get_controlnet_instancedata() const;
+
         ffd_object(sphere const& _sphere) : ball(_sphere), center(_sphere.position)
         {
             ball.position = vec3::Zero;
@@ -87,39 +95,6 @@ namespace geometry
             return { to_point.x / span.x, to_point.y / span.y, to_point.z / span.z };
         }
 
-        uint get_1D_idx(uint i, uint j, uint k) const
-        {
-            return i + k * (l + 1) + j * (l + 1) * (m + 1);
-        }
-
-        void apply_force(vec3 const& force, float dt)
-        {
-            velocity += force * dt;
-        }
-
-        void apply_force_at_controlpoint(uint i, uint j, uint k, vec3 const& force)
-        {
-            apply_force_at_controlpoint(get_1D_idx(i, j, k), force);
-        }
-
-        void apply_force_at_controlpoint(uint ctrlpt_idx, vec3 const& force)
-        {
-            velocities[ctrlpt_idx] += force;
-        }
-
-        std::vector<vec3> get_control_point_visualization() const;
-        std::vector<gfx::instance_data> get_controlnet_instancedata() const;
-
-        std::vector<vertex> const& get_vertices() const
-        {
-            return evaluated_verts;
-        }
-
-        std::vector<vec3> const& get_physx_triangles() const
-        {
-            return physx_verts;
-        }
-
         float fact(uint i) const
         {
             if (i < 1)
@@ -128,26 +103,8 @@ namespace geometry
             return fact(i - 1) * i;
         }
 
-        vec3 eval_bez_trivariate(float s, float t, float u) const
-        {
-            vec3 result = vec3::Zero;
-            for (uint i = 0; i <= 2; ++i)
-            {
-                float basis_s = (float(l) / float(fact(i) * fact(l - i))) * std::powf(float(1 - s), float(l - i)) * std::powf(float(s), float(i));
-                for (uint j = 0; j <= 2; ++j)
-                {
-                    float basis_t = (float(m) / float(fact(j) * fact(m - j))) * std::powf(float(1 - t), float(m - j)) * std::powf(float(t), float(j));
-                    for (uint k = 0; k <= 2; ++k)
-                    {
-                        float basis_u = (float(n) / float(fact(k) * fact(n - k))) * std::powf(float(1 - u), float(n - k)) * std::powf(float(u), float(k));
-
-                        result += basis_s * basis_t * basis_u * control_points[get_1D_idx(i, j, k)];
-                    }
-                }
-            }
-
-            return result;
-        }
+        vec3 evalbez_trivariate(float s, float t, float u) const;
+        vec3 eval_bez_trivariate(float s, float t, float u) const;
         
         void move(vec3 delta);
         vec3 const& getcenter() const { return center; }

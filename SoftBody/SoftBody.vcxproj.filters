@@ -42,7 +42,6 @@
     </ClCompile>
     <ClCompile Include="Engine\physics\collision.cpp" />
     <ClCompile Include="Engine\geometry\Shapes.cpp" />
-    <ClCompile Include="Engine\geometry\sphere.cpp" />
     <ClCompile Include="Engine\geometry\geocore.cpp" />
     <ClCompile Include="Engine\geometry\geoutils.cpp" />
     <ClCompile Include="Engine\engine.cpp" />
@@ -51,7 +50,6 @@
     <ClCompile Include="Engine\interfaces\engineinterface.cpp" />
     <ClCompile Include="Engine\graphics\gfxmemory.cpp" />
     <ClCompile Include="Engine\graphics\gfxutils.cpp" />
-    <ClCompile Include="Engine\geometry\cube.cpp" />
     <ClCompile Include="Engine\engineutils.cpp" />
     <ClCompile Include="Engine\geometry\primitives.ixx" />
     <ClCompile Include="Engine\geometry\shapes.ixx" />
@@ -91,7 +89,6 @@
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="Engine\physics\collision.h" />
     <ClInclude Include="Engine\geometry\Shapes.h" />
-    <ClInclude Include="Engine\geometry\sphere.h" />
     <ClInclude Include="Engine\geometry\geocore.h" />
     <ClInclude Include="Engine\geometry\geoutils.h" />
     <ClInclude Include="Engine\engine.h" />
@@ -102,7 +99,6 @@
     <ClInclude Include="Engine\interfaces\engineinterface.h" />
     <ClInclude Include="Engine\graphics\gfxmemory.h" />
     <ClInclude Include="Engine\graphics\gfxutils.h" />
-    <ClInclude Include="Engine\geometry\cube.h" />
     <ClInclude Include="Engine\geometry\geodefines.h" />
   </ItemGroup>
   <ItemGroup>

@@ -175,7 +175,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Engine\engineutils.cpp" />
-    <ClCompile Include="Engine\geometry\cube.cpp" />
     <ClCompile Include="Engine\DXSample.cpp" />
     <ClCompile Include="Engine\engine.cpp" />
     <ClCompile Include="Engine\geometry\geocore.cpp" />
@@ -183,7 +182,6 @@
     <ClCompile Include="Engine\geometry\primitives.ixx" />
     <ClCompile Include="Engine\geometry\Shapes.cpp" />
     <ClCompile Include="Engine\geometry\shapes.ixx" />
-    <ClCompile Include="Engine\geometry\sphere.cpp" />
     <ClCompile Include="Engine\graphics\body.cpp" />
     <ClCompile Include="Engine\graphics\gfxmemory.cpp" />
     <ClCompile Include="Engine\graphics\gfxutils.cpp" />
@@ -199,7 +197,6 @@
     <ClCompile Include="GameUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Engine\geometry\cube.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="Engine\DXSample.h" />
     <ClInclude Include="Engine\DXSampleHelper.h" />
@@ -209,7 +206,6 @@
     <ClInclude Include="Engine\geometry\geodefines.h" />
     <ClInclude Include="Engine\geometry\geoutils.h" />
     <ClInclude Include="Engine\geometry\Shapes.h" />
-    <ClInclude Include="Engine\geometry\sphere.h" />
     <ClInclude Include="Engine\graphics\body.h" />
     <ClInclude Include="Engine\graphics\body.hpp" />
     <ClInclude Include="Engine\graphics\gfxcore.h" />
