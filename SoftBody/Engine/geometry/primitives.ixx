@@ -20,8 +20,7 @@ struct line2D
     {
         // assuming point is already on the line
         auto origin = line.point;
-        auto topoint = point - origin;
-        topoint.Normalize();
+        auto const topoint = (point - origin).Normalized();
 
         return vec2::Distance(origin, point) * (topoint.Dot(line.dir) > 0.f ? 1.f : -1.f);
     }
@@ -40,8 +39,7 @@ struct line
     {
         // assuming point is already on the line
         auto origin = line.point;
-        auto topoint = point - origin;
-        topoint.Normalize();
+        auto const topoint = (point - origin).Normalized();
 
         return vec3::Distance(origin, point) * (topoint.Dot(line.dir) > 0.f ? 1.f : -1.f);
     }
@@ -50,8 +48,7 @@ struct line
     {
         // if the lines intersect they need to be on the same plane.
         // calculate plane normal
-        auto n = l.dir.Cross(r.dir);
-        n.Normalize();
+        auto const n = l.dir.Cross(r.dir).Normalized();
 
         // if lines intersect dot product to normal and any point on both lines is constant
         auto const c1 = n.Dot(l.point);
@@ -59,8 +56,7 @@ struct line
             return {};
 
         // calculate cross of n and line dir
-        auto ldir_cross_n = l.dir.Cross(n);
-        ldir_cross_n.Normalize();
+        auto const ldir_cross_n = l.dir.Cross(n).Normalized();
 
         // this constant should be same for all points on l, i.e 
         auto const c = ldir_cross_n.Dot(l.point);
@@ -132,14 +128,11 @@ struct triangle
 
     static std::optional<linesegment> intersect(vec3 const* t0, vec3 const* t1)
     {
-        vec3 t0_normal = (t0[1] - t0[0]).Cross(t0[2] - t0[0]);
-        vec3 t1_normal = (t1[1] - t1[0]).Cross(t1[2] - t1[0]);
-        t0_normal.Normalize();
-        t1_normal.Normalize();
+        vec3 const t0_normal = (t0[1] - t0[0]).Cross(t0[2] - t0[0]).Normalized();
+        vec3 const t1_normal = (t1[1] - t1[0]).Cross(t1[2] - t1[0]).Normalized();
 
         // construct third plane as cross product of the two plane normals and passing through origin
-        auto linedir = t0_normal.Cross(t1_normal);
-        linedir.Normalize();
+        auto const linedir = t0_normal.Cross(t1_normal).Normalized();
 
         // use 3 plane intersection to find a point on the inerseciton line
         auto const det = matrix(t0_normal, t1_normal, linedir).Determinant();
@@ -154,25 +147,13 @@ struct triangle
         std::vector<line> edges;
         edges.reserve(6);
 
-        auto dir = (t0[1] - t0[0]);
-        dir.Normalize();
-        edges.emplace_back(line{ t0[0], dir });
-        dir = (t0[2] - t0[1]);
-        dir.Normalize();
-        edges.emplace_back(line{ t0[1], dir });
-        dir = (t0[0] - t0[2]);
-        dir.Normalize();
-        edges.emplace_back(line{ t0[2], dir });
+        edges.emplace_back(line{ t0[0], (t0[1] - t0[0]).Normalized() });
+        edges.emplace_back(line{ t0[1], (t0[2] - t0[1]).Normalized() });
+        edges.emplace_back(line{ t0[2], (t0[0] - t0[2]).Normalized() });
 
-        dir = (t1[1] - t1[0]);
-        dir.Normalize();
-        edges.emplace_back(line{ t1[0], dir });
-        dir = (t1[2] - t1[1]);
-        dir.Normalize();
-        edges.emplace_back(line{ t1[1], dir });
-        dir = (t1[0] - t1[2]);
-        dir.Normalize();
-        edges.emplace_back(line{ t1[2], dir });
+        edges.emplace_back(line{ t1[0], (t1[1] - t1[0]).Normalized() });
+        edges.emplace_back(line{ t1[1], (t1[2] - t1[1]).Normalized() });
+        edges.emplace_back(line{ t1[2], (t1[0] - t1[2]).Normalized() });
 
         std::vector<vec3> isect_linesegment;
         isect_linesegment.reserve(2);
@@ -214,9 +195,8 @@ struct triangle
 
     static bool isin(vec3 const* tri, vec3 const& point)
     {
-        vec3 normal_unnormalized = (tri[1] - tri[0]).Cross(tri[2] - tri[0]);
-        vec3 normal = normal_unnormalized;
-        normal.Normalize();
+        vec3 const normal_unnormalized = (tri[1] - tri[0]).Cross(tri[2] - tri[0]);
+        vec3 const normal = normal_unnormalized.Normalized();
 
         // this is not really area of triangle
         // todo:verify if this is correct

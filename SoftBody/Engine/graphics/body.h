@@ -7,7 +7,6 @@
 #include "engine/interfaces/bodyinterface.h"
 #include "gfxmemory.h"
 #include "engine/SimpleMath.h"
-#include "engine/geometry/shapes.h"
 
 #include <type_traits>
 #include <memory>
@@ -61,6 +60,7 @@ namespace gfx
         D3D12_GPU_VIRTUAL_ADDRESS get_instancebuffer_gpuaddress() const;
         D3D12_GPU_VIRTUAL_ADDRESS get_vertexbuffer_gpuaddress() const override { return m_vertexbuffer->GetGPUVirtualAddress(); }
     public:
+        // todo : this weirdness to accept only member functions is probably not needed anymore with use of concepts
         template<typename = std::enable_if_t<!std::is_lvalue_reference_v<geometry_t>>>
         body_static(geometry_t _body, bodyparams const & _params);
         body_static(geometry_t const& _body, vertexfetch_r(std::decay_t<geometry_t>::* vfun)() const, instancedatafetch_r(std::decay_t<geometry_t>::* ifun)() const, bodyparams const& _params);
@@ -104,7 +104,7 @@ namespace gfx
         void update(float dt) override;
         void render(float dt, renderparams const&) override;
 
-        constexpr geometry_t &get() { return body; }
+        constexpr geometry_t &get() { return body; } 
         constexpr geometry_t const &get() const { return body; }
         constexpr geometry_t &operator*() { return body; }
         constexpr geometry_t const &operator*() const { return body; }

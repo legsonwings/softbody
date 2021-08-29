@@ -4,7 +4,7 @@
 #include "engine/SimpleMath.h"
 #include "engine/SimpleCamera.h"
 #include "engine/graphics/gfxmemory.h"
-#include "Engine/geometry/shapes.h"
+#include "Engine/geometry/ffd.h"
 
 import shapes;
 class game_engine;

@@ -3,7 +3,8 @@
 #include "Engine/SimpleMath.h"
 #include "DirectXMath.h"
 #include "Engine/engineutils.h"
-#include "Engine/geometry/Shapes.h"
+#include "engine/geometry/geodefines.h"
+#include "engine/geometry/geocore.h"
 
 #include <vector>
 

@@ -180,7 +180,7 @@
     <ClCompile Include="Engine\geometry\geocore.cpp" />
     <ClCompile Include="Engine\geometry\geoutils.cpp" />
     <ClCompile Include="Engine\geometry\primitives.ixx" />
-    <ClCompile Include="Engine\geometry\Shapes.cpp" />
+    <ClCompile Include="Engine\geometry\ffd.cpp" />
     <ClCompile Include="Engine\geometry\shapes.ixx" />
     <ClCompile Include="Engine\graphics\body.cpp" />
     <ClCompile Include="Engine\graphics\gfxmemory.cpp" />
@@ -189,6 +189,7 @@
     <ClCompile Include="Engine\interfaces\engineinterface.cpp" />
     <ClCompile Include="Engine\Main.cpp" />
     <ClCompile Include="Engine\physics\collision.cpp" />
+    <ClCompile Include="Engine\physics\spring.ixx" />
     <ClCompile Include="Engine\SimpleCamera.cpp" />
     <ClCompile Include="Engine\SimpleMath.cpp" />
     <ClCompile Include="Engine\Win32Application.cpp" />
@@ -205,7 +206,7 @@
     <ClInclude Include="Engine\geometry\geocore.h" />
     <ClInclude Include="Engine\geometry\geodefines.h" />
     <ClInclude Include="Engine\geometry\geoutils.h" />
-    <ClInclude Include="Engine\geometry\Shapes.h" />
+    <ClInclude Include="Engine\geometry\ffd.h" />
     <ClInclude Include="Engine\graphics\body.h" />
     <ClInclude Include="Engine\graphics\body.hpp" />
     <ClInclude Include="Engine\graphics\gfxcore.h" />

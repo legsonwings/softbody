@@ -24,8 +24,7 @@ std::array<vertex, 4> transform_unitquad(const vec3(&verts)[4], const vec3(&tx)[
 
     auto const scale = tx[2];
     auto const angle = XMConvertToRadians(tx[0].Length());
-    auto axis = tx[0];
-    axis.Normalize();
+    auto const axis = tx[0].Normalized();
 
     for (uint i = 0; i < 4; ++i)
     {
@@ -49,14 +48,11 @@ matrix geoutils::get_planematrix(vec3 const &translation, vec3 const &normal)
 {
     vec3 axis1 = normal.Cross(vec3::UnitX);
     if (axis1.LengthSquared() <= 0.001)
-    {
         axis1 = normal.Cross(vec3::UnitY);
-    }
 
     axis1.Normalize();
 
-    vec3 axis2 = axis1.Cross(normal);
-    axis2.Normalize();
+    vec3 const axis2 = axis1.Cross(normal).Normalized();
 
     // treat normal as y axis
     Matrix result = Matrix(axis1, axis2, -normal);

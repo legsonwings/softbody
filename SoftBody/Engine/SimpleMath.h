@@ -147,6 +147,7 @@ namespace DirectX
             Vector2 Cross(const Vector2& V) const noexcept;
 
             void Normalize() noexcept;
+            Vector2 Normalized() const noexcept;
             void Normalize(Vector2& result) const noexcept;
 
             void Clamp(const Vector2& vmin, const Vector2& vmax) noexcept;
@@ -260,6 +261,7 @@ namespace DirectX
             Vector3 Cross(const Vector3& V) const noexcept;
 
             void Normalize() noexcept;
+            Vector3 Normalized() const noexcept;
             void Normalize(Vector3& result) const noexcept;
 
             void Clamp(const Vector3& vmin, const Vector3& vmax) noexcept;

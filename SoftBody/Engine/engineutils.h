@@ -17,7 +17,7 @@ struct configurable_properties
 	unsigned height = 720;
 	static constexpr unsigned frame_count = 2;
 
-	std::wstring app_name = L"Soft Body Engine";
+	std::wstring app_name = L"Soft Body Demo";
 
 	float get_aspect_ratio() const
 	{

@@ -19,13 +19,12 @@ namespace gfx
     template<typename>
     inline body_static<geometry_t, primitive_t>::body_static(geometry_t _body, bodyparams const& _params) : bodyinterface(_params), body(_body)
     {
-        get_vertices = [](geometry_t const& geom) { return geom.get_vertices(); };
+        get_vertices = [](geometry_t const& geom) { return geom.gvertices(); };
     }
 
     template<typename geometry_t, topology primitive_t>
     inline body_static<geometry_t, primitive_t>::body_static(geometry_t const& _body, vertexfetch_r (std::decay_t<geometry_t>::* vfun)() const, instancedatafetch_r (std::decay_t<geometry_t>::* ifun)() const, bodyparams const& _params) : bodyinterface(_params), body(_body)
     {
-        // todo : add support for data member pointers
         get_vertices = [vfun](geometry_t const& geom) { return std::invoke(vfun, geom); };
         get_instancedata = [ifun](geometry_t const& geom) { return std::invoke(ifun, geom); };
     }
@@ -91,7 +90,7 @@ namespace gfx
     template<typename geometry_t, topology primitive_t>
     inline const geometry::aabb body_static<geometry_t, primitive_t>::getaabb() const
     {
-        return body.getaabb();
+        return body.gaabb();
     }
 
     template<typename geometry_t, topology primitive_t>
@@ -112,13 +111,12 @@ namespace gfx
     template<typename>
     inline body_dynamic<geometry_t, primitive_t>::body_dynamic(geometry_t _body, bodyparams const& _params)  : bodyinterface(_params), body(_body)
     {
-        get_vertices = [](geometry_t const& geom) { return geom.get_vertices(); };
+        get_vertices = [](geometry_t const& geom) { return geom.gvertices(); };
     }
 
     template<typename geometry_t, topology primitive_t>
     inline body_dynamic<geometry_t, primitive_t>::body_dynamic(geometry_t const& _body, vertexfetch_r (std::decay_t<geometry_t>::*fun)() const, bodyparams const& _params) : bodyinterface(_params), body(_body)
     {
-        // todo : add support for data member pointers and any callable(lambdas, functors)
         get_vertices = [fun](geometry_t const& geom) { return std::invoke(fun, geom); };
     }
 
@@ -188,9 +186,7 @@ namespace gfx
     template<typename geometry_t, topology primitive_t>
     inline void body_dynamic<geometry_t, primitive_t>::update_constbuffer()
     {
-        // vertices are already in world space so create matrix at origin
-        // todo : vertices should be in local space
-        objectconstants objconsts = { matrix::CreateTranslation(vec3::Zero), getview(), getmat(getparams().matname)};
+        objectconstants objconsts = { matrix::CreateTranslation(body.gcenter()), getview(), getmat(getparams().matname) };
         cbuffer.set_data(&objconsts);
     }
 

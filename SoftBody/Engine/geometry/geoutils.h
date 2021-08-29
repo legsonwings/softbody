@@ -7,7 +7,6 @@
 
 namespace geoutils
 {
-	// todo : these are more like numericutils
 	template <typename t>
 	concept arithmetic_c = std::is_arithmetic_v<t>;
 
