@@ -1,5 +1,6 @@
 #include "gfxutils.h"
 #include "engine/DXSampleHelper.h"
+#include "engine/engineutils.h"
 #include "engine/interfaces/engineinterface.h"
 #include "engine/geometry/geoutils.h"
 

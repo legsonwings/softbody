@@ -20,6 +20,7 @@ namespace gfx
     inline body_static<geometry_t, primitive_t>::body_static(geometry_t _body, bodyparams const& _params) : bodyinterface(_params), body(_body)
     {
         get_vertices = [](geometry_t const& geom) { return geom.gvertices(); };
+        get_instancedata = [](geometry_t const& geom) { return geom.instancedata(); };
     }
 
     template<typename geometry_t, topology primitive_t>

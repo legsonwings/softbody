@@ -2,7 +2,8 @@ module;
 
 #include "geocore.h"
 #include "geoutils.h"
-#include "Engine/engineutils.h"
+#include "engine/stdx.h"
+
 #include <optional>
 
 export module primitives;
@@ -52,7 +53,7 @@ struct line
 
         // if lines intersect dot product to normal and any point on both lines is constant
         auto const c1 = n.Dot(l.point);
-        if (std::fabs(c1 - n.Dot(r.point)) > geoutils::tolerance<float>)
+        if (std::fabs(c1 - n.Dot(r.point)) > stdx::tolerance<float>)
             return {};
 
         // calculate cross of n and line dir
@@ -207,7 +208,7 @@ struct triangle
         float const alpha = normal.Dot((tri[1] - point).Cross(tri[2] - point)) / triarea;
         float const beta = normal.Dot((tri[2] - point).Cross(tri[0] - point)) / triarea;
 
-        return alpha > -geoutils::tolerance<float> && beta > -geoutils::tolerance<float> && (alpha + beta) < (1.f + geoutils::tolerance<float>);
+        return alpha > -stdx::tolerance<float> && beta > -stdx::tolerance<float> && (alpha + beta) < (1.f + stdx::tolerance<float>);
 
     }
 

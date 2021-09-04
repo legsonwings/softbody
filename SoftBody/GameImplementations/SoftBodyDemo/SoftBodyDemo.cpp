@@ -7,6 +7,7 @@
 #include "engine/geometry/geoutils.h"
 #include "engine/graphics/body.h"
 #include "engine/graphics/gfxmemory.h"
+#include "engine/geometry/beziershapes.h"
 
 #include <set>
 #include <ranges>
@@ -45,38 +46,16 @@ namespace game_creator
 namespace gameparams
 {
     constexpr float speed = 10.f;
-    constexpr uint numballs = 70;
+    constexpr uint numballs = 50;
     constexpr float ballradius = 1.8f;
 }
-
-struct cell
-{
-    uint x = 0u;
-    uint y = 0u;
-    uint z = 0u;
-
-    // degree is number of cells in a square grid in any dimension
-    uint to1D(uint degree)
-    {
-        return (y * degree + z) * degree + x;
-    }
-
-    static cell to3D(uint v, uint degree)
-    {
-        cell res;
-        res.x = v % degree;
-        res.z = (v / degree) % degree;
-        res.y = (v - res.x - (res.z * degree)) / (degree * degree);
-        return res;
-    }
-};
 
 std::vector<vec3> fillwithspheres(geometry::aabb const& box, uint count, float radius)
 {
     std::set<uint> occupied;
     std::vector<vec3> spheres;
 
-    auto const roomspan = (box.span() - geoutils::tolerance<vec3>);
+    auto const roomspan = (box.span() - stdx::tolerance<vec3>);
 
     assert(roomspan.x > 0.f);
     assert(roomspan.y > 0.f);
@@ -106,8 +85,9 @@ std::vector<vec3> fillwithspheres(geometry::aabb const& box, uint count, float r
 
         occupied.insert(emptycell);
 
-        cell const thecell = cell::to3D(emptycell, degree);
-        spheres.emplace_back(vec3{ thecell.x * celld + cellr, thecell.y * celld + cellr, thecell.z * celld + cellr } + gridorigin);
+        using beziermaths::hypercubeidx;
+        hypercubeidx<2> const thecell = hypercubeidx<2>::from1d<2>(emptycell);
+        spheres.emplace_back(vec3{ thecell[0] * celld + cellr, thecell[1] * celld + cellr, thecell[2] * celld + cellr } + gridorigin);
     }
 
     return spheres;
@@ -166,10 +146,15 @@ void soft_body::update(float dt)
 
 void soft_body::render(float dt)
 {
-    for (auto& body : staticbodies_lines) { body.render(dt, { m_wireframe_toggle, cbuffer.get_gpuaddress() }); }
-    for (auto& body : staticbodies_boxes) { body.render(dt, { m_wireframe_toggle, cbuffer.get_gpuaddress() }); }
-    for (auto& body : dynamicbodies_line) { body.render(dt, { m_wireframe_toggle, cbuffer.get_gpuaddress() }); }
-    for (auto& body : balls) { body.render(dt, { m_wireframe_toggle, cbuffer.get_gpuaddress() }); }
+    for (auto& b : staticbodies_boxes) { b.render(dt, { wireframe_toggle, cbuffer.get_gpuaddress() }); }
+    for (auto& b : balls) { b.render(dt, { wireframe_toggle, cbuffer.get_gpuaddress() }); }
+    for (auto& b : bezier) { b.render(dt, { wireframe_toggle, cbuffer.get_gpuaddress() }); };
+
+    if (debugviz_toggle)
+    {
+        for (auto& b : dynamicbodies_line) { b.render(dt, { wireframe_toggle, cbuffer.get_gpuaddress() }); }
+        for (auto& b : staticbodies_lines) { b.render(dt, { wireframe_toggle, cbuffer.get_gpuaddress() }); }
+    }
 }
 
 game_base::resourcelist soft_body::load_assets_and_geometry()
@@ -199,20 +184,23 @@ game_base::resourcelist soft_body::load_assets_and_geometry()
     }
 
     // ensure balls container will no longer be modified, since it visualizations take references to objects in container
-    if (m_debugviz_toggle)
+    for (auto const& b : balls)
     {
-        for (auto const& b : balls)
-        {
-            dynamicbodies_line.emplace_back(*b, &ffd_object::boxvertices, bodyparams{ "lines" });
-            staticbodies_lines.emplace_back(*b, &ffd_object::controlpoint_visualization, &ffd_object::controlnet_instancedata, bodyparams{ "instancedlines" });
-        }
+        dynamicbodies_line.emplace_back(*b, &ffd_object::boxvertices, bodyparams{ "lines" });
+        staticbodies_lines.emplace_back(*b, &ffd_object::controlpoint_visualization, &ffd_object::controlnet_instancedata, bodyparams{ "instancedlines" });
     }
+
+    using beziermaths::controlpoint;
+    geometry::qbeziercurve qcurve;
+    qcurve.curve.controlnet = std::array<controlpoint, 3>{controlpoint{ -1.f, 0.f, 0.f }, controlpoint{ 0.f, 2.f, 0.f }, controlpoint{ 1.f, 0.f, 0.f }};
+    //bezier.emplace_back(qcurve, bodyparams{ "instancedlines" });
 
     game_base::resourcelist resources;
     for (auto& b : balls) { stdx::append(b.create_resources(), resources); };
     for (auto& b : dynamicbodies_line) { stdx::append(b.create_resources(), resources); };
     for (auto& b : staticbodies_lines) { stdx::append(b.create_resources(), resources); };
     for (auto& b : staticbodies_boxes) { stdx::append(b.create_resources(), resources); };
+    for (auto& b : bezier) { stdx::append(b.create_resources(), resources); };
 
     return resources;
 }
@@ -240,12 +228,12 @@ void soft_body::on_key_down(unsigned key)
 
     if (key == 'T')
     {
-        m_wireframe_toggle = !m_wireframe_toggle;
+        wireframe_toggle = !wireframe_toggle;
     }
 
-    if (key == 'v')
+    if (key == 'V')
     {
-        m_debugviz_toggle = !m_debugviz_toggle;
+        debugviz_toggle = !debugviz_toggle;
     }
 
     unsigned const relative_key = key - '0';

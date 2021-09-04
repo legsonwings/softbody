@@ -5,6 +5,7 @@
 #include "engine/SimpleCamera.h"
 #include "engine/graphics/gfxmemory.h"
 #include "Engine/geometry/ffd.h"
+#include "Engine/geometry/beziershapes.h"
 
 import shapes;
 class game_engine;
@@ -35,14 +36,14 @@ public:
 	void on_key_up(unsigned key) override;
 
 private:
-	bool m_wireframe_toggle = false;
-	bool m_debugviz_toggle = true;
+	bool wireframe_toggle = false;
+	bool debugviz_toggle = true;
 
 	uint8_t camera_view = 0;
-
 	SimpleCamera m_camera;    
 	constant_buffer cbuffer;
 
+	std::vector<gfx::body_static<geometry::qbeziercurve, gfx::topology::line>> bezier;
 	std::vector<gfx::body_dynamic<geometry::ffd_object>> balls;
 	std::vector<gfx::body_static<geometry::cube>> staticbodies_boxes;
 	std::vector<gfx::body_dynamic<geometry::ffd_object const&, gfx::topology::line>> dynamicbodies_line;

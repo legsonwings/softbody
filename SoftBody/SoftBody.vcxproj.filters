@@ -101,6 +101,9 @@
     <ClInclude Include="Engine\graphics\gfxmemory.h" />
     <ClInclude Include="Engine\graphics\gfxutils.h" />
     <ClInclude Include="Engine\geometry\geodefines.h" />
+    <ClInclude Include="Engine\geometry\beziermaths.h" />
+    <ClInclude Include="Engine\geometry\beziershapes.h" />
+    <ClInclude Include="Engine\stdx.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Engine\SimpleMath.inl">

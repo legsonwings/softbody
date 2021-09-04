@@ -1,7 +1,7 @@
 #pragma once
 
 #include "gfxcore.h"
-#include <engine/engineutils.h>
+#include "engine/stdx.h"
 
 #include <optional>
 #include <unordered_map>

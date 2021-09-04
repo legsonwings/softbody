@@ -203,6 +203,8 @@
     <ClInclude Include="Engine\DXSampleHelper.h" />
     <ClInclude Include="Engine\engine.h" />
     <ClInclude Include="Engine\EngineUtils.h" />
+    <ClInclude Include="Engine\geometry\beziermaths.h" />
+    <ClInclude Include="Engine\geometry\beziershapes.h" />
     <ClInclude Include="Engine\geometry\geocore.h" />
     <ClInclude Include="Engine\geometry\geodefines.h" />
     <ClInclude Include="Engine\geometry\geoutils.h" />
@@ -217,6 +219,7 @@
     <ClInclude Include="Engine\physics\collision.h" />
     <ClInclude Include="Engine\SimpleCamera.h" />
     <ClInclude Include="Engine\SimpleMath.h" />
+    <ClInclude Include="Engine\stdx.h" />
     <ClInclude Include="Engine\StepTimer.h" />
     <ClInclude Include="Engine\Win32Application.h" />
     <ClInclude Include="GameImplementations\SoftBodyDemo\SoftBodyDemo.h" />

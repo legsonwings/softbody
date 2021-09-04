@@ -67,13 +67,13 @@ void ffd_object::update(float dt)
     static const physx::spring spring;
     for (uint ctrlpt_idx = 0; ctrlpt_idx < num_control_points; ++ctrlpt_idx)
     {
-        auto const displacement = control_points[ctrlpt_idx] - rest_config[ctrlpt_idx];
+        auto const displacement = volume.controlnet[ctrlpt_idx] - rest_config[ctrlpt_idx];
  
         auto const [delta_pos_ctrlpt, newvel] = spring.critical(displacement, velocities[ctrlpt_idx], dt);
         auto const targetdir = delta_pos_ctrlpt.Normalized();
         
         // clamp the displacement from equilibrium so that control points do not cross the center
-        control_points[ctrlpt_idx] = rest_config[ctrlpt_idx] + std::min(delta_pos_ctrlpt.Length(), restsize * 0.99f / 2.f) * targetdir;
+        volume.controlnet[ctrlpt_idx] = rest_config[ctrlpt_idx] + std::min(delta_pos_ctrlpt.Length(), restsize * 0.99f / 2.f) * targetdir;
 
         velocities[ctrlpt_idx] = newvel;
     }
@@ -83,13 +83,13 @@ void ffd_object::update(float dt)
     // center is not the geometric center and is not affected by deformations
     auto const delta_pos = velocity * dt;
     center += delta_pos;
-    box = aabb{ control_points.data(), control_points.size() };
+    box = aabb{ volume.controlnet.data(), volume.controlnet.size() };
 
     physx_verts.clear();
     evaluated_verts.clear();
     for (auto const& vert : vertices)
     {
-        auto const pos = evalbez_trivariate(vert.position.x, vert.position.y, vert.position.z);
+        auto const pos = beziermaths::evaluatefast(volume, vert.position);
 
         // todo : evaluate the normal as well
         evaluated_verts.push_back({ pos, vert.normal });
@@ -101,36 +101,16 @@ std::vector<gfx::instance_data> ffd_object::controlnet_instancedata() const
 {
     std::vector<gfx::instance_data> instances_info;
     instances_info.reserve(num_control_points);
-    for (auto const& ctrl_pt : control_points) { instances_info.emplace_back(matrix::CreateTranslation(ctrl_pt + center), gfx::getview(), gfx::getmat("")); }
+    for (auto const& ctrl_pt : volume.controlnet) { instances_info.emplace_back(matrix::CreateTranslation(ctrl_pt + center), gfx::getview(), gfx::getmat("")); }
     return instances_info;
-}
-
-vec3 ffd_object::evalbez_trivariate(float s, float t, float u) const
-{
-    auto qbasis = [](float t)
-    {
-        // quadratic bezier basis
-        float const invt = 1.f - t;
-        return vec3{ invt * invt, 2.f * invt * t, t * t };
-    };
-
-    vec3 const bs = qbasis(s);
-    vec3 const bt = qbasis(t);
-    vec3 const bu = qbasis(u);
-
-    auto const &v = control_points;
-
-    vec3 const result = bt.x * (bu.x * (v[0] * bs.x + v[1] * bs.y + v[2] * bs.z) + bu.y * (v[3] * bs.x + v[4] * bs.y + v[5] * bs.z) + bu.z * (v[6] * bs.x + v[7] * bs.y + v[8] * bs.z)) 
-    + bt.y * (bu.x * (v[9] * bs.x + v[10] * bs.y + v[11] * bs.z) + bu.y * (v[12] * bs.x + v[13] * bs.y + v[14] * bs.z) + bu.z * (v[15] * bs.x + v[16] * bs.y + v[17] * bs.z))
-    + bt.z * (bu.x * (v[18] * bs.x + v[19] * bs.y + v[20] * bs.z) + bu.y * (v[21] * bs.x + v[22] * bs.y + v[23] * bs.z) + bu.z * (v[24] * bs.x + v[25] * bs.y + v[26] * bs.z));
-
-    return result;
 }
 
 vec3 ffd_object::eval_bez_trivariate(float s, float t, float u) const
 {
     // this is just for illustration, of the bernstein polynomial(3d) evaluation
-    // much faster evaluation is available(see evalbez_trivariate)
+    // much faster evaluation is available
+    auto to1d = [](uint i, uint j, uint k) { return i + k * (l + 1) + j * (l + 1) * (m + 1); };
+
     vec3 result = vec3::Zero;
     for (uint i = 0; i <= 2; ++i)
     {
@@ -143,7 +123,7 @@ vec3 ffd_object::eval_bez_trivariate(float s, float t, float u) const
             for (uint k = 0; k <= 2; ++k)
             {
                 float basis_u = (float(n) / float(fact(k) * fact(n - k))) * std::powf(float(1 - u), float(n - k)) * std::powf(u, float(k));
-                resultk += basis_u * control_points[to1D(i, j, k)];
+                resultk += basis_u * volume.controlnet[to1d(i, j, k)];
             }
 
             resultj += resultk * basis_t;
@@ -208,14 +188,14 @@ void ffd_object::resolve_collision(ffd_object & r, float dt)
     move(normal * 0.1f);
     r.move(-normal * 0.1f);
 
-    auto const ctrl_impulsemultiplier = 3.5f;
+    auto const ctrl_impulsemultiplier = 2.8f;
     auto const impulse_per_ctrlpt = impulse * ctrl_impulsemultiplier / static_cast<float>(affected_ctrlpts.size());
     for (uint i = 0; i < affected_ctrlpts.size(); ++i)
     {
         auto const [idx, idx_other] = affected_ctrlpts[i];
 
         auto const relativev = velocities[idx] - r.velocities[idx_other];
-        auto const impulse_ctrlpts = relativev.Dot(normal) * normal * (1.f + elasticity)/ num_control_points;
+        auto const impulse_ctrlpts = relativev.Dot(normal) * normal * (1.f + elasticity)/ static_cast<float>(num_control_points);
 
         velocities[idx] -= (impulse_per_ctrlpt + impulse_ctrlpts);
         r.velocities[idx_other] += (impulse_per_ctrlpt + impulse_ctrlpts);
@@ -231,22 +211,22 @@ void ffd_object::resolve_collision_interior(aabb const& r, float dt)
 
     std::vector<vec3> contacts;
 
-    if (isect_box->max_pt.x >= (r.max_pt.x - geoutils::tolerance<>))
+    if (isect_box->max_pt.x >= (r.max_pt.x - stdx::tolerance<>))
         contacts.emplace_back(isect_box->max_pt.x, center.y, center.z);
 
-    if (isect_box->min_pt.x <= (r.min_pt.x + geoutils::tolerance<>))
+    if (isect_box->min_pt.x <= (r.min_pt.x + stdx::tolerance<>))
         contacts.emplace_back(isect_box->min_pt.x, center.y, center.z);
 
-    if (isect_box->max_pt.y >= (r.max_pt.y - geoutils::tolerance<>))
+    if (isect_box->max_pt.y >= (r.max_pt.y - stdx::tolerance<>))
         contacts.emplace_back(center.x, isect_box->max_pt.y, center.z);
 
-    if (isect_box->min_pt.y <= (r.min_pt.y + geoutils::tolerance<>))
+    if (isect_box->min_pt.y <= (r.min_pt.y + stdx::tolerance<>))
         contacts.emplace_back(center.x, isect_box->min_pt.y, center.z);
 
-    if (isect_box->max_pt.z >= (r.max_pt.z - geoutils::tolerance<>))
+    if (isect_box->max_pt.z >= (r.max_pt.z - stdx::tolerance<>))
         contacts.emplace_back(center.x, center.y, isect_box->max_pt.z);
 
-    if (isect_box->min_pt.z <= (r.min_pt.z + geoutils::tolerance<>))
+    if (isect_box->min_pt.z <= (r.min_pt.z + stdx::tolerance<>))
         contacts.emplace_back(center.x, center.y, isect_box->min_pt.z);
 
     if (contacts.size() <= 0) return;
@@ -280,7 +260,7 @@ void ffd_object::resolve_collision_interior(aabb const& r, float dt)
    //  push control points in
     for (uint i = 0; i < affected_ctrlpts.size(); ++i)
     {
-        auto const deltavel_dir = (center - control_points[affected_ctrlpts[i]]).Normalized();
+        auto const deltavel_dir = (center - volume.controlnet[affected_ctrlpts[i]]).Normalized();
         velocities[affected_ctrlpts[i]] += impulse_per_ctrlpt * deltavel_dir;
     }
 }
@@ -288,11 +268,12 @@ void ffd_object::resolve_collision_interior(aabb const& r, float dt)
 uint ffd_object::closest_controlpoint(vec3 point) const
 {
     point -= center;
-    uint ctrlpt_idx = geoutils::invalid<uint>();
+    // todo no need to use invalid anymore
+    uint ctrlpt_idx = stdx::invalid<uint>();
     float distsqr_min = std::numeric_limits<float>::max();
     for (uint i = 0; i < num_control_points; ++i)
     {
-        if (auto const distsqr = vec3::DistanceSquared(point, control_points[i]); distsqr < distsqr_min)
+        if (auto const distsqr = vec3::DistanceSquared(point, volume.controlnet[i]); distsqr < distsqr_min)
         {
             distsqr_min = distsqr;
             ctrlpt_idx = i;
@@ -337,7 +318,7 @@ vec3 ffd_object::compute_contact(ffd_object const& r) const
     // compute a simple single contact
     auto const& isect_box = box.intersect(r.gaabb());
     if (!isect_box)
-        return geoutils::invalid<vec3>();
+        return stdx::invalid<vec3>();
 
     return (isect_box->max_pt + isect_box->min_pt) / 2.f;
 }

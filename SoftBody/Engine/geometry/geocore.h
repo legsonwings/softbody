@@ -2,7 +2,7 @@
 
 #include "geodefines.h"
 #include "Engine/SimpleMath.h"
-#include "engine/engineutils.h"
+#include "engine/stdx.h"
 
 #include <vector>
 #include <optional>
@@ -13,11 +13,11 @@ namespace geometry
 
     struct vertex
     {
-        vec3 position;
-        vec3 normal;
+        vec3 position = {};
+        vec3 normal = {};
 
-        vertex() = default;
-        vertex(vec3 const& pos, vec3 const& norm) : position(pos), normal(norm){}
+        constexpr vertex() = default;
+        constexpr vertex(vec3 const& pos, vec3 const& norm) : position(pos), normal(norm){}
     };
 
     struct box

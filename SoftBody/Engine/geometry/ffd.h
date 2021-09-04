@@ -4,6 +4,7 @@
 #include "engine/engineutils.h"
 #include "engine/graphics/gfxcore.h"
 #include "geocore.h"
+#include "beziermaths.h"
 
 #include <array>
 #include <vector>
@@ -26,7 +27,6 @@ namespace geometry
     public:
         ffd_object(shapeffd_c auto object);
 
-        uint to1D(uint i, uint j, uint k) const { return i + k * (l + 1) + j * (l + 1) * (m + 1); }
         std::vector<vertex> const& gvertices() const { return evaluated_verts; }
         std::vector<vec3> const& physx_triangles() const { return physx_verts; }
         
@@ -48,14 +48,12 @@ namespace geometry
         std::vector<vec3> compute_contacts(ffd_object const&) const;
         vec3 compute_contact(ffd_object const&) const;
         std::vector<gfx::instance_data> controlnet_instancedata() const;
-        vec3 evalbez_trivariate(float s, float t, float u) const;
         vec3 eval_bez_trivariate(float s, float t, float u) const;
 
         static vec3 parametric_coordinates(vec3 const& cartesian_coordinates, vec3 const& span);
 
     private:
         static constexpr uint l = 2, m = 2, n = 2;
-        static std::size_t constexpr num_control_points = (l + 1) * (m + 1) * (n + 1);
 
         aabb box;
         vec3 center = {};
@@ -66,11 +64,12 @@ namespace geometry
         // todo : this doesn't need to store normal
         std::vector<vertex> vertices;
 
+        beziermaths::beziervolume<2> volume;
+        static constexpr std::size_t num_control_points = beziermaths::beziervolume<2>::numcontrolpts;
+
         std::array<vec3, num_control_points> velocities;
         std::array<vec3, num_control_points> rest_config;
         std::array<vec3, num_control_points> control_points;
-
-        static_assert(ffd_object::num_control_points > 0);
     };
 
     inline ffd_object::ffd_object(shapeffd_c auto object) : center(object.gcenter())
@@ -104,7 +103,7 @@ namespace geometry
 
             // calculate in range [-span/2, span/2]
             rest_config[idx] = vec3{ span.x * ((i / l) - 0.5f), span.y * ((j / m) - 0.5f), span.z * ((k / n) - 0.5f) };
-            control_points[idx] = rest_config[idx];
+            volume.controlnet[idx] = rest_config[idx];
         }
 
         restsize = span.Length();

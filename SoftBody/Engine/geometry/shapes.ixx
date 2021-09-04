@@ -2,7 +2,7 @@ module;
 
 #include "geocore.h"
 #include "geoutils.h"
-#include "engine/engineutils.h"
+#include "engine/stdx.h"
 #include "engine/graphics/gfxcore.h"
 #include "engine/graphics/gfxutils.h"
 
@@ -193,8 +193,8 @@ private:
         unitsphere.clear();
         unitsphere.reserve(num_vertices);
 
-        float const theta_end = XM_PI - steptheta + geoutils::tolerance<float>;
-        float const phi_end = XM_2PI - stepphi + geoutils::tolerance<float>;
+        float const theta_end = XM_PI - steptheta + stdx::tolerance<float>;
+        float const phi_end = XM_2PI - stepphi + stdx::tolerance<float>;
 
         // Divide the sphere into quads for each region defined by four circles(at theta, theta + step, phi and phi + step)
         for (float theta = 0.f; theta < theta_end; theta += steptheta)
@@ -232,7 +232,7 @@ public:
     float radius = 1.5f;
     vec3 center = {};
 
-    uint numsegments_longitude = 25;
+    uint numsegments_longitude = 24;
     uint numsegments_latitude = (numsegments_longitude / 2) + (numsegments_longitude % 2);
 };
 

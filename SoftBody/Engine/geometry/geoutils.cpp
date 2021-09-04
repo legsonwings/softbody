@@ -8,6 +8,7 @@
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 using namespace geometry;
+using namespace stdx;
 
 constexpr vec3 unit_frontface_quad[4] =
 {
