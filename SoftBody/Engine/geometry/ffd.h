@@ -1,5 +1,6 @@
 #pragma once
 
+#include "engine/stdx.h"
 #include "engine/simplemath.h"
 #include "engine/engineutils.h"
 #include "engine/graphics/gfxcore.h"
@@ -22,13 +23,16 @@ namespace geometry
         {v.triangles()} -> std::convertible_to<std::vector<vertex>>;
     };
 
+    struct ffddata
+    {
+        vec3 center;
+        std::vector<vertex> vertices;
+    };
+
     class ffd_object
     {
     public:
-        ffd_object(shapeffd_c auto object);
-
-        std::vector<vertex> const& gvertices() const { return evaluated_verts; }
-        std::vector<vec3> const& physx_triangles() const { return physx_verts; }
+        ffd_object(ffddata data);
         
         box gbox() const { return box; }
         aabb const& gaabb() const { return box; }
@@ -37,23 +41,24 @@ namespace geometry
         vec3 const& gvelocity() const { return velocity; }
         void svelocity(vec3 const& vel) { velocity = vel; }
         std::vector<vec3> boxvertices() const { return gbox().gvertices(); }
+        std::vector<vertex> const& gvertices() const { return evaluated_verts; }
+        std::vector<vec3> const& physx_triangles() const { return physx_verts; }
 
         void move(vec3 delta);
         void update(float dt);
-        vec3 compute_wholebody_forces() const;
-        std::vector<vec3> controlpoint_visualization() const;
-        void resolve_collision(ffd_object &r, float dt);
+        vec3 compute_wholebodyforces() const;
+        vec3 compute_contact(ffd_object const&) const;
+        std::vector<vec3> compute_contacts(ffd_object const&) const;
+        void resolve_collision(ffd_object& r, float dt);
         void resolve_collision_interior(aabb const& r, float dt);
         uint closest_controlpoint(vec3 point) const;
-        std::vector<vec3> compute_contacts(ffd_object const&) const;
-        vec3 compute_contact(ffd_object const&) const;
+        std::vector<vec3> controlpoint_visualization() const;
         std::vector<gfx::instance_data> controlnet_instancedata() const;
         vec3 eval_bez_trivariate(float s, float t, float u) const;
 
         static vec3 parametric_coordinates(vec3 const& cartesian_coordinates, vec3 const& span);
 
     private:
-        static constexpr uint l = 2, m = 2, n = 2;
 
         aabb box;
         vec3 center = {};
@@ -61,52 +66,12 @@ namespace geometry
         float restsize = 0.f;
         std::vector<vec3> physx_verts;
         std::vector<vertex> evaluated_verts;
-        // todo : this doesn't need to store normal
         std::vector<vertex> vertices;
 
-        beziermaths::beziervolume<2> volume;
-        static constexpr std::size_t num_control_points = beziermaths::beziervolume<2>::numcontrolpts;
+        static constexpr uint dim = 2;
+        beziermaths::beziervolume<dim> volume;
 
-        std::array<vec3, num_control_points> velocities;
-        std::array<vec3, num_control_points> rest_config;
-        std::array<vec3, num_control_points> control_points;
+        std::array<vec3, beziermaths::beziervolume<dim>::numcontrolpts> rest_config;
+        std::array<vec3, beziermaths::beziervolume<dim>::numcontrolpts> velocities = {};
     };
-
-    inline ffd_object::ffd_object(shapeffd_c auto object) : center(object.gcenter())
-    {
-        object.scenter(vec3::Zero);
-        object.generate_triangles();
-
-        evaluated_verts = object.triangles();
-
-        auto const num_verts = evaluated_verts.size();
-
-        vertices.reserve(num_verts);
-        physx_verts.reserve(num_verts);
-
-        for (auto const& vert : evaluated_verts)
-        {
-            box += vert.position;
-            physx_verts.emplace_back(vert.position + center);
-        }
-
-        auto const& span = box.span();
-        for (auto const& vert : evaluated_verts)
-            vertices.push_back({ parametric_coordinates(vert.position, span), vert.normal });
-
-        static constexpr uint product_ln = (l + 1) * (n + 1);
-        for (uint idx = 0; idx < num_control_points; ++idx)
-        {
-            float const j = std::floorf(static_cast<float>(idx / product_ln));
-            float const k = std::floorf(static_cast<float>((idx % product_ln) / (m + 1)));
-            float const i = std::floorf(idx - k * (l + 1) - j * product_ln);
-
-            // calculate in range [-span/2, span/2]
-            rest_config[idx] = vec3{ span.x * ((i / l) - 0.5f), span.y * ((j / m) - 0.5f), span.z * ((k / n) - 0.5f) };
-            volume.controlnet[idx] = rest_config[idx];
-        }
-
-        restsize = span.Length();
-        std::fill(std::begin(velocities), std::end(velocities), vec3::Zero);
-    }
 }
