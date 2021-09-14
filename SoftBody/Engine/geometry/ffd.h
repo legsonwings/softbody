@@ -68,10 +68,10 @@ namespace geometry
         std::vector<vertex> evaluated_verts;
         std::vector<vertex> vertices;
 
-        static constexpr uint vold = 2;
-        beziermaths::beziervolume<vold> volume;
+        static constexpr uint dim = 2;
+        beziermaths::beziervolume<dim> volume;
 
-        std::array<vec3, beziermaths::beziervolume<vold>::numcontrolpts> rest_config;
-        std::array<vec3, beziermaths::beziervolume<vold>::numcontrolpts> velocities = {};
+        std::array<vec3, beziermaths::beziervolume<dim>::numcontrolpts> rest_config;
+        std::array<vec3, beziermaths::beziervolume<dim>::numcontrolpts> velocities = {};
     };
 }

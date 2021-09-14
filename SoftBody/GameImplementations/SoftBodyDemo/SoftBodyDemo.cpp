@@ -48,7 +48,7 @@ namespace game_creator
 namespace gameparams
 {
     constexpr float speed = 15.f;
-    constexpr uint numballs = 70;
+    constexpr uint numballs = 40;
     constexpr float ballradius = 1.8f;
 }
 

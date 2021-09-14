@@ -205,16 +205,6 @@ static vec3 evaluatefast(beziervolume<2> const& v, vec3 const& bt0, vec3 const& 
         + bt2.z * (bt1.x * (v[18] * bt0.x + v[19] * bt0.y + v[20] * bt0.z) + bt1.y * (v[21] * bt0.x + v[22] * bt0.y + v[23] * bt0.z) + bt1.z * (v[24] * bt0.x + v[25] * bt0.y + v[26] * bt0.z));
 }
 
-static vec3 evaluatefastposonly(beziervolume<2> const& v, vec3 const& uwv)
-{
-    auto const [t0, t2, t1] = uwv;
-    vec3 const bt0 = qbasis(t0);
-    vec3 const bt1 = qbasis(t1);
-    vec3 const bt2 = qbasis(t2);
-
-    return evaluatefast(v, bt0, bt1, bt2);
-}
-
 static voleval evaluatefast(beziervolume<2> const& v, vec3 const& uwv)
 {
     auto const [t0, t2, t1] = uwv;

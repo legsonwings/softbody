@@ -19,7 +19,6 @@ void gfx::dispatch(resource_bindings const& bindings, bool twosided)
     auto engine = game_engine::g_engine;
     auto cmd_list = engine->get_command_list();
 
-    // todo : not good, ideally objects sharing a rootsignature/pso should be rendered in sequence
     cmd_list->SetGraphicsRootSignature(bindings.pipelineobjs.root_signature.Get());
 
     cmd_list->SetGraphicsRootConstantBufferView(bindings.constant.slot, bindings.constant.address);

@@ -9,7 +9,6 @@
 #include "engine/SimpleMath.h"
 
 #include <type_traits>
-#include <memory>
 #include <unordered_map>
 
 using namespace DirectX;
@@ -17,7 +16,25 @@ using Microsoft::WRL::ComPtr;
 
 namespace gfx
 {
-    template<topology primitive_t = topology::triangle>
+    // todo : ensure these constraints can be satisfied by reference type instantiations
+    // until then cannot constrain body templates
+    template <typename t>
+    concept sbody_c = requires(t v)
+    {
+        {v.gcenter()} -> std::convertible_to<vec3>;
+        v.gvertices();
+        {v.instancedata()} -> std::same_as<std::vector<instance_data>>;
+    };
+
+    template <typename t>
+    concept dbody_c = requires(t v)
+    {
+        {v.gcenter()} -> std::convertible_to<vec3>;
+        v.gvertices();
+        v.update(float{});
+    };
+
+    template<topology prim_t = topology::triangle>
     struct topologyconstants
     {
         using vertextype = geometry::vertex;
@@ -33,26 +50,29 @@ namespace gfx
         static constexpr uint32_t maxprims_permsgroup = MAX_LINES_PER_GROUP;
     };
 
-    template<typename geometry_t, topology primitive_t>
+    template<typename body_t, topology prim_t>
     class body_static : public bodyinterface
     {
-        geometry_t body;
+        using rawbody_t = std::decay_t<body_t>;
+        using vertextype = typename topologyconstants<prim_t>::vertextype;
+
+        body_t body;
         uint num_instances;
         ComPtr<ID3D12Resource> m_vertexbuffer;
         ComPtr<ID3D12Resource> m_instance_buffer;
         uint8_t* m_instancebuffer_mapped = nullptr;
-        std::vector<typename topologyconstants<primitive_t>::vertextype> m_vertices;
-        std::unique_ptr<instance_data[]> m_cpu_instance_data;
+        std::vector<vertextype> m_vertices;
+        std::vector<instance_data> m_instancedata;
 
         using vertexfetch_r = decltype(m_vertices);
-        using vertexfetch = std::function<vertexfetch_r (std::decay_t<geometry_t> const&)>;
+        using vertexfetch = std::function<vertexfetch_r(rawbody_t const&)>;
         using instancedatafetch_r = std::vector<instance_data>;
-        using instancedatafetch = std::function<instancedatafetch_r(std::decay_t<geometry_t> const&)>;
+        using instancedatafetch = std::function<instancedatafetch_r(rawbody_t const&)>;
 
         vertexfetch get_vertices;
         instancedatafetch get_instancedata;
 
-        uint get_vertexbuffersize() const { return m_vertices.size() * sizeof(decltype(m_vertices)::value_type); }
+        uint get_vertexbuffersize() const { return m_vertices.size() * sizeof(vertextype); }
         uint get_instancebuffersize() const { return num_instances * sizeof(instance_data); }
         void update_instancebuffer();
         uint get_numinstances() const { return num_instances; }
@@ -60,62 +80,58 @@ namespace gfx
         D3D12_GPU_VIRTUAL_ADDRESS get_instancebuffer_gpuaddress() const;
         D3D12_GPU_VIRTUAL_ADDRESS get_vertexbuffer_gpuaddress() const override { return m_vertexbuffer->GetGPUVirtualAddress(); }
     public:
-        // todo : this weirdness to accept only member functions is probably not needed anymore with use of concepts
-        template<typename = std::enable_if_t<!std::is_lvalue_reference_v<geometry_t>>>
-        body_static(geometry_t _body, bodyparams const & _params);
-        body_static(geometry_t const& _body, vertexfetch_r(std::decay_t<geometry_t>::* vfun)() const, instancedatafetch_r(std::decay_t<geometry_t>::* ifun)() const, bodyparams const& _params);
+        body_static(rawbody_t _body, bodyparams const & _params);
+        body_static(body_t const& _body, vertexfetch_r(rawbody_t::* vfun)() const, instancedatafetch_r(rawbody_t::* ifun)() const, bodyparams const& _params);
 
         std::vector<ComPtr<ID3D12Resource>> create_resources() override;
         void render(float dt, renderparams const&) override;
         const geometry::aabb getaabb() const;
 
-        constexpr geometry_t& get() { return body; }
-        constexpr geometry_t const& get() const { return body; }
-        constexpr geometry_t& operator*() { return body; }
-        constexpr geometry_t const& operator*() const { return body; }
-        constexpr std::decay_t<geometry_t>* operator->() { return &body; }
-        constexpr std::decay_t<geometry_t> const* operator->() const { return &body; }
+        constexpr body_t& get() { return body; }
+        constexpr body_t const& get() const { return body; }
+        constexpr body_t& operator*() { return body; }
+        constexpr body_t const& operator*() const { return body; }
+        constexpr rawbody_t* operator->() { return &body; }
+        constexpr rawbody_t const* operator->() const { return &body; }
     };
 
-    template<typename geometry_t, topology primitive_t>
+    template<typename body_t, topology prim_t>
     class body_dynamic : public bodyinterface
     {
-        static_assert(!std::is_rvalue_reference_v<geometry_t>, "storing rvalue reference types is prohibited.");
+        using rawbody_t = std::decay_t<body_t>;
+        using vertextype = typename topologyconstants<prim_t>::vertextype;
 
-        geometry_t body;
+        body_t body;
         constant_buffer cbuffer;
         ComPtr<ID3D12Resource> m_vertexbuffer;
-        // todo : move these to upload buffer helper type
         uint8_t* m_vertexbuffer_databegin = nullptr;
-        std::vector<typename topologyconstants<primitive_t>::vertextype> m_vertices;
+        std::vector<vertextype> m_vertices;
         
         using vertexfetch_r = decltype(m_vertices);
-        using vertexfetch = std::function<vertexfetch_r (std::decay_t<geometry_t> const&)>;
+        using vertexfetch = std::function<vertexfetch_r (rawbody_t const&)>;
 
         vertexfetch get_vertices;
 
         void update_constbuffer();
         void update_vertexbuffer();
         unsigned get_numvertices() const { return static_cast<unsigned>(m_vertices.size()); }
-        uint get_vertexbuffersize() const { return m_vertices.size() * sizeof(decltype(m_vertices)::value_type); }
+        uint get_vertexbuffersize() const { return m_vertices.size() * sizeof(vertextype); }
         D3D12_GPU_VIRTUAL_ADDRESS get_vertexbuffer_gpuaddress() const override;
     public:
-        
-        template<typename = std::enable_if_t<!std::is_lvalue_reference_v<geometry_t>>>
-        body_dynamic(geometry_t _body, bodyparams const& _params);
-        body_dynamic(geometry_t const& _body, vertexfetch_r (std::decay_t<geometry_t>::*fun)() const, bodyparams const& _params);
+        body_dynamic(rawbody_t _body, bodyparams const& _params);
+        body_dynamic(body_t const& _body, vertexfetch_r (rawbody_t::*fun)() const, bodyparams const& _params);
 
         std::vector<ComPtr<ID3D12Resource>> create_resources() override;
 
         void update(float dt) override;
         void render(float dt, renderparams const&) override;
 
-        constexpr geometry_t &get() { return body; } 
-        constexpr geometry_t const &get() const { return body; }
-        constexpr geometry_t &operator*() { return body; }
-        constexpr geometry_t const &operator*() const { return body; }
-        constexpr std::decay_t<geometry_t> *operator->() { return &body; }
-        constexpr std::decay_t<geometry_t> const *operator->() const { return &body; }
+        constexpr body_t &get() { return body; } 
+        constexpr body_t const &get() const { return body; }
+        constexpr body_t &operator*() { return body; }
+        constexpr body_t const &operator*() const { return body; }
+        constexpr rawbody_t *operator->() { return &body; }
+        constexpr rawbody_t const *operator->() const { return &body; }
     };
 }
 
