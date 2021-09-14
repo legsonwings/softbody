@@ -31,21 +31,18 @@ public:
 	
 	std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> load_assets_and_geometry() override;
 
-	void switch_cameraview();
 	void on_key_down(unsigned key) override;
 	void on_key_up(unsigned key) override;
 
 private:
 	bool wireframe_toggle = false;
-	bool debugviz_toggle = true;
+	bool debugviz_toggle = false;
 
-	uint8_t camera_view = 0;
 	SimpleCamera m_camera;    
 	constant_buffer cbuffer;
 
-	std::vector<gfx::body_static<geometry::qbeziercurve, gfx::topology::line>> bezier;
 	std::vector<gfx::body_dynamic<geometry::ffd_object>> balls;
-	std::vector<gfx::body_static<geometry::cube>> staticbodies_boxes;
-	std::vector<gfx::body_dynamic<geometry::ffd_object const&, gfx::topology::line>> dynamicbodies_line;
-	std::vector<gfx::body_static<geometry::ffd_object const&, gfx::topology::line>> staticbodies_lines;
+	std::vector<gfx::body_static<geometry::cube>> boxes;
+	std::vector<gfx::body_dynamic<geometry::ffd_object const&, gfx::topology::line>> reflines;
+	std::vector<gfx::body_static<geometry::ffd_object const&, gfx::topology::line>> refstaticlines;
 };

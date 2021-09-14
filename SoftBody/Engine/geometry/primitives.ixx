@@ -212,6 +212,7 @@ struct triangle
 
     }
 
+    // make this std::array
     vec3 verts[3];
 };
 }

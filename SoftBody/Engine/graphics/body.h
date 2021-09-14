@@ -69,6 +69,12 @@ namespace gfx
         void render(float dt, renderparams const&) override;
         const geometry::aabb getaabb() const;
 
+        constexpr geometry_t& get() { return body; }
+        constexpr geometry_t const& get() const { return body; }
+        constexpr geometry_t& operator*() { return body; }
+        constexpr geometry_t const& operator*() const { return body; }
+        constexpr std::decay_t<geometry_t>* operator->() { return &body; }
+        constexpr std::decay_t<geometry_t> const* operator->() const { return &body; }
     };
 
     template<typename geometry_t, topology primitive_t>

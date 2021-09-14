@@ -10,6 +10,8 @@ export namespace physx
 // simulates shm
 struct spring
 {
+    std::pair<vec3, vec3> dummy(vec3 const& displacement, vec3 const& vel, float dt) const { return { displacement, vel, }; }
+
     std::pair<vec3, vec3> damped(vec3 const& displacement, vec3 const& vel, float dt) const
     {
         std::pair<vec3, vec3> res;

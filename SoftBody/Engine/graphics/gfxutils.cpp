@@ -48,6 +48,7 @@ std::string const& gfx::generaterandom_matcolor(materialcref definition, std::op
 
 void gfx::init_pipelineobjects()
 {
+    // bug : wireframe view cannot be toggled off
     addpso("lines", L"DefaultAS.cso", L"linesMS.cso", L"basic_ps.cso");
     addpso("default", L"DefaultAS.cso", L"DefaultMS.cso", L"default_ps.cso");
     addpso("instancedlines", L"InstancesAS.cso", L"linesinstances_ms.cso", L"basic_ps.cso");

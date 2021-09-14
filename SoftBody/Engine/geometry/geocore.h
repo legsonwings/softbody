@@ -1,7 +1,7 @@
 #pragma once
 
 #include "geodefines.h"
-#include "Engine/SimpleMath.h"
+#include "engine/simplemath.h"
 #include "engine/stdx.h"
 
 #include <vector>

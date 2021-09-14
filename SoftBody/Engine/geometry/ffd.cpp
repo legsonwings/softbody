@@ -64,21 +64,21 @@ std::vector<linesegment> intersect(ffd_object const& l, ffd_object const& r)
 
 void ffd_object::update(float dt)
 {
-    static const physx::spring spring;
-    for (uint ctrlpt_idx = 0; ctrlpt_idx < num_control_points; ++ctrlpt_idx)
+    static const physx::spring spring{};
+    for (uint ctrlpt_idx = 0; ctrlpt_idx < volume.numcontrolpts; ++ctrlpt_idx)
     {
         auto const displacement = volume.controlnet[ctrlpt_idx] - rest_config[ctrlpt_idx];
  
-        auto const [delta_pos_ctrlpt, newvel] = spring.critical(displacement, velocities[ctrlpt_idx], dt);
-        auto const targetdir = delta_pos_ctrlpt.Normalized();
+        auto const [deltapos_ctrlpt, newvel] = spring.critical(displacement, velocities[ctrlpt_idx], dt);
+        auto const targetdir = deltapos_ctrlpt.Normalized();
         
-        // clamp the displacement from equilibrium so that control points do not cross the center
-        volume.controlnet[ctrlpt_idx] = rest_config[ctrlpt_idx] + std::min(delta_pos_ctrlpt.Length(), restsize * 0.99f / 2.f) * targetdir;
+        // clamp the displacement from equilibrium so that control points do not cross the center(some objects will escape boxes otherwise)
+        volume.controlnet[ctrlpt_idx] = rest_config[ctrlpt_idx] + std::min(deltapos_ctrlpt.Length(), restsize * 0.99f / 2.f) * targetdir;
 
         velocities[ctrlpt_idx] = newvel;
     }
 
-    velocity += compute_wholebody_forces() * dt;
+    velocity += compute_wholebodyforces() * dt;
 
     // center is not the geometric center and is not affected by deformations
     auto const delta_pos = velocity * dt;
@@ -89,18 +89,20 @@ void ffd_object::update(float dt)
     evaluated_verts.clear();
     for (auto const& vert : vertices)
     {
-        auto const pos = beziermaths::evaluatefast(volume, vert.position);
+        // auto const eval = beziermaths::evaluatefast(volume, vert.position);
+        // evaluated_verts.push_back({ eval.first, vec3::TransformNormal(vert.normal, eval.second).Normalized() });
+        //
+        //physx_verts.push_back(eval.first + center);
 
-        // todo : evaluate the normal as well
-        evaluated_verts.push_back({ pos, vert.normal });
-        physx_verts.push_back(pos + center);
+        evaluated_verts.push_back({ beziermaths::evaluatefastposonly(volume, vert.position), vert.normal });
+        physx_verts.push_back(evaluated_verts.back().position + center);
     }
 }
 
 std::vector<gfx::instance_data> ffd_object::controlnet_instancedata() const
 {
     std::vector<gfx::instance_data> instances_info;
-    instances_info.reserve(num_control_points);
+    instances_info.reserve(volume.numcontrolpts);
     for (auto const& ctrl_pt : volume.controlnet) { instances_info.emplace_back(matrix::CreateTranslation(ctrl_pt + center), gfx::getview(), gfx::getmat("")); }
     return instances_info;
 }
@@ -109,8 +111,8 @@ vec3 ffd_object::eval_bez_trivariate(float s, float t, float u) const
 {
     // this is just for illustration, of the bernstein polynomial(3d) evaluation
     // much faster evaluation is available
+    static constexpr uint l = 2, m = 2, n = 2;
     auto to1d = [](uint i, uint j, uint k) { return i + k * (l + 1) + j * (l + 1) * (m + 1); };
-
     vec3 result = vec3::Zero;
     for (uint i = 0; i <= 2; ++i)
     {
@@ -145,6 +147,45 @@ vec3 ffd_object::parametric_coordinates(vec3 const& cartesian_coordinates, vec3 
 
 std::vector<vec3> geometry::ffd_object::controlpoint_visualization() const { return geoutils::create_cube_lines(vec3::Zero, 0.1f); }
 
+geometry::ffd_object::ffd_object(ffddata data) : center(data.center)
+{
+    evaluated_verts = std::move(data.vertices);
+    auto const num_verts = evaluated_verts.size();
+
+    vertices.reserve(num_verts);
+    physx_verts.reserve(num_verts);
+
+    for (auto const& vert : evaluated_verts)
+    {
+        box += vert.position;
+        physx_verts.emplace_back(vert.position);
+    }
+
+    // correct the geometric center
+   /* const auto boxcenter = box.center();
+    center += boxcenter;
+    for (auto i : std::ranges::iota_view(0u, evaluated_verts.size()))
+    {
+        evaluated_verts[i].position -= boxcenter;
+        physx_verts.emplace_back(evaluated_verts[i].position + center);
+    }*/
+
+    auto const& span = box.span();
+    for (auto const& vert : evaluated_verts)
+        vertices.push_back({ parametric_coordinates(vert.position, span), vert.normal });
+
+    for (uint idx = 0; idx < volume.numcontrolpts; ++idx)
+    {
+        // calculate in range [-span/2, span/2]
+        using cubeidx = stdx::hypercubeidx<2>;
+        auto const idx3d = cubeidx::from1d(vold, idx);
+        rest_config[idx] = (vec3(span.x * idx3d[0], span.y * idx3d[2], span.z * idx3d[1]) / vold) - vec3(0.5f);
+        volume.controlnet[idx] = rest_config[idx];
+    }
+
+    restsize = span.Length();
+}
+
 void ffd_object::move(vec3 delta)
 {
     center += delta;
@@ -152,7 +193,7 @@ void ffd_object::move(vec3 delta)
     box.max_pt += delta;
 }
 
-vec3 ffd_object::compute_wholebody_forces() const
+vec3 ffd_object::compute_wholebodyforces() const
 {
     auto const drag = -velocity * 0.0001f;
     return drag;
@@ -173,7 +214,7 @@ void ffd_object::resolve_collision(ffd_object & r, float dt)
     }
 
     static constexpr float body_mass = 1.f;
-    static constexpr float ctrlpt_mass = body_mass / num_control_points;
+    static constexpr float ctrlpt_mass = body_mass / volume.numcontrolpts;
 
     auto const normal = (center - r.center).Normalized();
     auto const relativevel = velocity - r.velocity;
@@ -188,14 +229,14 @@ void ffd_object::resolve_collision(ffd_object & r, float dt)
     move(normal * 0.1f);
     r.move(-normal * 0.1f);
 
-    auto const ctrl_impulsemultiplier = 2.8f;
+    auto const ctrl_impulsemultiplier = 2.f;
     auto const impulse_per_ctrlpt = impulse * ctrl_impulsemultiplier / static_cast<float>(affected_ctrlpts.size());
     for (uint i = 0; i < affected_ctrlpts.size(); ++i)
     {
         auto const [idx, idx_other] = affected_ctrlpts[i];
 
         auto const relativev = velocities[idx] - r.velocities[idx_other];
-        auto const impulse_ctrlpts = relativev.Dot(normal) * normal * (1.f + elasticity)/ static_cast<float>(num_control_points);
+        auto const impulse_ctrlpts = relativev.Dot(normal) * normal * (1.f + elasticity)/ static_cast<float>(volume.numcontrolpts);
 
         velocities[idx] -= (impulse_per_ctrlpt + impulse_ctrlpts);
         r.velocities[idx_other] += (impulse_per_ctrlpt + impulse_ctrlpts);
@@ -244,7 +285,7 @@ void ffd_object::resolve_collision_interior(aabb const& r, float dt)
     normal = (center - normal).Normalized();
 
     static constexpr float body_mass = 1.f;
-    static constexpr float ctrlpt_mass = body_mass / num_control_points;
+    static constexpr float ctrlpt_mass = body_mass / volume.numcontrolpts;
 
     static auto constexpr elasticity = 1.f;
     auto const impulse_magnitude = velocity.Dot(-normal) * elasticity;
@@ -255,9 +296,9 @@ void ffd_object::resolve_collision_interior(aabb const& r, float dt)
     // move it away from wall, to avoid duplicate collisions, ideally should use mtd
     move(normal * 0.1f);
 
-    auto const impulse_per_ctrlpt = 2.f * impulse_magnitude / static_cast<float>(affected_ctrlpts.size());
+    auto const impulse_per_ctrlpt = 1.7f * impulse_magnitude / static_cast<float>(affected_ctrlpts.size());
 
-   //  push control points in
+    // push control points in
     for (uint i = 0; i < affected_ctrlpts.size(); ++i)
     {
         auto const deltavel_dir = (center - volume.controlnet[affected_ctrlpts[i]]).Normalized();
@@ -268,10 +309,9 @@ void ffd_object::resolve_collision_interior(aabb const& r, float dt)
 uint ffd_object::closest_controlpoint(vec3 point) const
 {
     point -= center;
-    // todo no need to use invalid anymore
-    uint ctrlpt_idx = stdx::invalid<uint>();
+    uint ctrlpt_idx = 0;
     float distsqr_min = std::numeric_limits<float>::max();
-    for (uint i = 0; i < num_control_points; ++i)
+    for (uint i = 0; i < volume.numcontrolpts; ++i)
     {
         if (auto const distsqr = vec3::DistanceSquared(point, volume.controlnet[i]); distsqr < distsqr_min)
         {
