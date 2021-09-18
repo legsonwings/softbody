@@ -183,13 +183,8 @@ struct triangle
         if (isect_linesegment.size() < 2)
             return {};
 
+        // bug : sometimes there more than two points in the solution
         //assert(isect_linesegment.size() != 2);
-
-        // there is an issue here
-        /*if (isect_linesegment.size() != 2)
-        {
-            DebugBreak();
-        }*/
 
         return { { isect_linesegment[0], isect_linesegment[1] } };
     }

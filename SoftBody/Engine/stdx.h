@@ -48,6 +48,8 @@ struct invalid { constexpr operator t() const { return { std::numeric_limits<t>:
 template <arithmeticvector_c t>
 struct arithmeticvector {};
 
+bool constexpr nearlyequal(arithmetic_c auto const& l, arithmetic_c auto const& r) { return l == r; }
+
 template <typename t>
 requires arithmetic_c<t> || arithmeticvector_c<t>
 bool constexpr isvalid(t const& val) { return !nearlyequal(std::numeric_limits<t>::max(), val); }
@@ -201,6 +203,7 @@ struct ext
 	constexpr b const* operator->() const { return &base; }
 };
 
+// these allow iteration over multiple heterogenous containers
 template<typename t, indexablecontainer_c... args_t>
 struct join;
 
@@ -234,7 +237,7 @@ public:
 		if (calcsizes() == 0) return end();
 		return iter_t(this, 0);
 	}
-	iter_t end() { return iter_t(this, totalsize); }
+	iter_t end() { return iter_t(this, calcsizes()); }
 
 private:
 	uint calcsizes()

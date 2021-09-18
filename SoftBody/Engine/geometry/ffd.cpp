@@ -115,13 +115,10 @@ void ffd_object::update(float dt)
     box = aabb{ volume.controlnet.data(), volume.controlnet.size() };
 
     physx_verts.clear();
-    evaluated_verts.clear();
-    for (auto const& vert : vertices)
-    {
-        auto const& eval = beziermaths::evaluatefast(volume, vert.position);
-        evaluated_verts.push_back({ eval.first, vec3::TransformNormal(vert.normal, eval.second).Normalized() });
-        physx_verts.push_back(eval.first + center);
-    }
+    evaluated_verts = beziermaths::bulkevaluate(volume, vertices);
+
+    for (auto const& vtx : evaluated_verts)
+        physx_verts.emplace_back(vtx.position + center);
 }
 
 std::vector<gfx::instance_data> ffd_object::controlnet_instancedata() const
@@ -137,7 +134,7 @@ vec3 ffd_object::eval_bez_trivariate(float s, float t, float u) const
     static float (*fact)(uint i) = [](uint i)->float { return i < 1 ? 1 : fact(i - 1) * i; };
 
     // this is just for illustration, of the bernstein polynomial(3d) evaluation
-    // much faster evaluation is available
+    // much much much faster evaluation is available
     static constexpr uint l = 2, m = 2, n = 2;
     auto to1d = [](uint i, uint j, uint k) { return i + k * (l + 1) + j * (l + 1) * (m + 1); };
     vec3 result = vec3::Zero;
@@ -183,7 +180,7 @@ void ffd_object::move(vec3 delta)
 
 vec3 ffd_object::compute_wholebodyforces() const
 {
-    auto const drag = -velocity * 0.0001f;
+    auto const drag = -velocity * 0.001f;
     return drag;
 }
 

@@ -48,6 +48,7 @@
     <ClCompile Include="Engine\geometry\primitives.ixx" />
     <ClCompile Include="Engine\geometry\shapes.ixx" />
     <ClCompile Include="Engine\physics\spring.ixx" />
+    <ClCompile Include="Engine\geometry\beziermaths.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\DXSample.h">
@@ -98,6 +99,7 @@
     <ClInclude Include="Engine\geometry\beziermaths.h" />
     <ClInclude Include="Engine\geometry\beziershapes.h" />
     <ClInclude Include="Engine\stdx.h" />
+    <ClInclude Include="Engine\debugutils.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Engine\SimpleMath.inl">

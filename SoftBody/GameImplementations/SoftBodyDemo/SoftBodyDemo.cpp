@@ -16,26 +16,6 @@
 #include <algorithm>
 #include <functional>
 
-//#define PROFILE_TIMING
-
-#ifdef PROFILE_TIMING
-#include <chrono>
-using namespace std::chrono;
-#endif 
-
-#ifdef PROFILE_TIMING
-
-#define TIMEDSCOPE(name) { steady_clock::time_point timed##name = high_resolution_clock::now();
-#define TIMEDSCOPEEND(name) {                                                      \
-auto t = duration_cast<microseconds>(high_resolution_clock::now() - timed##name);  \
-char buf[512];                                                                     \
-sprintf_s(buf, "time for %s [%d]us\n", #name, static_cast<int>(t.count()));        \
-OutputDebugStringA(buf);                                                           \
-}                                                                                  \
-}
-
-#endif // PROFILE_TIMING
-
 namespace game_creator
 {
     template <>
@@ -47,8 +27,8 @@ namespace game_creator
 
 namespace gameparams
 {
-    constexpr float speed = 15.f;
-    constexpr uint numballs = 40;
+    constexpr float speed = 10.f;
+    constexpr uint numballs = 80;
     constexpr float ballradius = 1.8f;
 }
 
@@ -191,7 +171,7 @@ game_base::resourcelist soft_body::load_assets_and_geometry()
     }
 
     game_base::resourcelist resources;
-    for (auto b : stdx::makejoin<gfx::bodyinterface>(balls, reflines, refstaticlines, boxes)) { stdx::append(b->create_resources(), resources); };
+    for (auto b : stdx::makejoin<gfx::bodyinterface>(balls, boxes, reflines, refstaticlines)) { stdx::append(b->create_resources(), resources); };
     return resources;
 }
 
