@@ -6,6 +6,6 @@ Prerequisites:
 -AVX2 intrinsics support
 
 Controls:
--Use movement keys to move/rotate camera
--T to toggle wireframe mode
--V to show bounds and controlnet
+-Use movement keys to move/rotate camera  
+-T to toggle wireframe mode  
+-V to show bounds and controlnet  
