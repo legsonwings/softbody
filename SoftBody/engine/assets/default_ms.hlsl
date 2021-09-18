@@ -1,4 +1,4 @@
-#include "Common.hlsli"
+#include "common.hlsli"
 
 StructuredBuffer<VertexIn> triangle_verts : register(t0);
 

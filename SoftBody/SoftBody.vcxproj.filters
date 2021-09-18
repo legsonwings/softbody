@@ -1,112 +1,82 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <FxCompile Include="Engine\Assets\DefaultAS.hlsl" />
-    <FxCompile Include="Engine\Assets\DefaultMS.hlsl" />
-    <FxCompile Include="Engine\Assets\InstancesMS.hlsl" />
-    <FxCompile Include="Engine\Assets\InstancesAS.hlsl" />
-    <FxCompile Include="Engine\Assets\linesMS.hlsl" />
-    <FxCompile Include="Engine\Assets\linesinstances_ms.hlsl" />
-    <FxCompile Include="Engine\Assets\basic_ps.hlsl" />
-    <FxCompile Include="Engine\Assets\instances_ps.hlsl" />
-    <FxCompile Include="Engine\Assets\default_ps.hlsl" />
+    <FxCompile Include="engine\assets\linesinstances_ms.hlsl" />
+    <FxCompile Include="engine\assets\basic_ps.hlsl" />
+    <FxCompile Include="engine\assets\instances_ps.hlsl" />
+    <FxCompile Include="engine\assets\default_ps.hlsl" />
+    <FxCompile Include="engine\assets\default_as.hlsl" />
+    <FxCompile Include="engine\assets\default_ms.hlsl" />
+    <FxCompile Include="engine\assets\instances_as.hlsl" />
+    <FxCompile Include="engine\assets\instances_ms.hlsl" />
+    <FxCompile Include="engine\assets\lines_ms.hlsl" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Engine\DXSample.cpp">
-      <Filter>Engine</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Main.cpp">
-      <Filter>Engine</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\SimpleCamera.cpp">
-      <Filter>Engine</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\SimpleMath.cpp">
-      <Filter>Engine</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Win32Application.cpp">
-      <Filter>Engine</Filter>
-    </ClCompile>
     <ClCompile Include="GameUtils.cpp" />
-    <ClCompile Include="GameImplementations\SoftBodyDemo\SoftBodyDemo.cpp">
-      <Filter>GameImplementations\SoftBodyDemo</Filter>
-    </ClCompile>
-    <ClCompile Include="GameInterfaces\GameBase.cpp">
+    <ClCompile Include="gameinterfaces\GameBase.cpp">
       <Filter>GameInterfaces</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\physics\collision.cpp" />
-    <ClCompile Include="Engine\geometry\ffd.cpp" />
-    <ClCompile Include="Engine\geometry\geocore.cpp" />
-    <ClCompile Include="Engine\geometry\geoutils.cpp" />
-    <ClCompile Include="Engine\engine.cpp" />
-    <ClCompile Include="Engine\graphics\body.cpp" />
-    <ClCompile Include="Engine\interfaces\bodyinterface.cpp" />
-    <ClCompile Include="Engine\interfaces\engineinterface.cpp" />
-    <ClCompile Include="Engine\graphics\gfxmemory.cpp" />
-    <ClCompile Include="Engine\graphics\gfxutils.cpp" />
-    <ClCompile Include="Engine\engineutils.cpp" />
-    <ClCompile Include="Engine\geometry\primitives.ixx" />
-    <ClCompile Include="Engine\geometry\shapes.ixx" />
-    <ClCompile Include="Engine\physics\spring.ixx" />
-    <ClCompile Include="Engine\geometry\beziermaths.cpp" />
+    <ClCompile Include="engine\physics\collision.cpp" />
+    <ClCompile Include="engine\geometry\ffd.cpp" />
+    <ClCompile Include="engine\geometry\geocore.cpp" />
+    <ClCompile Include="engine\geometry\geoutils.cpp" />
+    <ClCompile Include="engine\engine.cpp" />
+    <ClCompile Include="engine\graphics\body.cpp" />
+    <ClCompile Include="engine\interfaces\bodyinterface.cpp" />
+    <ClCompile Include="engine\interfaces\engineinterface.cpp" />
+    <ClCompile Include="engine\graphics\gfxmemory.cpp" />
+    <ClCompile Include="engine\graphics\gfxutils.cpp" />
+    <ClCompile Include="engine\engineutils.cpp" />
+    <ClCompile Include="engine\geometry\primitives.ixx" />
+    <ClCompile Include="engine\geometry\shapes.ixx" />
+    <ClCompile Include="engine\physics\spring.ixx" />
+    <ClCompile Include="engine\geometry\beziermaths.cpp" />
+    <ClCompile Include="engine\dxsample.cpp" />
+    <ClCompile Include="engine\main.cpp" />
+    <ClCompile Include="engine\simplecamera.cpp" />
+    <ClCompile Include="engine\simplemath.cpp" />
+    <ClCompile Include="engine\win32application.cpp" />
+    <ClCompile Include="gameimplementations\softbodydemo\softbodydemo.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Engine\DXSample.h">
-      <Filter>Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\DXSampleHelper.h">
-      <Filter>Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\SimpleCamera.h">
-      <Filter>Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\SimpleMath.h">
-      <Filter>Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\StepTimer.h">
-      <Filter>Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Win32Application.h">
-      <Filter>Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="GameInterfaces\GameBase.h">
+    <ClInclude Include="gameinterfaces\GameBase.h">
       <Filter>GameInterfaces</Filter>
     </ClInclude>
-    <ClInclude Include="GameInterfaces\GameUtils.h">
+    <ClInclude Include="gameinterfaces\GameUtils.h">
       <Filter>GameInterfaces</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\EngineUtils.h">
-      <Filter>Engine</Filter>
     </ClInclude>
     <ClInclude Include="SharedConstants.h" />
-    <ClInclude Include="GameImplementations\SoftBodyDemo\SoftBodyDemo.h">
-      <Filter>GameImplementations\SoftBodyDemo</Filter>
-    </ClInclude>
     <ClInclude Include="d3dx12.h" />
-    <ClInclude Include="Engine\physics\collision.h" />
-    <ClInclude Include="Engine\geometry\ffd.h" />
-    <ClInclude Include="Engine\geometry\geocore.h" />
-    <ClInclude Include="Engine\geometry\geoutils.h" />
-    <ClInclude Include="Engine\engine.h" />
-    <ClInclude Include="Engine\graphics\body.h" />
-    <ClInclude Include="Engine\graphics\body.hpp" />
-    <ClInclude Include="Engine\graphics\gfxcore.h" />
-    <ClInclude Include="Engine\interfaces\bodyinterface.h" />
-    <ClInclude Include="Engine\interfaces\engineinterface.h" />
-    <ClInclude Include="Engine\graphics\gfxmemory.h" />
-    <ClInclude Include="Engine\graphics\gfxutils.h" />
-    <ClInclude Include="Engine\geometry\geodefines.h" />
-    <ClInclude Include="Engine\geometry\beziermaths.h" />
-    <ClInclude Include="Engine\geometry\beziershapes.h" />
-    <ClInclude Include="Engine\stdx.h" />
-    <ClInclude Include="Engine\debugutils.h" />
+    <ClInclude Include="engine\physics\collision.h" />
+    <ClInclude Include="engine\geometry\ffd.h" />
+    <ClInclude Include="engine\geometry\geocore.h" />
+    <ClInclude Include="engine\geometry\geoutils.h" />
+    <ClInclude Include="engine\engine.h" />
+    <ClInclude Include="engine\graphics\body.h" />
+    <ClInclude Include="engine\graphics\body.hpp" />
+    <ClInclude Include="engine\graphics\gfxcore.h" />
+    <ClInclude Include="engine\interfaces\bodyinterface.h" />
+    <ClInclude Include="engine\interfaces\engineinterface.h" />
+    <ClInclude Include="engine\graphics\gfxmemory.h" />
+    <ClInclude Include="engine\graphics\gfxutils.h" />
+    <ClInclude Include="engine\geometry\geodefines.h" />
+    <ClInclude Include="engine\geometry\beziermaths.h" />
+    <ClInclude Include="engine\geometry\beziershapes.h" />
+    <ClInclude Include="engine\stdx.h" />
+    <ClInclude Include="engine\debugutils.h" />
+    <ClInclude Include="engine\dxsample.h" />
+    <ClInclude Include="engine\dxsamplehelper.h" />
+    <ClInclude Include="engine\engineutils.h" />
+    <ClInclude Include="engine\simplecamera.h" />
+    <ClInclude Include="engine\simplemath.h" />
+    <ClInclude Include="engine\steptimer.h" />
+    <ClInclude Include="engine\win32application.h" />
+    <ClInclude Include="gameimplementations\softbodydemo\softbodydemo.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Engine\SimpleMath.inl">
-      <Filter>Engine</Filter>
-    </None>
-    <None Include="Engine\Assets\Common.hlsli" />
-    <None Include="Engine\Assets\lighting.hlsli" />
+    <None Include="engine\assets\lighting.hlsli" />
+    <None Include="engine\assets\common.hlsli" />
+    <None Include="engine\simplemath.inl" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="GameImplementations">

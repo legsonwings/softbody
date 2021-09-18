@@ -1,4 +1,4 @@
-#include "Common.hlsli"
+#include "common.hlsli"
 
 float attenuation(float range, float distance)
 {

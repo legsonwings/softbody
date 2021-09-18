@@ -49,14 +49,14 @@ std::string const& gfx::generaterandom_matcolor(materialcref definition, std::op
 void gfx::init_pipelineobjects()
 {
     // bug : wireframe view cannot be toggled off
-    addpso("lines", L"DefaultAS.cso", L"linesMS.cso", L"basic_ps.cso");
-    addpso("default", L"DefaultAS.cso", L"DefaultMS.cso", L"default_ps.cso");
-    addpso("instancedlines", L"InstancesAS.cso", L"linesinstances_ms.cso", L"basic_ps.cso");
-    addpso("instanced", L"InstancesAS.cso", L"InstancesMS.cso", L"instances_ps.cso");
-    addpso("transparent", L"DefaultAS.cso", L"DefaultMS.cso", L"default_ps.cso", psoflags::transparent);
-    addpso("transparent_twosided", L"DefaultAS.cso", L"DefaultMS.cso", L"default_ps.cso", psoflags::transparent | psoflags::twosided);
-    addpso("wireframe", L"DefaultAS.cso", L"DefaultMS.cso", L"default_ps.cso", psoflags::wireframe | psoflags::transparent);
-    addpso("instancedtransparent", L"InstancesAS.cso", L"InstancesMS.cso", L"instances_ps.cso", psoflags::transparent);
+    addpso("lines", L"default_as.cso", L"lines_ms.cso", L"basic_ps.cso");
+    addpso("default", L"default_as.cso", L"default_ms.cso", L"default_ps.cso");
+    addpso("instancedlines", L"instances_as.cso", L"linesinstances_ms.cso", L"basic_ps.cso");
+    addpso("instanced", L"instances_as.cso", L"instances_ms.cso", L"instances_ps.cso");
+    addpso("transparent", L"default_as.cso", L"default_ms.cso", L"default_ps.cso", psoflags::transparent);
+    addpso("transparent_twosided", L"default_as.cso", L"default_ms.cso", L"default_ps.cso", psoflags::transparent | psoflags::twosided);
+    addpso("wireframe", L"default_as.cso", L"default_ms.cso", L"default_ps.cso", psoflags::wireframe | psoflags::transparent);
+    addpso("instancedtransparent", L"instances_as.cso", L"instances_ms.cso", L"instances_ps.cso", psoflags::transparent);
 
     auto const ballmat = material().roughness(0.95f).diffusealbedo({ 1.f, 1.f, 1.f, 1.f }).fresnelr(vec3{ 0.0f });
     auto const transparent_ballmat = material().roughness(0.f).diffusealbedo({ 0.7f, 0.9f, 0.6f, 0.1f }).fresnelr(vec3{1.f});

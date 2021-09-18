@@ -1,4 +1,4 @@
-#include "Common.hlsli"
+#include "common.hlsli"
 
 [RootSignature(ROOT_SIG)]
 [NumThreads(AS_GROUP_SIZE, 1, 1)]

@@ -43,7 +43,7 @@ struct beziersurface
 {
     constexpr beziersurface() = default;
     constexpr vec3& operator[](uint index) { return controlnet[index]; }
-    constexpr vec3 operator[](uint index) const { return controlnet[index]; }
+    constexpr vec3 const& operator[](uint index) const { return controlnet[index]; }
     static constexpr uint numcontrolpts = (n + 1) * (n + 1);
     std::array<controlpoint, numcontrolpts> controlnet;
 };
@@ -53,7 +53,7 @@ struct beziertriangle
 {
     constexpr beziertriangle() = default;
     constexpr vec3& operator[](uint index) { return controlnet[index]; }
-    constexpr vec3 operator[](uint index) const { return controlnet[index]; }
+    constexpr vec3 const& operator[](uint index) const { return controlnet[index]; }
     static constexpr uint numcontrolpts = ((n + 1) * (n + 2)) / 2;
     std::array<controlpoint, numcontrolpts> controlnet;
 };
@@ -63,9 +63,8 @@ struct beziervolume
 {
     constexpr beziervolume() = default;
     constexpr vec3& operator[](uint index) { return controlnet[index]; }
-    constexpr vec3 operator[](uint index) const { return controlnet[index]; }
+    constexpr vec3 const& operator[](uint index) const { return controlnet[index]; }
     static constexpr uint numcontrolpts = (n + 1) * (n + 1) * (n + 1);
-
     std::array<controlpoint, numcontrolpts> controlnet;
 };
 

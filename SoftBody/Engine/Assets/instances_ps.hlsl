@@ -1,5 +1,5 @@
 #include "lighting.hlsli"
-#include "Common.hlsli"
+#include "common.hlsli"
 
 StructuredBuffer<instance_data> instances : register(t1);
 

@@ -37,21 +37,19 @@ vec3 evaluateavx2(beziervolume<2> const& v, vec3 const& bt0, vec3 const& bt1, ve
     __m256 r1b1 = _mm256_fmadd_ps(t0x, v01, _mm256_fmadd_ps(t0y, v11, _mm256_mul_ps(t0z, v21)));
     __m256 r2b1 = _mm256_fmadd_ps(t0x, v02, _mm256_fmadd_ps(t0y, v12, _mm256_mul_ps(t0z, v22)));
 
-    __m256 res = _mm256_mul_ps(t2, _mm256_fmadd_ps(t1x, r0b1, _mm256_fmadd_ps(t1y, r1b1, _mm256_mul_ps(t1z, r2b1))));
+    float res[8];
+    _mm256_store_ps(res, _mm256_mul_ps(t2, _mm256_fmadd_ps(t1x, r0b1, _mm256_fmadd_ps(t1y, r1b1, _mm256_mul_ps(t1z, r2b1)))));
 
     // compute the remaining value the scalar way
     float const l = bt2.z * (bt1.x * (v[18].z * bt0.x + v[19].z * bt0.y + v[20].z * bt0.z) + bt1.y * (v[21].z * bt0.x + v[22].z * bt0.y + v[23].z * bt0.z) + bt1.z * (v[24].z * bt0.x + v[25].z * bt0.y + v[26].z * bt0.z));
-    return vec3{ res.m256_f32[0] + res.m256_f32[3] + res.m256_f32[6], res.m256_f32[1] + res.m256_f32[4] + res.m256_f32[7], res.m256_f32[2] + res.m256_f32[5] + l };
+    return vec3{ res[0] + res[3] + res[6], res[1] + res[4] + res[7], res[2] + res[5] + l };
 }
 
-// no need to optimize this with cached variables/computations, turns out it performs worse
-// potentially caused by having to reload the cached local variables into registers again
+// some computations are duplicated, but performance actually is worse when caching them
 std::vector<geometry::vertex> bulkevaluate(beziervolume<2> const& v, std::vector<geometry::vertex> const& vertices)
 {
-    std::vector<geometry::vertex> res;
-    static float totalus = 0.f;
-    static uint num = 0;
-                                                        
+    std::vector<geometry::vertex> ret;
+                          
     // vab is line along 3rd dim. ab represent first two dims.
     __m256 v00 = _mm256_setr_ps(v[0].x, v[0].y, v[0].z, v[9].x, v[9].y, v[9].z, v[18].x, v[18].y);
     __m256 v10 = _mm256_setr_ps(v[1].x, v[1].y, v[1].z, v[10].x, v[10].y, v[10].z, v[19].x, v[19].y);
@@ -65,6 +63,7 @@ std::vector<geometry::vertex> bulkevaluate(beziervolume<2> const& v, std::vector
     __m256 v12 = _mm256_setr_ps(v[7].x, v[7].y, v[7].z, v[16].x, v[16].y, v[16].z, v[25].x, v[25].y);
     __m256 v22 = _mm256_setr_ps(v[8].x, v[8].y, v[8].z, v[17].x, v[17].y, v[17].z, v[26].x, v[26].y);
 
+    float res[8];
     for (auto const& vtx : vertices)
     {
         auto const [p0, p2, p1] = vtx.position;
@@ -92,11 +91,11 @@ std::vector<geometry::vertex> bulkevaluate(beziervolume<2> const& v, std::vector
             __m256 r1b1 = _mm256_fmadd_ps(t0x, v01, _mm256_fmadd_ps(t0y, v11, _mm256_mul_ps(t0z, v21)));
             __m256 r2b1 = _mm256_fmadd_ps(t0x, v02, _mm256_fmadd_ps(t0y, v12, _mm256_mul_ps(t0z, v22)));
 
-            __m256 res = _mm256_mul_ps(t2, _mm256_fmadd_ps(t1x, r0b1, _mm256_fmadd_ps(t1y, r1b1, _mm256_mul_ps(t1z, r2b1))));
+            _mm256_store_ps(res, _mm256_mul_ps(t2, _mm256_fmadd_ps(t1x, r0b1, _mm256_fmadd_ps(t1y, r1b1, _mm256_mul_ps(t1z, r2b1)))));
 
             // compute the remaining value the scalar way
             float const l = bt2.z * (bt1.x * (v[18].z * bt0.x + v[19].z * bt0.y + v[20].z * bt0.z) + bt1.y * (v[21].z * bt0.x + v[22].z * bt0.y + v[23].z * bt0.z) + bt1.z * (v[24].z * bt0.x + v[25].z * bt0.y + v[26].z * bt0.z));
-            pos = vec3{ res.m256_f32[0] + res.m256_f32[3] + res.m256_f32[6], res.m256_f32[1] + res.m256_f32[4] + res.m256_f32[7], res.m256_f32[2] + res.m256_f32[5] + l };
+            pos = vec3{ res[0] + res[3] + res[6], res[1] + res[4] + res[7], res[2] + res[5] + l };
         }
 
         // compute the normals
@@ -114,10 +113,10 @@ std::vector<geometry::vertex> bulkevaluate(beziervolume<2> const& v, std::vector
             __m256 r1b1 = _mm256_fmadd_ps(t0x, v01, _mm256_fmadd_ps(t0y, v11, _mm256_mul_ps(t0z, v21)));
             __m256 r2b1 = _mm256_fmadd_ps(t0x, v02, _mm256_fmadd_ps(t0y, v12, _mm256_mul_ps(t0z, v22)));
 
-            __m256 res = _mm256_mul_ps(t2, _mm256_fmadd_ps(t1x, r0b1, _mm256_fmadd_ps(t1y, r1b1, _mm256_mul_ps(t1z, r2b1))));
+            _mm256_store_ps(res, _mm256_mul_ps(t2, _mm256_fmadd_ps(t1x, r0b1, _mm256_fmadd_ps(t1y, r1b1, _mm256_mul_ps(t1z, r2b1)))));
 
             float const l = bt2.z * (bt1.x * (v[18].z * dt0.x + v[19].z * dt0.y + v[20].z * dt0.z) + bt1.y * (v[21].z * dt0.x + v[22].z * dt0.y + v[23].z * dt0.z) + bt1.z * (v[24].z * dt0.x + v[25].z * dt0.y + v[26].z * dt0.z));
-            tn0 = vec3{ res.m256_f32[0] + res.m256_f32[3] + res.m256_f32[6], res.m256_f32[1] + res.m256_f32[4] + res.m256_f32[7], res.m256_f32[2] + res.m256_f32[5] + l };
+            tn0 = vec3{ res[0] + res[3] + res[6], res[1] + res[4] + res[7], res[2] + res[5] + l };
         }
 
         {
@@ -134,10 +133,10 @@ std::vector<geometry::vertex> bulkevaluate(beziervolume<2> const& v, std::vector
             __m256 r1b1 = _mm256_fmadd_ps(t0x, v01, _mm256_fmadd_ps(t0y, v11, _mm256_mul_ps(t0z, v21)));
             __m256 r2b1 = _mm256_fmadd_ps(t0x, v02, _mm256_fmadd_ps(t0y, v12, _mm256_mul_ps(t0z, v22)));
 
-            __m256 res = _mm256_mul_ps(t2, _mm256_fmadd_ps(t1x, r0b1, _mm256_fmadd_ps(t1y, r1b1, _mm256_mul_ps(t1z, r2b1))));
-            
+            _mm256_store_ps(res, _mm256_mul_ps(t2, _mm256_fmadd_ps(t1x, r0b1, _mm256_fmadd_ps(t1y, r1b1, _mm256_mul_ps(t1z, r2b1)))));
+
             float const l = dt2.z * (bt1.x * (v[18].z * bt0.x + v[19].z * bt0.y + v[20].z * bt0.z) + bt1.y * (v[21].z * bt0.x + v[22].z * bt0.y + v[23].z * bt0.z) + bt1.z * (v[24].z * bt0.x + v[25].z * bt0.y + v[26].z * bt0.z));
-            tn1 = vec3{ res.m256_f32[0] + res.m256_f32[3] + res.m256_f32[6], res.m256_f32[1] + res.m256_f32[4] + res.m256_f32[7], res.m256_f32[2] + res.m256_f32[5] + l };
+            tn1 = vec3{ res[0] + res[3] + res[6], res[1] + res[4] + res[7], res[2] + res[5] + l };
         }
 
         {
@@ -154,16 +153,16 @@ std::vector<geometry::vertex> bulkevaluate(beziervolume<2> const& v, std::vector
             __m256 r1b1 = _mm256_fmadd_ps(t0x, v01, _mm256_fmadd_ps(t0y, v11, _mm256_mul_ps(t0z, v21)));
             __m256 r2b1 = _mm256_fmadd_ps(t0x, v02, _mm256_fmadd_ps(t0y, v12, _mm256_mul_ps(t0z, v22)));
 
-            __m256 res = _mm256_mul_ps(t2, _mm256_fmadd_ps(t1x, r0b1, _mm256_fmadd_ps(t1y, r1b1, _mm256_mul_ps(t1z, r2b1))));
+            _mm256_store_ps(res, _mm256_mul_ps(t2, _mm256_fmadd_ps(t1x, r0b1, _mm256_fmadd_ps(t1y, r1b1, _mm256_mul_ps(t1z, r2b1)))));
 
             float const l = bt2.z * (dt1.x * (v[18].z * bt0.x + v[19].z * bt0.y + v[20].z * bt0.z) + dt1.y * (v[21].z * bt0.x + v[22].z * bt0.y + v[23].z * bt0.z) + dt1.z * (v[24].z * bt0.x + v[25].z * bt0.y + v[26].z * bt0.z));
-            tn2 = vec3{ res.m256_f32[0] + res.m256_f32[3] + res.m256_f32[6], res.m256_f32[1] + res.m256_f32[4] + res.m256_f32[7], res.m256_f32[2] + res.m256_f32[5] + l };
+            tn2 = vec3{ res[0] + res[3] + res[6], res[1] + res[4] + res[7], res[2] + res[5] + l };
         }
 
-        res.emplace_back(pos, vec3::TransformNormal(vtx.normal, matrix(tn0, tn1, tn2)).Normalized());
+        ret.emplace_back(pos, vec3::TransformNormal(vtx.normal, matrix(tn0, tn1, tn2)).Normalized());
     }
 
-    return res;
+    return ret;
 }
 
 voleval evaluatefast(beziervolume<2> const& v, vec3 const& uwv)

@@ -1,5 +1,5 @@
 #include "lighting.hlsli"
-#include "Common.hlsli"
+#include "common.hlsli"
 
 float4 main(MeshShaderVertex input) : SV_TARGET
 {
