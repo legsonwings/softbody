@@ -7,3 +7,5 @@ Prerequisites:
 
 Controls:
 -Use movement keys to move/rotate camera
+-T to toggle wireframe mode
+-V to show bounds and controlnet
