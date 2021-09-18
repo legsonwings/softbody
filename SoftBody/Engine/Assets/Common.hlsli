@@ -1,5 +1,5 @@
 #pragma once
-#include "..\..\SharedConstants.h"
+#include "..\sharedconstants.h"
 
 #define ROOT_SIG "CBV(b0), \
                   CBV(b1), \

@@ -1,12 +1,12 @@
 #pragma once
 
 #include "gfxcore.h"
-#include "../../SharedConstants.h"
+#include "engine/sharedconstants.h"
 #include "engine/geometry/geocore.h"
+#include "engine/simplemath.h"
 #include "engine/engineutils.h"
 #include "engine/interfaces/bodyinterface.h"
 #include "gfxmemory.h"
-#include "engine/SimpleMath.h"
 
 #include <type_traits>
 #include <unordered_map>

@@ -15,7 +15,7 @@
 #include "interfaces/engineinterface.h"
 
 #include "StepTimer.h"
-#include "SimpleMath.h"
+#include "simplemath.h"
 #include "GameBase.h"
 #include "engineutils.h"
 #include "graphics/gfxmemory.h"

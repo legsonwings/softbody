@@ -12,10 +12,6 @@
     <FxCompile Include="engine\assets\lines_ms.hlsl" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="GameUtils.cpp" />
-    <ClCompile Include="gameinterfaces\GameBase.cpp">
-      <Filter>GameInterfaces</Filter>
-    </ClCompile>
     <ClCompile Include="engine\physics\collision.cpp" />
     <ClCompile Include="engine\geometry\ffd.cpp" />
     <ClCompile Include="engine\geometry\geocore.cpp" />
@@ -37,15 +33,10 @@
     <ClCompile Include="engine\simplemath.cpp" />
     <ClCompile Include="engine\win32application.cpp" />
     <ClCompile Include="gameimplementations\softbodydemo\softbodydemo.cpp" />
+    <ClCompile Include="gameinterfaces\gamebase.cpp" />
+    <ClCompile Include="gameinterfaces\gameutils.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="gameinterfaces\GameBase.h">
-      <Filter>GameInterfaces</Filter>
-    </ClInclude>
-    <ClInclude Include="gameinterfaces\GameUtils.h">
-      <Filter>GameInterfaces</Filter>
-    </ClInclude>
-    <ClInclude Include="SharedConstants.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="engine\physics\collision.h" />
     <ClInclude Include="engine\geometry\ffd.h" />
@@ -72,6 +63,9 @@
     <ClInclude Include="engine\steptimer.h" />
     <ClInclude Include="engine\win32application.h" />
     <ClInclude Include="gameimplementations\softbodydemo\softbodydemo.h" />
+    <ClInclude Include="gameinterfaces\gamebase.h" />
+    <ClInclude Include="gameinterfaces\gameutils.h" />
+    <ClInclude Include="engine\sharedconstants.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="engine\assets\lighting.hlsli" />

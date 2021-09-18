@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Engine/SimpleMath.h"
+#include "engine/simplemath.h"
 
 using vec2 = DirectX::SimpleMath::Vector2;
 using vec3 = DirectX::SimpleMath::Vector3;

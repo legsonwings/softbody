@@ -23,7 +23,8 @@
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{c682db2d-ea65-4023-8b57-9e768bf19474}</ProjectGuid>
     <RootNamespace>HelloMS</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
+    <ProjectName>softbody</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -201,8 +202,8 @@
     <ClCompile Include="engine\simplemath.cpp" />
     <ClCompile Include="engine\win32application.cpp" />
     <ClCompile Include="gameimplementations\softbodydemo\softbodydemo.cpp" />
-    <ClCompile Include="gameinterfaces\GameBase.cpp" />
-    <ClCompile Include="GameUtils.cpp" />
+    <ClCompile Include="gameinterfaces\gamebase.cpp" />
+    <ClCompile Include="gameinterfaces\gameutils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="d3dx12.h" />
@@ -225,15 +226,15 @@
     <ClInclude Include="engine\interfaces\bodyinterface.h" />
     <ClInclude Include="engine\interfaces\engineinterface.h" />
     <ClInclude Include="engine\physics\collision.h" />
+    <ClInclude Include="engine\sharedconstants.h" />
     <ClInclude Include="engine\simplecamera.h" />
     <ClInclude Include="engine\simplemath.h" />
     <ClInclude Include="engine\stdx.h" />
     <ClInclude Include="engine\steptimer.h" />
     <ClInclude Include="engine\win32application.h" />
     <ClInclude Include="gameimplementations\softbodydemo\softbodydemo.h" />
-    <ClInclude Include="gameinterfaces\GameBase.h" />
-    <ClInclude Include="gameinterfaces\GameUtils.h" />
-    <ClInclude Include="SharedConstants.h" />
+    <ClInclude Include="gameinterfaces\gamebase.h" />
+    <ClInclude Include="gameinterfaces\gameutils.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="engine\assets\basic_ps.hlsl">

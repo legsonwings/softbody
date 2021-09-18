@@ -1,8 +1,8 @@
 #include "softbodydemo.h"
 #include "gameutils.h"
-#include "sharedconstants.h"
+#include "engine/sharedconstants.h"
 #include "engine/interfaces/engineinterface.h"
-#include "engine/DXSample.h"
+#include "engine/dxsample.h"
 #include "engine/stdx.h"
 #include "engine/engineutils.h"
 #include "engine/geometry/geoutils.h"
@@ -119,14 +119,9 @@ void soft_body::update(float dt)
     constbufferdata.lights[0].direction = vec3{ 0.3f, -0.27f, 0.57735f }.Normalized();
     constbufferdata.lights[0].color = { 0.2f, 0.2f, 0.2f };
 
-    // bug? : point light at origin creates blurry lighting on room
-    constbufferdata.lights[1].position = { 5.f, 2.f, 0.f};
+    constbufferdata.lights[1].position = { 0.f, 0.f, 0.f};
     constbufferdata.lights[1].color = { 1.f, 1.f, 1.f };
     constbufferdata.lights[1].range = 30.f;
-
-    constbufferdata.lights[2].position = {-10.f, 0.f, 0.f};
-    constbufferdata.lights[2].color = { 0.6f, 0.8f, 0.6f };
-    constbufferdata.lights[2].range = 30.f;
 
     cbuffer.set_data(&constbufferdata);
 }
