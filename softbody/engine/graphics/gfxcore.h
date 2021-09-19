@@ -60,6 +60,7 @@ namespace gfx
     struct pipeline_objects
     {
         ComPtr<ID3D12PipelineState> pso;
+        ComPtr<ID3D12PipelineState> pso_wireframe;
         ComPtr<ID3D12PipelineState> pso_twosided;
         ComPtr<ID3D12RootSignature> root_signature;
     };

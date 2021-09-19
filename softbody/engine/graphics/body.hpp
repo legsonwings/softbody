@@ -9,7 +9,7 @@ namespace gfx
 {
     using default_and_upload_buffers = std::pair<ComPtr<ID3D12Resource>, ComPtr<ID3D12Resource>>;
 
-    void dispatch(resource_bindings const &bindings, bool twosided = false);
+    void dispatch(resource_bindings const &bindings, bool wireframe = false, bool twosided = false);
     default_and_upload_buffers create_vertexbuffer_default(void* vertexdata_start, std::size_t const vb_size);
     ComPtr<ID3D12Resource> createupdate_uploadbuffer(uint8_t** mapped_buffer, void* data_start, std::size_t const perframe_buffersize);
     D3D12_GPU_VIRTUAL_ADDRESS get_perframe_gpuaddress(D3D12_GPU_VIRTUAL_ADDRESS start, UINT64 perframe_buffersize);
@@ -81,7 +81,7 @@ namespace gfx
         bindings.rootconstants.values.resize(sizeof(dispatch_params));
 
         memcpy(bindings.rootconstants.values.data(), &dispatch_params, sizeof(dispatch_params));
-        dispatch(bindings, gfx::getmat(getparams().matname).ex());
+        dispatch(bindings, params.wireframe, gfx::getmat(getparams().matname).ex());
     }
 
     template<typename body_t, topology primitive_t>
@@ -167,7 +167,7 @@ namespace gfx
         bindings.rootconstants.values.resize(sizeof(dispatch_params));
 
         memcpy(bindings.rootconstants.values.data(), &dispatch_params, sizeof(dispatch_params));
-        dispatch(bindings, gfx::getmat(getparams().matname).ex());
+        dispatch(bindings, params.wireframe, gfx::getmat(getparams().matname).ex());
     }
 
     template<typename body_t, topology primitive_t>

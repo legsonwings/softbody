@@ -18,6 +18,18 @@ constexpr vec3 unit_frontface_quad[4] =
     { -1.f, -1.f, 0.f }
 };
 
+constexpr vec3 unitcube[8] =
+{
+    { -1.f, 1.f, -1.f },
+    { 1.f, 1.f, -1.f },
+    { 1.f, -1.f, -1.f },
+    { -1.f, -1.f, -1.f },
+    { -1.f, 1.f, 1.f },
+    { 1.f, 1.f, 1.f },
+    { 1.f, -1.f, 1.f },
+    { -1.f, -1.f, 1.f }
+};
+
 std::array<vertex, 4> transform_unitquad(const vec3(&verts)[4], const vec3(&tx)[3])
 {
     static constexpr vec3 unitquad_normal = {0.f, 0.f, -1.f};
@@ -95,30 +107,30 @@ std::vector<vertex> geoutils::create_cube(vec3 const& center, vec3 const& extent
 std::vector<vec3> geoutils::create_box_lines(vec3 const &center, vec3 const &extents)
 {
     auto const scale = vec3{ extents.x / 2.f, extents.y / 2.f, extents.z / 2.f };
-    vec3 transformations[6][3] =
-    {
-        {{0.f, 360.f, 0.f}, {0.f, 0.0f, scale.z}, {scale}},
-        {{0.f, 180.f, 0.f}, {0.f, 0.0f, -scale.z}, {scale}},
-        {{-90.f, 0.f, 0.f}, {0.f, scale.y, 0.f}, {scale}},
-        {{90.f, 0.f, 0.f}, {0.f, -scale.y, 0.f}, {scale}},
-        {{0.f, 90.f, 0.f}, {scale.x, 0.f, 0.f}, {scale}},
-        {{0.f, -90.f, 0.f}, {-scale.x, 0.0f, 0.f}, {scale}}
-    };
 
-    std::vector<vec3> quads;
-    for (auto const& transformation : transformations)
+    std::array<vec3, 8> scaledbox;
+
+    for(uint i(0); i < std::size(unitcube); ++i)
+        scaledbox[i] = { unitcube[i].x * scale.x, unitcube[i].y * scale.y, unitcube[i].z * scale.z };
+
+    std::vector<vec3> res;
+    res.resize(24);
+    for (uint i(0); i < 4; ++i)
     {
-        auto const face = transform_unitquad(unit_frontface_quad, transformation);
-        auto const num_verts = face.size();
-        for (size_t vert_idx = 0; vert_idx < num_verts; ++vert_idx)
-        {
-            quads.push_back(face[vert_idx].position);
-            quads.push_back(face[(vert_idx + 1) % num_verts].position);
-        }
+        // front face lines
+        res[i * 2] = scaledbox[i];
+        res[i * 2 + 1] = scaledbox[(i + 1) % 4];
+
+        // back face lines
+        res[i * 2 + 8] = scaledbox[i + 4];
+        res[i * 2 + 8 + 1] = scaledbox[(i + 1) % 4 + 4];
+
+        // lines connecting front and back faces
+        res[16 + i * 2] = scaledbox[i];
+        res[16 + i * 2 + 1] = scaledbox[i + 4];
     }
 
-    for (auto & vertex : quads) { vertex += center; }
-    return quads;
+    return res;
 }
 
 std::vector<vec3> geoutils::create_cube_lines(vec3 const& center, float scale)

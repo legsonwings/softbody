@@ -29,7 +29,7 @@ namespace gameparams
 {
     constexpr float speed = 10.f;
     constexpr uint numballs = 80;
-    constexpr float ballradius = 1.8f;
+    constexpr float ballradius = 2.5f;
 }
 
 geometry::ffddata createffddata(geometry::shapeffd_c auto shape)
@@ -89,7 +89,7 @@ soft_body::soft_body(game_engine const* engine)
 {
     assert(engine != nullptr);
 
-    m_camera.Init({ 0.f, 0.f, -15.f });
+    m_camera.Init({ 0.f, 0.f, -43.f });
     m_camera.SetMoveSpeed(10.0f);
 }
 
@@ -119,9 +119,13 @@ void soft_body::update(float dt)
     constbufferdata.lights[0].direction = vec3{ 0.3f, -0.27f, 0.57735f }.Normalized();
     constbufferdata.lights[0].color = { 0.2f, 0.2f, 0.2f };
 
-    constbufferdata.lights[1].position = { 0.f, 0.f, 0.f};
+    constbufferdata.lights[1].position = { -15.f, 15.f, -15.f};
     constbufferdata.lights[1].color = { 1.f, 1.f, 1.f };
-    constbufferdata.lights[1].range = 30.f;
+    constbufferdata.lights[1].range = 40.f;
+
+    constbufferdata.lights[2].position = { 15.f, 15.f, -15.f };
+    constbufferdata.lights[2].color = { 1.f, 1.f, 1.f };
+    constbufferdata.lights[2].range = 40.f;
 
     cbuffer.set_data(&constbufferdata);
 }
@@ -142,7 +146,7 @@ game_base::resourcelist soft_body::load_assets_and_geometry()
     auto device = engine->get_device();
     cbuffer.createresources<gfx::sceneconstants>();
 
-    boxes.emplace_back(cube{ {vec3{0.f, 0.f, 0.f}}, vec3{30.f} }, &cube::vertices_flipped, &cube::instancedata, bodyparams{ "instanced" });
+    boxes.emplace_back(cube{ {vec3{0.f, 0.f, 0.f}}, vec3{40.f} }, &cube::vertices_flipped, &cube::instancedata, bodyparams{ "instanced" });
     
     auto const& roomaabb = boxes[0].getaabb();
     auto const roomhalfspan = (roomaabb.max_pt - roomaabb.min_pt - (vec3::One * gameparams::ballradius) - vec3(0.5f)) / 2.f;
@@ -154,7 +158,7 @@ game_base::resourcelist soft_body::load_assets_and_geometry()
     for (auto const& center : fillwithspheres(roomaabb, gameparams::numballs, gameparams::ballradius))
     {
         auto const velocity = vec3{ distvelocity(re), distvelocity(re), distvelocity(re) }.Normalized() * gameparams::speed;
-        balls.emplace_back(ffd_object(createffddata(sphere{ center, gameparams::ballradius })), bodyparams{ "default", gfx::generaterandom_matcolor(basemat_ball) });
+        balls.emplace_back(ffd_object(createffddata(sphere{ center, gameparams::ballradius })), bodyparams{ "wireframe", gfx::generaterandom_matcolor(basemat_ball) });
         balls.back()->svelocity(velocity);
     }
 

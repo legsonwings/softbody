@@ -183,8 +183,8 @@ struct triangle
         if (isect_linesegment.size() < 2)
             return {};
 
-        // bug : sometimes there more than two points in the solution
-        //assert(isect_linesegment.size() != 2);
+        // bug : this can sometimes be invalid, only when frame time is high?
+        // assert(isect_linesegment.size() != 2);
 
         return { { isect_linesegment[0], isect_linesegment[1] } };
     }
@@ -194,17 +194,14 @@ struct triangle
         vec3 const normal_unnormalized = (tri[1] - tri[0]).Cross(tri[2] - tri[0]);
         vec3 const normal = normal_unnormalized.Normalized();
 
-        // this is not really area of triangle
-        // todo:verify if this is correct
-        float const triarea = normal.Dot(normal_unnormalized);
+        float const triarea = normal_unnormalized.Length();
         if (triarea == 0)
             return false;
 
-        float const alpha = normal.Dot((tri[1] - point).Cross(tri[2] - point)) / triarea;
-        float const beta = normal.Dot((tri[2] - point).Cross(tri[0] - point)) / triarea;
+        float const alpha = (tri[1] - point).Cross(tri[2] - point).Length() / triarea;
+        float const beta = (tri[2] - point).Cross(tri[0] - point).Length() / triarea;
 
         return alpha > -stdx::tolerance<float> && beta > -stdx::tolerance<float> && (alpha + beta) < (1.f + stdx::tolerance<float>);
-
     }
 
     // make this std::array

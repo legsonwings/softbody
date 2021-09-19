@@ -98,7 +98,7 @@ void ffd_object::update(float dt)
     {
         auto const displacement = volume.controlnet[ctrlpt_idx] - rest_config[ctrlpt_idx];
  
-        auto const [deltapos_ctrlpt, newvel] = spring.critical(displacement, velocities[ctrlpt_idx], dt);
+        auto const [deltapos_ctrlpt, newvel] = spring.damped(displacement, velocities[ctrlpt_idx], dt);
         auto const targetdir = deltapos_ctrlpt.Normalized();
         
         // clamp the displacement from equilibrium so that control points do not cross the center(some objects will escape boxes otherwise)
@@ -214,7 +214,7 @@ void ffd_object::resolve_collision(ffd_object & r, float dt)
     move(normal * 0.1f);
     r.move(-normal * 0.1f);
 
-    auto const ctrl_impulsemultiplier = 2.f;
+    auto const ctrl_impulsemultiplier = 3.f;
     auto const impulse_per_ctrlpt = impulse * ctrl_impulsemultiplier / static_cast<float>(affected_ctrlpts.size());
     for (uint i = 0; i < affected_ctrlpts.size(); ++i)
     {
@@ -281,7 +281,7 @@ void ffd_object::resolve_collision_interior(aabb const& r, float dt)
     // move it away from wall, to avoid duplicate collisions, ideally should use mtd
     move(normal * 0.1f);
 
-    auto const impulse_per_ctrlpt = 1.7f * impulse_magnitude / static_cast<float>(affected_ctrlpts.size());
+    auto const impulse_per_ctrlpt = 2.f * impulse_magnitude / static_cast<float>(affected_ctrlpts.size());
 
     // push control points in
     for (uint i = 0; i < affected_ctrlpts.size(); ++i)

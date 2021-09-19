@@ -131,12 +131,7 @@ void gfx::addpso(std::string const& name, std::wstring const& as, std::wstring c
 
         pso_desc.BlendState.RenderTarget[0] = transparency_blenddesc;
     }
-
-    if (flags & psoflags::wireframe)
-    {
-        D3DX12_MESH_SHADER_PIPELINE_STATE_DESC wireframepso = pso_desc;
-        pso_desc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
-    }
+    //pso_wireframe
 
     auto psostream = CD3DX12_PIPELINE_MESH_STATE_STREAM(pso_desc);
 
@@ -145,6 +140,18 @@ void gfx::addpso(std::string const& name, std::wstring const& as, std::wstring c
     stream_desc.SizeInBytes = sizeof(psostream);
 
     ThrowIfFailed(device->CreatePipelineState(&stream_desc, IID_PPV_ARGS(psos[name].pso.GetAddressOf())));
+
+    if (flags & psoflags::wireframe)
+    {
+        D3DX12_MESH_SHADER_PIPELINE_STATE_DESC wireframepso = pso_desc;
+        wireframepso.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
+        
+        auto psostream = CD3DX12_PIPELINE_MESH_STATE_STREAM(wireframepso);
+        D3D12_PIPELINE_STATE_STREAM_DESC stream_desc;
+        stream_desc.pPipelineStateSubobjectStream = &psostream;
+        stream_desc.SizeInBytes = sizeof(psostream);
+        ThrowIfFailed(device->CreatePipelineState(&stream_desc, IID_PPV_ARGS(psos[name].pso_wireframe.GetAddressOf())));
+    }
 
     if (flags & psoflags::twosided)
     {

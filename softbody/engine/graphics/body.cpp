@@ -14,7 +14,7 @@ namespace gfx
     }
 }
 
-void gfx::dispatch(resource_bindings const& bindings, bool twosided)
+void gfx::dispatch(resource_bindings const& bindings, bool wireframe, bool twosided)
 {
     auto engine = game_engine::g_engine;
     auto cmd_list = engine->get_command_list();
@@ -30,13 +30,13 @@ void gfx::dispatch(resource_bindings const& bindings, bool twosided)
     if (bindings.instance.address != 0)
         cmd_list->SetGraphicsRootShaderResourceView(bindings.instance.slot, bindings.instance.address);
 
-    if (twosided)
-    {
+    if (wireframe && bindings.pipelineobjs.pso_wireframe)
+        cmd_list->SetPipelineState(bindings.pipelineobjs.pso_wireframe.Get());
+    else if (twosided && bindings.pipelineobjs.pso_twosided)
         cmd_list->SetPipelineState(bindings.pipelineobjs.pso_twosided.Get());
-        cmd_list->DispatchMesh(1, 1, 1);
-    }
+    else 
+        cmd_list->SetPipelineState(bindings.pipelineobjs.pso.Get());
 
-    cmd_list->SetPipelineState(bindings.pipelineobjs.pso.Get());
     cmd_list->DispatchMesh(1, 1, 1);
 }
 
