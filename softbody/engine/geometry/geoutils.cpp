@@ -106,30 +106,36 @@ std::vector<vertex> geoutils::create_cube(vec3 const& center, vec3 const& extent
 
 std::vector<vec3> geoutils::create_box_lines(vec3 const &center, vec3 const &extents)
 {
-    auto const scale = vec3{ extents.x / 2.f, extents.y / 2.f, extents.z / 2.f };
-
-    std::array<vec3, 8> scaledbox;
-
-    for(uint i(0); i < std::size(unitcube); ++i)
-        scaledbox[i] = { unitcube[i].x * scale.x, unitcube[i].y * scale.y, unitcube[i].z * scale.z };
-
-    std::vector<vec3> res;
-    res.resize(24);
-    for (uint i(0); i < 4; ++i)
+    auto createcubelines = [](vec3 const (&cube)[8])
     {
-        // front face lines
-        res[i * 2] = scaledbox[i];
-        res[i * 2 + 1] = scaledbox[(i + 1) % 4];
+        std::vector<vec3> res;
+        res.resize(24);
 
-        // back face lines
-        res[i * 2 + 8] = scaledbox[i + 4];
-        res[i * 2 + 8 + 1] = scaledbox[(i + 1) % 4 + 4];
+        for (uint i(0); i < 4; ++i)
+        {
+            // front face lines
+            res[i * 2] = cube[i];
+            res[i * 2 + 1] = cube[(i + 1) % 4];
 
-        // lines connecting front and back faces
-        res[16 + i * 2] = scaledbox[i];
-        res[16 + i * 2 + 1] = scaledbox[i + 4];
-    }
+            // back face lines
+            res[i * 2 + 8] = cube[i + 4];
+            res[i * 2 + 8 + 1] = cube[(i + 1) % 4 + 4];
 
+            // lines connecting front and back faces
+            res[16 + i * 2] = cube[i];
+            res[16 + i * 2 + 1] = cube[i + 4];
+        }
+
+        return res;
+    };
+
+    static const std::vector<vec3> unitcubelines = createcubelines(unitcube);
+
+    auto const scale = vec3{ extents.x / 2.f, extents.y / 2.f, extents.z / 2.f };
+    
+    std::vector<vec3> res;
+    res.reserve(24);
+    for (auto const v : unitcubelines) res.emplace_back(v.x * scale.x, v.y * scale.y, v.z * scale.z);
     return res;
 }
 
