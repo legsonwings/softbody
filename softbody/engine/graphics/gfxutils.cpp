@@ -48,7 +48,6 @@ std::string const& gfx::generaterandom_matcolor(materialcref definition, std::op
 
 void gfx::init_pipelineobjects()
 {
-    // bug : wireframe view cannot be toggled off
     addpso("lines", L"default_as.cso", L"lines_ms.cso", L"basic_ps.cso");
     addpso("default", L"default_as.cso", L"default_ms.cso", L"default_ps.cso");
     addpso("instancedlines", L"instances_as.cso", L"linesinstances_ms.cso", L"basic_ps.cso");
@@ -131,8 +130,7 @@ void gfx::addpso(std::string const& name, std::wstring const& as, std::wstring c
 
         pso_desc.BlendState.RenderTarget[0] = transparency_blenddesc;
     }
-    //pso_wireframe
-
+ 
     auto psostream = CD3DX12_PIPELINE_MESH_STATE_STREAM(pso_desc);
 
     D3D12_PIPELINE_STATE_STREAM_DESC stream_desc;

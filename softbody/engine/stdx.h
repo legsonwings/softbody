@@ -180,7 +180,7 @@ struct hypercubeidx
 		return res;
 	}
 
-	std::array<uint, n + 1> coords;
+	std::array<uint, n + 1> coords = {};
 };
 
 template<typename b, typename e>
