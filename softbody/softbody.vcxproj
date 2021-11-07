@@ -201,6 +201,7 @@
     <ClCompile Include="engine\simplecamera.cpp" />
     <ClCompile Include="engine\simplemath.cpp" />
     <ClCompile Include="engine\win32application.cpp" />
+    <ClCompile Include="gameimplementations\fluidsimulation\fluidsimulation.ixx" />
     <ClCompile Include="gameimplementations\softbodydemo\softbodydemo.cpp" />
     <ClCompile Include="gameinterfaces\gamebase.cpp" />
     <ClCompile Include="gameinterfaces\gameutils.cpp" />
@@ -232,6 +233,7 @@
     <ClInclude Include="engine\stdx.h" />
     <ClInclude Include="engine\steptimer.h" />
     <ClInclude Include="engine\win32application.h" />
+    <ClInclude Include="gameimplementations\fluidsimulation\fluidcore.h" />
     <ClInclude Include="gameimplementations\softbodydemo\softbodydemo.h" />
     <ClInclude Include="gameinterfaces\gamebase.h" />
     <ClInclude Include="gameinterfaces\gameutils.h" />

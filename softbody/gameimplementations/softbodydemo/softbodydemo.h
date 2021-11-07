@@ -2,8 +2,6 @@
 
 #include "gamebase.h"
 #include "engine/SimpleMath.h"
-#include "engine/SimpleCamera.h"
-#include "engine/graphics/gfxmemory.h"
 #include "Engine/geometry/ffd.h"
 #include "Engine/geometry/beziershapes.h"
 
@@ -32,14 +30,10 @@ public:
 	std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> load_assets_and_geometry() override;
 
 	void on_key_down(unsigned key) override;
-	void on_key_up(unsigned key) override;
 
 private:
 	bool wireframe_toggle = false;
 	bool debugviz_toggle = false;
-
-	SimpleCamera m_camera;    
-	constant_buffer cbuffer;
 
 	std::vector<gfx::body_dynamic<geometry::ffd_object>> balls;
 	std::vector<gfx::body_static<geometry::cube>> boxes;

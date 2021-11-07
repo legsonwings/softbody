@@ -35,6 +35,7 @@
     <ClCompile Include="gameimplementations\softbodydemo\softbodydemo.cpp" />
     <ClCompile Include="gameinterfaces\gamebase.cpp" />
     <ClCompile Include="gameinterfaces\gameutils.cpp" />
+    <ClCompile Include="gameimplementations\fluidsimulation\fluidsimulation.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="d3dx12.h" />
@@ -66,6 +67,7 @@
     <ClInclude Include="gameinterfaces\gamebase.h" />
     <ClInclude Include="gameinterfaces\gameutils.h" />
     <ClInclude Include="engine\sharedconstants.h" />
+    <ClInclude Include="gameimplementations\fluidsimulation\fluidcore.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="engine\assets\lighting.hlsli" />

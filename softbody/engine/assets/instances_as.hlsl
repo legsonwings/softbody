@@ -4,6 +4,7 @@
 [NumThreads(AS_GROUP_SIZE, 1, 1)]
 void main(uint dtid : SV_DispatchThreadID, uint gtid : SV_GroupThreadID, uint gid : SV_GroupID)
 {
+    // todo : this limits how many instances can be rendered bny each as, if vertices are low then each ms will be very poorly utilized
     // Each mesh shader thread group only deals with a single instance
     const uint num_instances = dispatch_params.numprims / dispatch_params.numprims_perinstance;
     const uint num_groups_per_instance = ceil(float(dispatch_params.numprims_perinstance) / float(dispatch_params.maxprims_permsgroup));

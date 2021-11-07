@@ -8,6 +8,9 @@
 #define NOMINMAX
 #include <wrl.h>
 
+#include "engine/graphics/gfxmemory.h"
+#include "engine/SimpleCamera.h"
+
 class game_engine;
 struct ID3D12Resource;
 
@@ -26,9 +29,11 @@ public:
 	virtual void update(float dt) = 0;
 	virtual void render(float dt) = 0;
 
-	virtual void on_key_down(unsigned key) {};
-	virtual void on_key_up(unsigned key) {};
+	virtual void on_key_down(unsigned key) { m_camera.OnKeyDown(key); };
+	virtual void on_key_up(unsigned key) { m_camera.OnKeyUp(key); };
 
 protected:
 	game_engine const * engine;
+	SimpleCamera m_camera;
+	constant_buffer cbuffer;
 };

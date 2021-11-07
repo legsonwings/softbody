@@ -20,7 +20,7 @@ namespace gfx
     enum class topology
     {
         triangle,
-        line
+        line,
     };
 
     enum psoflags

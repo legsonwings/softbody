@@ -3,6 +3,7 @@
 struct vertexin
 {
     float3 position;
+    float intensity;
 };
 
 StructuredBuffer<vertexin> in_vertices : register(t0);

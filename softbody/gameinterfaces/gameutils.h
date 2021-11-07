@@ -2,10 +2,11 @@
 
 enum class game_types
 {
-	soft_body_demo
+	softbodydemo,
+	fluidsimulation
 };
 
-auto constexpr current_game = game_types::soft_body_demo;
+auto constexpr current_game = game_types::fluidsimulation;
 
 #include "GameBase.h"
 

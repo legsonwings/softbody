@@ -80,7 +80,7 @@ namespace gfx
         D3D12_GPU_VIRTUAL_ADDRESS get_instancebuffer_gpuaddress() const;
         D3D12_GPU_VIRTUAL_ADDRESS get_vertexbuffer_gpuaddress() const override { return m_vertexbuffer->GetGPUVirtualAddress(); }
     public:
-        body_static(rawbody_t _body, bodyparams const & _params);
+        body_static(rawbody_t _body, bodyparams const& _params);
         body_static(body_t const& _body, vertexfetch_r(rawbody_t::* vfun)() const, instancedatafetch_r(rawbody_t::* ifun)() const, bodyparams const& _params);
 
         std::vector<ComPtr<ID3D12Resource>> create_resources() override;

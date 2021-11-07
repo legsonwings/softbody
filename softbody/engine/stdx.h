@@ -48,6 +48,8 @@ struct invalid { constexpr operator t() const { return { std::numeric_limits<t>:
 template <arithmeticvector_c t>
 struct arithmeticvector {};
 
+struct uminus { constexpr auto operator() (arithmetic_c auto v) const { return -v; }; };
+
 bool constexpr nearlyequal(arithmetic_c auto const& l, arithmetic_c auto const& r) { return l == r; }
 
 template <typename t>
@@ -76,11 +78,9 @@ constexpr std::array<t, n> sum(std::array<t, n> const& l, std::array<t, n> const
 	return res;
 }
 
-template<typename t>
-requires arithmetic_c<t>
-constexpr auto pown(t v, uint n)
+constexpr auto pown(arithmetic_c auto v, uint n)
 {
-	t res = 1;
+	decltype(v) res = 1;
 	for (auto i : std::ranges::iota_view{ 0u,  n })
 		res *= v;
 	return res;
@@ -112,6 +112,39 @@ void append(std::vector<t> const& source, std::vector<t>& dest)
 {
 	dest.reserve(dest.size() + source.size());
 	for (auto const& e : source) { dest.emplace_back(e); }
+}
+
+template<arithmetic_c t, uint n>
+constexpr t dot(std::array<t, n> a, std::array<t, n> b)
+{
+	t r = 0;
+	for (uint i(0); i < n; ++i) r += a[i] * b[i];
+	return r;
+}
+
+template<arithmetic_c t, uint n>
+constexpr std::array<t, n> clamp(std::array<t, n> a, t l, t h)
+{
+	std::array<t, n> r;
+	for (uint i(0); i < n; ++i) r[i] = (a[i] < l ? l : (a[i] > h ? h : a[i]));
+	return r;
+}
+
+// todo : create a concept, std::regular_invocable doesn't work
+template<typename t, uint n, typename f_t>
+constexpr std::array<t, n> unaryop(std::array<t, n> a, f_t f)
+{
+	std::array<t, n> r;
+	for (uint i(0); i < n; ++i) r[i] = f(a[i]);
+	return r;
+}
+
+template<typename t, uint n, typename f_t>
+constexpr std::array<t, n> binaryop(std::array<t, n> a, std::array<t, n> b, f_t f)
+{
+	std::array<t, n> r;
+	for (uint i(0); i < n; ++i) r[i] = f(a[i], b[i]);
+	return r;
 }
 
 // triangular index
@@ -156,6 +189,7 @@ struct hypercubeidx
 	template<uint_c ... args>
 	requires (sizeof...(args) == (n + 1))
 	constexpr hypercubeidx(args... _coords) : coords{ static_cast<uint>(_coords)... } {}
+	constexpr uint& operator[](uint idxidx) { return coords[idxidx]; }
 	constexpr uint operator[](uint idxidx) const { return coords[idxidx]; }
 	constexpr hypercubeidx operator+(hypercubeidx const& rhs) const { return { sum(coords, rhs.coords) }; }
 

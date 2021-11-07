@@ -19,10 +19,7 @@
 namespace game_creator
 {
     template <>
-    std::unique_ptr<game_base> create_instance<game_types::soft_body_demo>(game_engine const* engine)
-    {
-        return std::move(std::make_unique<soft_body>(engine));
-    }
+    std::unique_ptr<game_base> create_instance<game_types::softbodydemo>(game_engine const* engine) { return std::move(std::make_unique<soft_body>(engine)); }
 }
 
 namespace gameparams
@@ -176,13 +173,8 @@ game_base::resourcelist soft_body::load_assets_and_geometry()
 
 void soft_body::on_key_down(unsigned key)
 {
-    m_camera.OnKeyDown(key);
+    game_base::on_key_down(key);
 
     if (key == 'T') wireframe_toggle = !wireframe_toggle;
     if (key == 'V') debugviz_toggle = !debugviz_toggle;
-}
-
-void soft_body::on_key_up(unsigned key)
-{
-    m_camera.OnKeyUp(key);
 }
