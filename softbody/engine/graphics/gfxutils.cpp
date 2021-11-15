@@ -50,7 +50,7 @@ void gfx::init_pipelineobjects()
 {
     addpso("lines", L"default_as.cso", L"lines_ms.cso", L"basic_ps.cso");
     addpso("default", L"default_as.cso", L"default_ms.cso", L"default_ps.cso");
-    addpso("instancedlines", L"instances_as.cso", L"linesinstances_ms.cso", L"basic_ps.cso");
+    addpso("instancedlines", L"instances_asold.cso", L"linesinstances_ms.cso", L"basic_ps.cso");
     addpso("instanced", L"instances_as.cso", L"instances_ms.cso", L"instances_ps.cso");
     addpso("transparent", L"default_as.cso", L"default_ms.cso", L"default_ps.cso", psoflags::transparent);
     addpso("transparent_twosided", L"default_as.cso", L"default_ms.cso", L"default_ps.cso", psoflags::transparent | psoflags::twosided);

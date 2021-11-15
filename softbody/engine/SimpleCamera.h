@@ -23,7 +23,7 @@ public:
     void Update(float elapsedSeconds);
     DirectX::XMFLOAT3 GetCurrentPosition() const;
     DirectX::XMMATRIX GetViewMatrix();
-    DirectX::XMMATRIX GetProjectionMatrix(float fov, float aspectRatio, float nearPlane = 1.0f, float farPlane = 1000.0f);
+    DirectX::XMMATRIX GetProjectionMatrix(float fov, float aspectRatio, float nearPlane = 0.1f, float farPlane = 1000.0f);
     void SetMoveSpeed(float unitsPerSecond);
     void SetTurnSpeed(float radiansPerSecond);
 

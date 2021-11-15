@@ -276,32 +276,27 @@ public:
 private:
 	uint calcsizes()
 	{
+		uint totalsize = 0;
 		for (uint i = 0; i < mysize; ++i) { sizes[i] = getsize(i); totalsize += sizes[i]; }
 		return totalsize;
 	}
 
 	std::pair<uint, uint> container(uint idx) const
 	{
-		assert(idx < totalsize);
-		std::pair<uint, uint> ret;
+		static constexpr auto invalid = std::make_pair(std::numeric_limits<uint>::max(), std::numeric_limits<uint>::max());
 		uint sum = 0;
+		std::pair<uint, uint> ret = invalid;
 		for (uint i = 0; i < sizes.size(); ++i)
 		{
-			uint prevsum = sum;
 			sum += sizes[i];
-			if (idx < sum)
-			{
-				ret.first = idx - prevsum;
-				ret.second = i;
-				break;
-			}
+			if (idx < sum) return { idx - sum + sizes[i], i };
 		}
-
 		return ret;
 	}
 
 	t* get(uint idx)
 	{
+		assert(idx < calcsizes());
 		auto const& [idxrel, idxc] = container(idx);
 		return getimpl(idxrel, idxc);
 	}
@@ -325,7 +320,6 @@ private:
 		return 0;
 	}
 
-	uint totalsize = 0;
 	std::array<uint, mysize> sizes;
 	std::tuple<args_t&...> data;
 };

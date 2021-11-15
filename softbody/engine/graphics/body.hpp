@@ -9,7 +9,7 @@ namespace gfx
 {
     using default_and_upload_buffers = std::pair<ComPtr<ID3D12Resource>, ComPtr<ID3D12Resource>>;
 
-    void dispatch(resource_bindings const &bindings, bool wireframe = false, bool twosided = false);
+    void dispatch(resource_bindings const &bindings, bool wireframe = false, bool twosided = false, uint dispatchx = 1);
     default_and_upload_buffers create_vertexbuffer_default(void* vertexdata_start, std::size_t const vb_size);
     ComPtr<ID3D12Resource> createupdate_uploadbuffer(uint8_t** mapped_buffer, void* data_start, std::size_t const perframe_buffersize);
     D3D12_GPU_VIRTUAL_ADDRESS get_perframe_gpuaddress(D3D12_GPU_VIRTUAL_ADDRESS start, UINT64 perframe_buffersize);
@@ -80,8 +80,10 @@ namespace gfx
         bindings.rootconstants.slot = 2;
         bindings.rootconstants.values.resize(sizeof(dispatch_params));
 
+        uint const numasthreads = static_cast<uint>(std::ceil(static_cast<float>(dispatch_params.numprims) / static_cast<float>(INSTANCE_ASGROUP_SIZE * dispatch_params.maxprims_permsgroup)));
+
         memcpy(bindings.rootconstants.values.data(), &dispatch_params, sizeof(dispatch_params));
-        dispatch(bindings, params.wireframe, gfx::getmat(getparams().matname).ex());
+        dispatch(bindings, params.wireframe, gfx::getmat(getparams().matname).ex(), numasthreads);
     }
 
     template<typename body_t, topology primitive_t>

@@ -7,9 +7,10 @@
     <FxCompile Include="engine\assets\default_ps.hlsl" />
     <FxCompile Include="engine\assets\default_as.hlsl" />
     <FxCompile Include="engine\assets\default_ms.hlsl" />
-    <FxCompile Include="engine\assets\instances_as.hlsl" />
+    <FxCompile Include="engine\assets\instances_asold.hlsl" />
     <FxCompile Include="engine\assets\instances_ms.hlsl" />
     <FxCompile Include="engine\assets\lines_ms.hlsl" />
+    <FxCompile Include="engine\assets\instances_as.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="engine\physics\collision.cpp" />
@@ -36,6 +37,7 @@
     <ClCompile Include="gameinterfaces\gamebase.cpp" />
     <ClCompile Include="gameinterfaces\gameutils.cpp" />
     <ClCompile Include="gameimplementations\fluidsimulation\fluidsimulation.ixx" />
+    <ClCompile Include="engine\cursor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="d3dx12.h" />
@@ -68,6 +70,7 @@
     <ClInclude Include="gameinterfaces\gameutils.h" />
     <ClInclude Include="engine\sharedconstants.h" />
     <ClInclude Include="gameimplementations\fluidsimulation\fluidcore.h" />
+    <ClInclude Include="engine\cursor.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="engine\assets\lighting.hlsli" />

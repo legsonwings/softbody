@@ -8,9 +8,11 @@ module;
 #include "engine/interfaces/bodyinterface.h"
 #include "engine/geometry/geoutils.h"
 #include "engine/geometry/geocore.h"
+#include "engine/cursor.h"
 #include "gamebase.h"
 #include "gameutils.h"
 #include "fluidcore.h"
+#include "engine/win32application.h"
 
 export module fluidsimulation;
 
@@ -21,7 +23,8 @@ using Microsoft::WRL::ComPtr;
 
 namespace fluid
 {
-    static constexpr float maxd = 1.f;
+static constexpr float maxd = 1.f;
+using cubeidx = stdx::hypercubeidx<1>;
 
 template<uint l>
 struct scalarfieldro
@@ -47,7 +50,6 @@ struct scalarfieldro
     std::vector<gfx::instance_data> instancedata() const
     {
         gfx::material mat = gfx::getmat("room");
-        using cubeidx = stdx::hypercubeidx<1>;
         std::vector<gfx::instance_data> r;
         for (uint i(0); i < sf.size(); ++i)
         {
@@ -63,6 +65,9 @@ struct scalarfieldro
     }
 };
 
+// todo : remove game_engine from game
+// its only used by gfx
+
 class fluidsimulation : public game_base
 {
 public:
@@ -74,9 +79,10 @@ public:
         m_camera.SetMoveSpeed(10.0f);
     }
 
+    cursor cursor;
 private:
     static constexpr uint vd = 1;
-    static constexpr uint l = 20;
+    static constexpr uint l = 70;
 
     fluidbox<vd, l> fluid{ 0.2f, 0.5f };
     std::vector<gfx::body_static<geometry::cube, gfx::topology::triangle>> boxes;
@@ -86,25 +92,20 @@ private:
     {
         using geometry::cube;
         using gfx::bodyparams;
-        auto device = engine->get_device();
         cbuffer.createresources<gfx::sceneconstants>();
 
         boxes.emplace_back(cube{ {vec3{0.f, 0.f, 0.f}}, vec3{40.f} }, &cube::vertices_flipped, &cube::instancedata, bodyparams{ "instanced" });
         dye.emplace_back(scalarfieldro<l>{}, bodyparams{ "instanced" });
 
-        // todo : makejoin has a horrible bug here. This crashes :((
-        // for (auto b : stdx::makejoin<gfx::bodyinterface>(dye, boxes)) { stdx::append(b->create_resources(), resources); };
-        for (uint i((l / 2) - 3); i < (l / 2) + 3; ++i)
-            for (uint j((l / 2) - 3); j < (l / 2) + 3; ++j)
-            {
-                fluid.adddensity({ i,j }, maxd);
-                fluid.addvelocity({ i,j }, { 3.f, 0.f });
-            }
+        //for (uint i((l / 2) - 3); i < (l / 2) + 3; ++i)
+        //    for (uint j((l / 2) - 3); j < (l / 2) + 3; ++j)
+        //    {
+        //        fluid.adddensity({ i,j }, maxd);
+        //        fluid.addvelocity({ i,j }, { 0.f, 4.f });
+        //    }
 
         resourcelist r;
-        for (auto &b : boxes) stdx::append(b.create_resources(), r);
-        for (auto &b : dye) stdx::append(b.create_resources(), r);
-
+        for (auto b : stdx::makejoin<gfx::bodyinterface>(dye, boxes)) { stdx::append(b->create_resources(), r); };
         return r;
     }
 
@@ -133,11 +134,44 @@ private:
 
         cbuffer.set_data(&constbufferdata);
 
+        cursor.tick(dt);
+
+        DirectX::SimpleMath::Ray ray(m_camera.GetCurrentPosition(), cursor.ray());
+        
+        float dist;
+        // fluid box is at origin
+        if (ray.Intersects(plane{ vec3::Zero, vec3::Backward }, dist))
+        {
+            vec3 const point = ray.position + ray.direction * dist;
+
+            static constexpr float speed = 2.f;
+            static constexpr DirectX::SimpleMath::Vector2 origin = DirectX::SimpleMath::Vector2{ -(l / 2.f), -(l / 2.f) };
+
+            // todo : account for window scaling when computing cursor pos
+            // todo : implement the fluid plane as fulscreen canvas
+            // todo : provide helpers to do type conversions
+            // todo : implement hypercubeidx as child of std::array
+            DirectX::SimpleMath::Vector2 const idxf = { std::roundf(point.x - origin.x), std::roundf(point.y - origin.y) };
+            cubeidx const idx = { static_cast<uint>(idxf.x), static_cast<uint>(idxf.y)};
+
+            float spread = 1.f;
+            for (uint i(idx[0] - spread); i <= (idx[0] + spread) && (i > 0 && i < (l - 1)); ++i)
+                for (uint j(idx[1] - spread); j <= (idx[1] + spread) && (i > 0 && i < (l - 1)); ++j)
+                {
+                    DirectX::SimpleMath::Vector2 const currentcellf = { static_cast<float>(i), static_cast<float>(j) };
+                    auto const vel = (currentcellf - idxf).Normalized() * speed + cursor.vel() * 0.5f;
+                    fluid.adddensity({ i,j }, 0.25);
+                    fluid.addvelocity({ i,j }, { vel.x, vel.y });
+                }
+        }
+
+
+        // todo : these probably need optimizations
         auto& v = fluid.v;
         v = advect2d(v, v, dt);
         sbounds(v, -1.f);
         
-        v = diffuse({}, v, dt, 0.1f);
+        v = diffuse({}, v, dt, 0.4f);
         sbounds(v, -1.f);
 
         // move this to a project function
@@ -165,7 +199,7 @@ private:
 
     void render(float dt) override
     {
-        for (auto b : stdx::makejoin<gfx::bodyinterface>(boxes, dye))  b->render(dt, { false, cbuffer.get_gpuaddress() });
+        for (auto b : stdx::makejoin<gfx::bodyinterface>(dye))  b->render(dt, { false, cbuffer.get_gpuaddress() });
     }
 };
 }

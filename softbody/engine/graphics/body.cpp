@@ -14,7 +14,7 @@ namespace gfx
     }
 }
 
-void gfx::dispatch(resource_bindings const& bindings, bool wireframe, bool twosided)
+void gfx::dispatch(resource_bindings const& bindings, bool wireframe, bool twosided, uint dispatchx)
 {
     auto engine = game_engine::g_engine;
     auto cmd_list = engine->get_command_list();
@@ -37,7 +37,7 @@ void gfx::dispatch(resource_bindings const& bindings, bool wireframe, bool twosi
     else 
         cmd_list->SetPipelineState(bindings.pipelineobjs.pso.Get());
 
-    cmd_list->DispatchMesh(1, 1, 1);
+    cmd_list->DispatchMesh(static_cast<UINT>(dispatchx), 1, 1);
 }
 
 gfx::default_and_upload_buffers gfx::create_vertexbuffer_default(void* vertexdata_start, std::size_t const vb_size)

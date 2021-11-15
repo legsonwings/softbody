@@ -21,6 +21,17 @@ struct payload_instances
     uint numprims[MAX_MSGROUPS_PER_ASGROUP];
 };
 
+struct msdata_instanced
+{
+    uint start;
+    uint numprims;
+};
+
+struct payload_instanced
+{
+    msdata_instanced data[MAX_MSGROUPS_PER_ASGROUPTRI];
+};
+
 struct dispatch_parameters
 {
     uint numprims;
