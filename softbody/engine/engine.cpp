@@ -14,11 +14,10 @@
 
 using namespace DirectX::SimpleMath;
 
-softbody::softbody(configurable_properties const& config_props)
-    : DXSample(config_props.width, config_props.height, config_props.app_name)
-    , config_properties(config_props)
-    , m_viewport(0.0f, 0.0f, static_cast<float>(config_props.width), static_cast<float>(config_props.height))
-    , m_scissorRect(0, 0, static_cast<LONG>(config_props.width), static_cast<LONG>(config_props.height))
+softbody::softbody(gamedata const& data)
+    : DXSample(data.width, data.height)
+    , m_viewport(0.0f, 0.0f, static_cast<float>(data.width), static_cast<float>(data.height))
+    , m_scissorRect(0, 0, static_cast<LONG>(data.width), static_cast<LONG>(data.height))
     , m_rtvDescriptorSize(0)
     , m_dsvDescriptorSize(0)
     , m_frameIndex(0)
@@ -26,7 +25,7 @@ softbody::softbody(configurable_properties const& config_props)
     , m_fenceEvent{}
     , m_fenceValues{}
 {
-    game = game_creator::create_instance<current_game>(this);
+    game = game_creator::create_instance<currentgame>(data);
 
     WCHAR assetsPath[512];
     GetAssetsPath(assetsPath, _countof(assetsPath));
@@ -248,7 +247,9 @@ void softbody::OnUpdate()
         // Update window text with FPS value.
         wchar_t fps[64];
         swprintf_s(fps, L"%ufps", m_timer.GetFramesPerSecond());
-        SetCustomWindowText(fps);
+
+        std::wstring const title = gametitles[int(currentgame)] + L": " + fps;
+        SetCustomWindowText(title);
     }
 
     game->update(static_cast<float>(m_timer.GetElapsedSeconds()));

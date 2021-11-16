@@ -59,17 +59,16 @@ template<uint n, uint l>
 requires (n >= 0)
 	struct fluidbox
 {
-	fluidbox(float _diff, float _visc) : diff(_diff), visc(_visc) {}
+	fluidbox(float _diff) : diff(_diff) {}
 	static constexpr uint numcells = stdx::pown(l, n);
 	using cubeidx = stdx::hypercubeidx<n>;
 
 	float diff;
-	float visc;
 
 	vecfield21<l> d;
 	vecfield22<l> v;
 	vecfield22<l> v0;
-	// diffusion coeffecient, viscosity, s, density, velocity, oldvelocity
+	// diffusion coeffecient, density, velocity, oldvelocity
 
 	void addvelocity(cubeidx const& cellidx, vec<float, n> vel)
 	{
@@ -85,7 +84,7 @@ requires (n >= 0)
 };
 
 // todo : figure out a way to generically handle arbitrary dimensions
-// the problem right now is that we have to no way of generating nested loops based on tempalate paramter
+// the problem right now is that we have to no way of generating nested loops based on template paramter
 // a potential solution is to wirte loop templates that use recursion
 // alternatvely a more desirable solution could be to iterate the 1d representation(since data in any dimension is just a 1D array) in single loop
 // This might mean padding the vector field with additional cells outside boundary since we require neighbouring cells for solving poisson equations
@@ -168,11 +167,6 @@ vecfield2<vd, l> advect2d(vecfield2<vd, l> const& a, vecfield22<l> const& v, flo
 			auto const rb = idx::to1d<l - 1>({ lt2d + idx{1, 1} });
 
 			r[cell] = bilerp(a[lt], a[rt], a[lb], a[rb], {xy[0] - lt2d.coords[0], xy[1] - lt2d.coords[1] });
-
-			//if (std::isnan(r[cell][0]) || std::isnan(r[cell][1]))
-			//{
-			//	bool found = true;
-			//}
 		}
 
 	return r;

@@ -31,7 +31,7 @@
 class DXSample
 {
 public:
-    DXSample(UINT width, UINT height, std::wstring name);
+    DXSample(UINT width, UINT height);
     virtual ~DXSample();
 
     virtual void OnInit() = 0;
@@ -57,7 +57,7 @@ protected:
         _Outptr_result_maybenull_ IDXGIAdapter1** ppAdapter,
         bool requestHighPerformanceAdapter = false);
 
-    void SetCustomWindowText(LPCWSTR text);
+    void SetCustomWindowText(std::wstring const& text);
 
     // Viewport dimensions.
     UINT m_width;

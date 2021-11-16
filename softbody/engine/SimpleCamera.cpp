@@ -28,7 +28,7 @@ SimpleCamera::SimpleCamera():
 {
 }
 
-void SimpleCamera::Init(XMFLOAT3 position)
+void SimpleCamera::Init(DirectX::XMFLOAT3 position)
 {
     m_initialPosition = position;
     Reset();
@@ -112,10 +112,20 @@ XMMATRIX SimpleCamera::GetViewMatrix()
     return XMMatrixLookToLH(XMLoadFloat3(&m_position), XMLoadFloat3(&m_lookDirection), XMLoadFloat3(&m_upDirection));
 }
 
-XMMATRIX SimpleCamera::GetProjectionMatrix(float fov, float aspectRatio, float nearPlane, float farPlane)
+XMMATRIX SimpleCamera::GetProjectionMatrix(float fov)
 {
-    return XMMatrixPerspectiveFovLH(fov, aspectRatio, nearPlane, farPlane);
+    return XMMatrixPerspectiveFovLH(fov, _aspectratio, _nearp, _farp);
 }
+
+float SimpleCamera::nearplane() const { return _nearp; }
+
+float SimpleCamera::farplane() const { return _farp; }
+
+void SimpleCamera::nearplane(float nearp) { _nearp = nearp; }
+
+void SimpleCamera::farplane(float farp){ _farp = farp; }
+
+void SimpleCamera::aspectratio(float aspectratio) { _aspectratio = aspectratio; }
 
 void SimpleCamera::TopView()
 {

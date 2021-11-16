@@ -13,10 +13,9 @@
 
 using namespace Microsoft::WRL;
 
-DXSample::DXSample(UINT width, UINT height, std::wstring name) :
+DXSample::DXSample(UINT width, UINT height) :
     m_width(width),
     m_height(height),
-    m_title(name),
     m_useWarpDevice(false)
 {}
 
@@ -92,7 +91,7 @@ void DXSample::GetHardwareAdapter(
 }
 
 // Helper function for setting the window's title text.
-void DXSample::SetCustomWindowText(LPCWSTR text)
+void DXSample::SetCustomWindowText(std::wstring const& text)
 {
     std::wstring windowText = m_title + L": " + text;
     SetWindowText(Win32Application::GetHwnd(), windowText.c_str());

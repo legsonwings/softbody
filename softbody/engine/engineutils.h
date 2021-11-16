@@ -5,15 +5,19 @@
 
 class game_engine;
 
-struct configurable_properties
+struct gamedata
 {
 	unsigned width = 1280;
 	unsigned height = 720;
-	static constexpr unsigned frame_count = 2;
-
-	std::wstring app_name = L"Soft Body Demo";
+	float nearplane = 0.1f;
+	float farplane = 1000.f;
 
 	float get_aspect_ratio() const { return static_cast<float>(width) / static_cast<float>(height); }
+};
+
+struct configurable_properties
+{
+	static constexpr unsigned frame_count = 2;
 };
 
 namespace engineutils

@@ -4,15 +4,12 @@
 
 using viewport = DirectX::SimpleMath::Viewport;
 
-// todo : store near and far planes as vars
-static constexpr float neard = 0.01f;
-static constexpr float fard = 1000.f;
-
 void cursor::tick(float dt)
 {
     _lastpos = _pos;
     _pos = pos();
     _vel = (_pos - _lastpos) / dt;
+    _vel.y = -_vel.y;     // pos is relative to topleft so invert y
 }
 
 vec2 cursor::pos() const
@@ -20,36 +17,39 @@ vec2 cursor::pos() const
     POINT pos;
     GetCursorPos(&pos);
     ScreenToClient(Win32Application::GetHwnd(), &pos);
-
     return { static_cast<float>(pos.x), static_cast<float>(pos.y) };
 }
 
 vec2 cursor::vel() const { return _vel; }
 
-vec3 cursor::ray() const
+vec3 cursor::ray(float nearp, float farp) const
 {
-    auto const raystart = to3d({ _pos.x, _pos.y, neard });
-    auto const rayend = to3d({ _pos.x, _pos.y, fard });
+    auto const raystart = to3d({ _pos.x, _pos.y, nearp }, nearp, farp);
+    auto const rayend = to3d({ _pos.x, _pos.y, farp }, nearp, farp);
 
     return (rayend - raystart).Normalized();
 }
 
-vec3 cursor::to3d(vec3 screenpos) const
+vec3 cursor::to3d(vec3 pos, float nearp, float farp) const
 {
+    RECT clientr;
+    GetClientRect(Win32Application::GetHwnd(), &clientr);
+
+    float const width = static_cast<float>(clientr.right - clientr.left);
+    float const height = static_cast<float>(clientr.bottom - clientr.top);
+
     auto const& view = gfx::getview();
 
     // frustum z range = 1000.f
     // convert to ndc [-1, 1]
-
-    // todo : get screen width and height
-    vec4 const ndc = vec4{ screenpos.x / 1280.f, (720.f - screenpos.y - 1.f) / 720.f, (screenpos.z - neard) / (fard - neard) , 1.f } * 2.f - vec4{ 1.f };
+    vec4 const ndc = vec4{ pos.x / width, (height - pos.y - 1.f) / height, (pos.z - nearp) / (farp - nearp) , 1.f } * 2.f - vec4{ 1.f };
 
     // homogenous space
-    auto pos = vec4::Transform(ndc, view.proj.Invert());
-    pos /= pos.w;
+    auto posh = vec4::Transform(ndc, view.proj.Invert());
+    posh /= posh.w;
 
     // world space
-    pos = vec4::Transform(pos, view.view.Invert());
+    posh = vec4::Transform(posh, view.view.Invert());
 
-    return { pos.x, pos.y, pos.z };
+    return { posh.x, posh.y, posh.z };
 }

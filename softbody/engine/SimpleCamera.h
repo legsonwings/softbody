@@ -23,7 +23,14 @@ public:
     void Update(float elapsedSeconds);
     DirectX::XMFLOAT3 GetCurrentPosition() const;
     DirectX::XMMATRIX GetViewMatrix();
-    DirectX::XMMATRIX GetProjectionMatrix(float fov, float aspectRatio, float nearPlane = 0.1f, float farPlane = 1000.0f);
+    DirectX::XMMATRIX GetProjectionMatrix(float fov);
+
+    float nearplane() const;
+    float farplane() const;
+    void nearplane(float nearp);
+    void farplane(float farp);
+    void aspectratio(float aspectratio);
+
     void SetMoveSpeed(float unitsPerSecond);
     void SetTurnSpeed(float radiansPerSecond);
 
@@ -55,6 +62,10 @@ private:
     DirectX::XMFLOAT3 m_upDirection;
     float m_moveSpeed;            // Speed at which the camera moves, in units per second.
     float m_turnSpeed;            // Speed at which the camera turns, in radians per second.
+
+    float _nearp = 0.01f;
+    float _farp = 1000.f;
+    float _aspectratio = 1.f;
 
     KeysPressed m_keysPressed;
 };

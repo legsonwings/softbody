@@ -22,7 +22,7 @@ namespace gfx
 class soft_body final : public game_base
 {
 public:
-	soft_body(game_engine const* engine);
+	soft_body(gamedata const& data);
 
 	void update(float dt) override;
 	void render(float dt) override;

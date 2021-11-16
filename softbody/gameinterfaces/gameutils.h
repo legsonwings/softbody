@@ -1,12 +1,16 @@
 #pragma once
 
-enum class game_types
+#include <string>
+
+enum class game_types : int
 {
 	softbodydemo,
-	fluidsimulation
+	fluidsimulation,
+	num
 };
 
-auto constexpr current_game = game_types::fluidsimulation;
+extern std::wstring gametitles[int(game_types::num)];
+auto constexpr currentgame = game_types::fluidsimulation;
 
 #include "GameBase.h"
 
@@ -24,8 +28,8 @@ class game_engine;
 namespace game_creator
 {
 	template <game_types type>
-	std::unique_ptr<game_base> create_instance(game_engine const * engine);
+	std::unique_ptr<game_base> create_instance(gamedata const& data);
 
 	template <>
-	std::unique_ptr<game_base> create_instance<current_game>(game_engine const* engine);
+	std::unique_ptr<game_base> create_instance<currentgame>(gamedata const& data);
 }

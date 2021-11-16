@@ -15,7 +15,7 @@ using Microsoft::WRL::ComPtr;
 class softbody : public DXSample, public game_engine
 {
 public:
-    softbody(configurable_properties const & config_props = configurable_properties());
+    softbody(gamedata const& data = {});
 
     virtual void OnInit();
     virtual void OnUpdate();

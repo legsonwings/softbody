@@ -1,7 +1,6 @@
 #include "softbodydemo.h"
 #include "gameutils.h"
 #include "engine/sharedconstants.h"
-#include "engine/interfaces/engineinterface.h"
 #include "engine/dxsample.h"
 #include "engine/stdx.h"
 #include "engine/engineutils.h"
@@ -19,7 +18,7 @@
 namespace game_creator
 {
     template <>
-    std::unique_ptr<game_base> create_instance<game_types::softbodydemo>(game_engine const* engine) { return std::move(std::make_unique<soft_body>(engine)); }
+    std::unique_ptr<game_base> create_instance<game_types::softbodydemo>(gamedata const& data) { return std::move(std::make_unique<soft_body>(data)); }
 }
 
 namespace gameparams
@@ -81,18 +80,15 @@ std::vector<vec3> fillwithspheres(geometry::aabb const& box, uint count, float r
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 
-soft_body::soft_body(game_engine const* engine)
-	: game_base(engine)
+soft_body::soft_body(gamedata const& data) : game_base(data)
 {
-    assert(engine != nullptr);
-
-    m_camera.Init({ 0.f, 0.f, -43.f });
-    m_camera.SetMoveSpeed(10.0f);
+    camera.Init({ 0.f, 0.f, -43.f });
+    camera.SetMoveSpeed(10.0f);
 }
 
 void soft_body::update(float dt)
 {
-    m_camera.Update(dt);
+    game_base::update(dt);
 
     auto const& roomaabb = boxes[0].getaabb();
 
@@ -105,13 +101,9 @@ void soft_body::update(float dt)
 
     for (auto b : stdx::makejoin<gfx::bodyinterface>(balls, reflines)) b->update(dt);
 
-    auto& viewinfo = gfx::getview();
     auto &constbufferdata = gfx::getglobals();
 
-    viewinfo.view = m_camera.GetViewMatrix();
-    viewinfo.proj = m_camera.GetProjectionMatrix(XM_PI / 3.0f, engine->get_config_properties().get_aspect_ratio());
-
-    constbufferdata.campos = m_camera.GetCurrentPosition();
+    constbufferdata.campos = camera.GetCurrentPosition();
     constbufferdata.ambient = { 0.1f, 0.1f, 0.1f, 1.0f };
     constbufferdata.lights[0].direction = vec3{ 0.3f, -0.27f, 0.57735f }.Normalized();
     constbufferdata.lights[0].color = { 0.2f, 0.2f, 0.2f };
@@ -140,7 +132,6 @@ game_base::resourcelist soft_body::load_assets_and_geometry()
     using gfx::bodyparams;
     using geometry::ffd_object;
 
-    auto device = engine->get_device();
     cbuffer.createresources<gfx::sceneconstants>();
 
     boxes.emplace_back(cube{ {vec3{0.f, 0.f, 0.f}}, vec3{40.f} }, &cube::vertices_flipped, &cube::instancedata, bodyparams{ "instanced" });
