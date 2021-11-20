@@ -23,7 +23,7 @@ float3 blinnphong(float3 toeye, float3 normal, float3 intensity, material mat, f
 	// specalbedo can go out of range [0 1] which LDR doesn't support
 	specalbedo = specalbedo / (specalbedo + 1.0f);
 
-	return (mat.diffusealbedo.rgb + specalbedo) * intensity;
+	return (mat.diffuse.rgb + specalbedo) * intensity;
 }
 
 float3 directionallight(light l, material m, float3 normal, float3 toeye)

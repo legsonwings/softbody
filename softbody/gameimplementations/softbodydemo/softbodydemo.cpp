@@ -31,17 +31,17 @@ namespace gameparams
 geometry::ffddata createffddata(geometry::shapeffd_c auto shape)
 { 
     auto const center = shape.gcenter();
-    shape.scenter(vec3::Zero);
+    shape.scenter(vector3::Zero);
     shape.generate_triangles();
     return { center, shape.triangles() };
 }
 
-std::vector<vec3> fillwithspheres(geometry::aabb const& box, uint count, float radius)
+std::vector<vector3> fillwithspheres(geometry::aabb const& box, uint count, float radius)
 {
     std::set<uint> occupied;
-    std::vector<vec3> spheres;
+    std::vector<vector3> spheres;
 
-    auto const roomspan = (box.span() - stdx::tolerance<vec3>);
+    auto const roomspan = (box.span() - stdx::tolerance<vector3>);
 
     assert(roomspan.x > 0.f);
     assert(roomspan.y > 0.f);
@@ -59,7 +59,7 @@ std::vector<vec3> fillwithspheres(geometry::aabb const& box, uint count, float r
     // check if this box can contain all voxels
     assert(cubelen * cubelen * cubelen > gridvol);
 
-    vec3 const gridorigin = { box.center() - vec3(cubelen / 2.f) };
+    vector3 const gridorigin = { box.center() - vector3(cubelen / 2.f) };
     for (auto i : std::ranges::iota_view{ 0u,  count })
     {
         static auto& re = engineutils::getrandomengine();
@@ -71,7 +71,7 @@ std::vector<vec3> fillwithspheres(geometry::aabb const& box, uint count, float r
         occupied.insert(emptycell);
 
         auto const thecell = stdx::hypercubeidx<2>::from1d(degree, emptycell);
-        spheres.emplace_back((vec3(thecell[0] * celld, thecell[2] * celld, thecell[1] * celld) + vec3(cellr)) + gridorigin);
+        spheres.emplace_back((vector3(thecell[0] * celld, thecell[2] * celld, thecell[1] * celld) + vector3(cellr)) + gridorigin);
     }
 
     return spheres;
@@ -101,11 +101,12 @@ void soft_body::update(float dt)
 
     for (auto b : stdx::makejoin<gfx::bodyinterface>(balls, reflines)) b->update(dt);
 
+    gfx::getview().proj = camera.GetProjectionMatrix(XM_PI / 3.0f);
     auto &constbufferdata = gfx::getglobals();
 
     constbufferdata.campos = camera.GetCurrentPosition();
     constbufferdata.ambient = { 0.1f, 0.1f, 0.1f, 1.0f };
-    constbufferdata.lights[0].direction = vec3{ 0.3f, -0.27f, 0.57735f }.Normalized();
+    constbufferdata.lights[0].direction = vector3{ 0.3f, -0.27f, 0.57735f }.Normalized();
     constbufferdata.lights[0].color = { 0.2f, 0.2f, 0.2f };
 
     constbufferdata.lights[1].position = { -15.f, 15.f, -15.f};
@@ -125,7 +126,7 @@ void soft_body::render(float dt)
     if (debugviz_toggle) for (auto b : stdx::makejoin<gfx::bodyinterface>(reflines, refstaticlines)) b->render(dt, { wireframe_toggle, cbuffer.get_gpuaddress() });
 }
 
-game_base::resourcelist soft_body::load_assets_and_geometry()
+gfx::resourcelist soft_body::load_assets_and_geometry()
 {
     using geometry::cube;
     using geometry::sphere;
@@ -134,10 +135,10 @@ game_base::resourcelist soft_body::load_assets_and_geometry()
 
     cbuffer.createresources<gfx::sceneconstants>();
 
-    boxes.emplace_back(cube{ {vec3{0.f, 0.f, 0.f}}, vec3{40.f} }, &cube::vertices_flipped, &cube::instancedata, bodyparams{ "instanced" });
+    boxes.emplace_back(cube{ {vector3{0.f, 0.f, 0.f}}, vector3{40.f} }, &cube::vertices_flipped, &cube::instancedata, bodyparams{ "instanced" });
     
     auto const& roomaabb = boxes[0].getaabb();
-    auto const roomhalfspan = (roomaabb.max_pt - roomaabb.min_pt - (vec3::One * gameparams::ballradius) - vec3(0.5f)) / 2.f;
+    auto const roomhalfspan = (roomaabb.max_pt - roomaabb.min_pt - (vector3::One * gameparams::ballradius) - vector3(0.5f)) / 2.f;
 
     static auto& re = engineutils::getrandomengine();
     static const std::uniform_real_distribution<float> distvelocity(-1.f, 1.f);
@@ -145,7 +146,7 @@ game_base::resourcelist soft_body::load_assets_and_geometry()
     static const auto basemat_ball = gfx::getmat("ball");
     for (auto const& center : fillwithspheres(roomaabb, gameparams::numballs, gameparams::ballradius))
     {
-        auto const velocity = vec3{ distvelocity(re), distvelocity(re), distvelocity(re) }.Normalized() * gameparams::speed;
+        auto const velocity = vector3{ distvelocity(re), distvelocity(re), distvelocity(re) }.Normalized() * gameparams::speed;
         balls.emplace_back(ffd_object(createffddata(sphere{ center, gameparams::ballradius })), bodyparams{ "wireframe", gfx::generaterandom_matcolor(basemat_ball) });
         balls.back()->svelocity(velocity);
     }
@@ -157,7 +158,7 @@ game_base::resourcelist soft_body::load_assets_and_geometry()
         refstaticlines.emplace_back(*b, &ffd_object::controlpoint_visualization, &ffd_object::controlnet_instancedata, bodyparams{ "instancedlines" });
     }
 
-    game_base::resourcelist resources;
+    gfx::resourcelist resources;
     for (auto b : stdx::makejoin<gfx::bodyinterface>(balls, boxes, reflines, refstaticlines)) { stdx::append(b->create_resources(), resources); };
     return resources;
 }

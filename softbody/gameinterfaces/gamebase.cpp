@@ -6,7 +6,8 @@ game_base::game_base(gamedata const& data)
 {
     camera.nearplane(data.nearplane);
     camera.farplane(data.farplane);
-    camera.aspectratio(data.get_aspect_ratio());
+    camera.width(data.width);
+    camera.height(data.height);
 }
 
 void game_base::updateview(float dt)
@@ -14,5 +15,4 @@ void game_base::updateview(float dt)
 	camera.Update(dt);
 
     gfx::getview().view = camera.GetViewMatrix();
-    gfx::getview().proj = camera.GetProjectionMatrix(XM_PI / 3.0f);
 }

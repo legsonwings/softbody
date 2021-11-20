@@ -114,7 +114,12 @@ XMMATRIX SimpleCamera::GetViewMatrix()
 
 XMMATRIX SimpleCamera::GetProjectionMatrix(float fov)
 {
-    return XMMatrixPerspectiveFovLH(fov, _aspectratio, _nearp, _farp);
+    return XMMatrixPerspectiveFovLH(fov, static_cast<float>(_width) / static_cast<float>(_height), _nearp, _farp);
+}
+
+DirectX::XMMATRIX SimpleCamera::GetOrthoProjectionMatrix()
+{
+    return XMMatrixOrthographicLH (static_cast<float>(_width), static_cast<float>(_height), _nearp, _farp);
 }
 
 float SimpleCamera::nearplane() const { return _nearp; }
@@ -125,7 +130,9 @@ void SimpleCamera::nearplane(float nearp) { _nearp = nearp; }
 
 void SimpleCamera::farplane(float farp){ _farp = farp; }
 
-void SimpleCamera::aspectratio(float aspectratio) { _aspectratio = aspectratio; }
+void SimpleCamera::width(unsigned width) { _width = width; }
+
+void SimpleCamera::height(unsigned height) { _height = height; }
 
 void SimpleCamera::TopView()
 {

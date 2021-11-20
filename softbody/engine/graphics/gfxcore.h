@@ -1,6 +1,6 @@
 #pragma once
 
-#include "engine/geometry/geodefines.h"
+#include "engine/core.h"
 #include "engine/sharedconstants.h"
 #include "engine/engineutils.h"
 #include "engine/SimpleMath.h"
@@ -17,6 +17,8 @@ struct ID3D12RootSignature;
 
 namespace gfx
 {
+    using resourcelist = std::vector<ComPtr<ID3D12Resource>>;
+
     enum class topology
     {
         triangle,
@@ -30,6 +32,13 @@ namespace gfx
         transparent = 0x2,
         twosided = 0x4,
         count
+    };
+
+    struct color
+    {
+        static inline vector4 red = vector4{ 1.f, 0.f, 0.f, 1.f };
+        static inline vector4 black = vector4{ 0.f, 0.f, 0.f, 1.f };
+        static inline vector4 white = vector4{ 1.f, 1.f, 1.f, 1.f };
     };
 
     struct shader
@@ -71,8 +80,10 @@ namespace gfx
         buffer objectconstant;
         buffer vertex;
         buffer instance;
+        buffer texture;
         rootconstants rootconstants;
         pipeline_objects pipelineobjs;
+        ComPtr<ID3D12DescriptorHeap> srvheap;
     };
 
     struct viewinfo
@@ -85,13 +96,13 @@ namespace gfx
     struct material
     {
         // the member order is deliberate
-        vec3 fr = { 0.01f, 0.01f, 0.01f };
+        vector3 fr = { 0.01f, 0.01f, 0.01f };
         float r = 0.25f;
-        vec4 a = vec4::One;
+        vector4 a = vector4::One;
 
         material& roughness(float _r) { r = _r; return *this; }
-        material& diffusealbedo(vec4 const& _a) { a = _a; return *this; }
-        material& fresnelr(vec3 const& _fr) { fr = _fr; return *this; }
+        material& diffuse(vector4 const& _a) { a = _a; return *this; }
+        material& fresnelr(vector3 const& _fr) { fr = _fr; return *this; }
     };
 
     // this is used in constant buffer so alignment is important
@@ -114,19 +125,19 @@ namespace gfx
 
     struct light
     {
-        vec3 color;
+        vector3 color;
         float range;
-        vec3 position;
+        vector3 position;
         uint8_t padding1[4];
-        vec3 direction;
+        vector3 direction;
         uint8_t padding2[4];
     };
 
     _declspec(align(256u)) struct sceneconstants
     {
-        vec3 campos;
+        vector3 campos;
         uint8_t padding[4];
-        vec4 ambient;
+        vector4 ambient;
         light lights[NUM_LIGHTS];
     };
 }

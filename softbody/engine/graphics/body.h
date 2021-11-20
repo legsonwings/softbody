@@ -21,7 +21,7 @@ namespace gfx
     template <typename t>
     concept sbody_c = requires(t v)
     {
-        {v.gcenter()} -> std::convertible_to<vec3>;
+        {v.gcenter()} -> std::convertible_to<vector3>;
         v.gvertices();
         {v.instancedata()} -> std::same_as<std::vector<instance_data>>;
     };
@@ -29,7 +29,7 @@ namespace gfx
     template <typename t>
     concept dbody_c = requires(t v)
     {
-        {v.gcenter()} -> std::convertible_to<vec3>;
+        {v.gcenter()} -> std::convertible_to<vector3>;
         v.gvertices();
         v.update(float{});
     };
@@ -45,7 +45,7 @@ namespace gfx
     template<>
     struct topologyconstants<topology::line>
     {
-        using vertextype = vec3;
+        using vertextype = vector3;
         static constexpr uint32_t numverts_perprim = 2;
         static constexpr uint32_t maxprims_permsgroup = MAX_LINES_PER_GROUP;
     };
@@ -58,8 +58,8 @@ namespace gfx
 
         body_t body;
         uint num_instances;
-        ComPtr<ID3D12Resource> m_vertexbuffer;
-        ComPtr<ID3D12Resource> m_instance_buffer;
+        ComPtr<ID3D12Resource> _vertexbuffer;
+        ComPtr<ID3D12Resource> _instancebuffer;
         uint8_t* m_instancebuffer_mapped = nullptr;
         std::vector<vertextype> m_vertices;
         std::vector<instance_data> m_instancedata;
@@ -77,8 +77,9 @@ namespace gfx
         void update_instancebuffer();
         uint get_numinstances() const { return num_instances; }
         uint get_numvertices() const { return m_vertices.size(); }
+
         D3D12_GPU_VIRTUAL_ADDRESS get_instancebuffer_gpuaddress() const;
-        D3D12_GPU_VIRTUAL_ADDRESS get_vertexbuffer_gpuaddress() const override { return m_vertexbuffer->GetGPUVirtualAddress(); }
+        D3D12_GPU_VIRTUAL_ADDRESS get_vertexbuffer_gpuaddress() const override { return _vertexbuffer->GetGPUVirtualAddress(); }
     public:
         body_static(rawbody_t _body, bodyparams const& _params);
         body_static(body_t const& _body, vertexfetch_r(rawbody_t::* vfun)() const, instancedatafetch_r(rawbody_t::* ifun)() const, bodyparams const& _params);
@@ -103,10 +104,16 @@ namespace gfx
 
         body_t body;
         constant_buffer cbuffer;
-        ComPtr<ID3D12Resource> m_vertexbuffer;
-        uint8_t* m_vertexbuffer_databegin = nullptr;
+        ComPtr<ID3D12Resource> _vertexbuffer;
+        ComPtr<ID3D12Resource> _texture;
+        uint8_t* _vertexbuffer_mapped = nullptr;
+        uint8_t* _texture_mapped = nullptr;
         std::vector<vertextype> m_vertices;
+        std::vector<uint8_t> _texturedata;
         
+        // todo : major changes might be needed on how to manage efficiently(right now its one heap per body)
+        ComPtr<ID3D12DescriptorHeap> _srvheap;
+
         using vertexfetch_r = decltype(m_vertices);
         using vertexfetch = std::function<vertexfetch_r (rawbody_t const&)>;
 
@@ -114,17 +121,22 @@ namespace gfx
 
         void update_constbuffer();
         void update_vertexbuffer();
+        void updatetexture();
         unsigned get_numvertices() const { return static_cast<unsigned>(m_vertices.size()); }
         uint get_vertexbuffersize() const { return m_vertices.size() * sizeof(vertextype); }
+        uint texturedatasize() const { return _texturedata.size(); }
         D3D12_GPU_VIRTUAL_ADDRESS get_vertexbuffer_gpuaddress() const override;
+        D3D12_GPU_VIRTUAL_ADDRESS texturegpuaddress() const;
     public:
         body_dynamic(rawbody_t _body, bodyparams const& _params);
         body_dynamic(body_t const& _body, vertexfetch_r (rawbody_t::*fun)() const, bodyparams const& _params);
 
-        std::vector<ComPtr<ID3D12Resource>> create_resources() override;
+        gfx::resourcelist create_resources() override;
 
         void update(float dt) override;
         void render(float dt, renderparams const&) override;
+
+        void texturedata(std::vector<uint8_t> const& texturedata);
 
         constexpr body_t &get() { return body; } 
         constexpr body_t const &get() const { return body; }

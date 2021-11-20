@@ -14,6 +14,24 @@ namespace gfx
     }
 }
 
+ComPtr<ID3D12DescriptorHeap> gfx::createsrvdescriptorheap(D3D12_DESCRIPTOR_HEAP_DESC heapdesc)
+{
+    auto engine = game_engine::g_engine;
+    auto device = engine->get_device();
+
+    ComPtr<ID3D12DescriptorHeap> heap;
+    ThrowIfFailed(device->CreateDescriptorHeap(&heapdesc, IID_PPV_ARGS(heap.ReleaseAndGetAddressOf())));
+    return heap;
+}
+
+void gfx::createsrv(D3D12_SHADER_RESOURCE_VIEW_DESC srvdesc, ComPtr<ID3D12Resource> resource, ComPtr<ID3D12DescriptorHeap> srvheap)
+{
+    auto engine = game_engine::g_engine;
+    auto device = engine->get_device();
+
+    device->CreateShaderResourceView(resource.Get(), &srvdesc, srvheap->GetCPUDescriptorHandleForHeapStart());
+}
+
 void gfx::dispatch(resource_bindings const& bindings, bool wireframe, bool twosided, uint dispatchx)
 {
     auto engine = game_engine::g_engine;
@@ -22,7 +40,7 @@ void gfx::dispatch(resource_bindings const& bindings, bool wireframe, bool twosi
     cmd_list->SetGraphicsRootSignature(bindings.pipelineobjs.root_signature.Get());
 
     cmd_list->SetGraphicsRootConstantBufferView(bindings.constant.slot, bindings.constant.address);
-    if(bindings.objectconstant.address != 0)
+    if (bindings.objectconstant.address != 0)
         cmd_list->SetGraphicsRootConstantBufferView(bindings.objectconstant.slot, bindings.objectconstant.address);
     cmd_list->SetGraphicsRootShaderResourceView(bindings.vertex.slot, bindings.vertex.address);
     cmd_list->SetGraphicsRoot32BitConstants(bindings.rootconstants.slot, static_cast<UINT>(bindings.rootconstants.values.size() / 4), bindings.rootconstants.values.data(), 0);
@@ -30,15 +48,25 @@ void gfx::dispatch(resource_bindings const& bindings, bool wireframe, bool twosi
     if (bindings.instance.address != 0)
         cmd_list->SetGraphicsRootShaderResourceView(bindings.instance.slot, bindings.instance.address);
 
+    if (bindings.srvheap)
+        cmd_list->SetDescriptorHeaps(1, bindings.srvheap.GetAddressOf());
+
+    // todo : hack for now, address is never used so its not needed
+    if (bindings.texture.address != 0)
+    {
+        cmd_list->SetGraphicsRootDescriptorTable(bindings.texture.slot, bindings.srvheap->GetGPUDescriptorHandleForHeapStart());
+    }
+
     if (wireframe && bindings.pipelineobjs.pso_wireframe)
         cmd_list->SetPipelineState(bindings.pipelineobjs.pso_wireframe.Get());
     else if (twosided && bindings.pipelineobjs.pso_twosided)
         cmd_list->SetPipelineState(bindings.pipelineobjs.pso_twosided.Get());
-    else 
+    else
         cmd_list->SetPipelineState(bindings.pipelineobjs.pso.Get());
 
     cmd_list->DispatchMesh(static_cast<UINT>(dispatchx), 1, 1);
 }
+
 
 gfx::default_and_upload_buffers gfx::create_vertexbuffer_default(void* vertexdata_start, std::size_t const vb_size)
 {
@@ -89,6 +117,26 @@ ComPtr<ID3D12Resource> gfx::createupdate_uploadbuffer(uint8_t** mapped_buffer, v
     update_allframebuffers(*mapped_buffer, data_start, perframe_buffersize, configurable_properties::frame_count);
 
     return result;
+}
+
+ComPtr<ID3D12Resource> gfx::createupdate_uploadtexture(uint width, uint height, uint8_t** mappedtex, void* data_start, std::size_t const perframe_texsize)
+{
+    auto device = game_engine::g_engine->get_device();
+
+    ComPtr<ID3D12Resource> b_upload;
+    if (perframe_texsize > 0)
+    {
+        auto resource_desc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32G32B32_FLOAT, static_cast<UINT64>(width), static_cast<UINT>(height));
+        auto heap_props = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+        ThrowIfFailed(device->CreateCommittedResource(&heap_props, D3D12_HEAP_FLAG_NONE, &resource_desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(b_upload.GetAddressOf())));
+
+        // We do not intend to read from this resource on the CPU.
+        ThrowIfFailed(b_upload->Map(0, nullptr, reinterpret_cast<void**>(mappedtex)));
+    }
+
+    update_allframebuffers(*mappedtex, data_start, perframe_texsize, configurable_properties::frame_count);
+
+    return b_upload;
 }
 
 D3D12_GPU_VIRTUAL_ADDRESS gfx::get_perframe_gpuaddress(D3D12_GPU_VIRTUAL_ADDRESS start, std::size_t perframe_buffersize)

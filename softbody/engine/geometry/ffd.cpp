@@ -42,7 +42,7 @@ geometry::ffd_object::ffd_object(ffddata data) : center(data.center)
         using cubeidx = stdx::hypercubeidx<2>;
         static constexpr float subtt = dim * 0.5f;
         auto const idx3d = cubeidx::from1d(dim, idx);
-        rest_config[idx] = vec3{ span.x * (idx3d[0] - subtt), span.y * (idx3d[2] - subtt), span.z * (idx3d[1] - subtt) } / static_cast<float>(dim);
+        rest_config[idx] = vector3{ span.x * (idx3d[0] - subtt), span.y * (idx3d[2] - subtt), span.z * (idx3d[1] - subtt) } / static_cast<float>(dim);
         volume.controlnet[idx] = rest_config[idx];
     }
 
@@ -129,7 +129,7 @@ std::vector<gfx::instance_data> ffd_object::controlnet_instancedata() const
     return instances_info;
 }
 
-vec3 ffd_object::eval_bez_trivariate(float s, float t, float u) const
+vector3 ffd_object::eval_bez_trivariate(float s, float t, float u) const
 {
     static float (*fact)(uint i) = [](uint i)->float { return i < 1 ? 1 : fact(i - 1) * i; };
 
@@ -137,14 +137,14 @@ vec3 ffd_object::eval_bez_trivariate(float s, float t, float u) const
     // much much much faster evaluation is available
     static constexpr uint l = 2, m = 2, n = 2;
     auto to1d = [](uint i, uint j, uint k) { return i + k * (l + 1) + j * (l + 1) * (m + 1); };
-    vec3 result = vec3::Zero;
+    vector3 result = vector3::Zero;
     for (uint i = 0; i <= 2; ++i)
     {
-        vec3 resultj = vec3::Zero;
+        vector3 resultj = vector3::Zero;
         float basis_s = (float(l) / float(fact(i) * fact(l - i))) * std::powf(float(1 - s), float(l - i)) * std::powf(s, float(i));
         for (uint j = 0; j <= 2; ++j)
         {
-            vec3 resultk = vec3::Zero;
+            vector3 resultk = vector3::Zero;
             float basis_t = (float(m) / float(fact(j) * fact(m - j))) * std::powf(float(1 - t), float(m - j)) * std::powf(t, float(j));
             for (uint k = 0; k <= 2; ++k)
             {
@@ -161,24 +161,24 @@ vec3 ffd_object::eval_bez_trivariate(float s, float t, float u) const
     return result;
 }
 
-vec3 ffd_object::parametric_coordinates(vec3 const& cartesian_coordinates, vec3 const& span)
+vector3 ffd_object::parametric_coordinates(vector3 const& cartesian_coordinates, vector3 const& span)
 {
-    vec3 const to_point = cartesian_coordinates + span / 2.f;
+    vector3 const to_point = cartesian_coordinates + span / 2.f;
 
     // assume the volume is axis aligned and coordinates relative to volume center)
     return { to_point.x / span.x, to_point.y / span.y, to_point.z / span.z };
 }
 
-std::vector<vec3> geometry::ffd_object::controlpoint_visualization() const { return geoutils::create_cube_lines(vec3::Zero, 0.1f); }
+std::vector<vector3> geometry::ffd_object::controlpoint_visualization() const { return geoutils::create_cube_lines(vector3::Zero, 0.1f); }
 
-void ffd_object::move(vec3 delta)
+void ffd_object::move(vector3 delta)
 {
     center += delta;
     box.min_pt += delta;
     box.max_pt += delta;
 }
 
-vec3 ffd_object::compute_wholebodyforces() const
+vector3 ffd_object::compute_wholebodyforces() const
 {
     auto const drag = -velocity * 0.001f;
     return drag;
@@ -235,7 +235,7 @@ void ffd_object::resolve_collision_interior(aabb const& r, float dt)
     if (!isect_box)
         return;
 
-    std::vector<vec3> contacts;
+    std::vector<vector3> contacts;
 
     if (isect_box->max_pt.x >= (r.max_pt.x - stdx::tolerance<>))
         contacts.emplace_back(isect_box->max_pt.x, center.y, center.z);
@@ -257,7 +257,7 @@ void ffd_object::resolve_collision_interior(aabb const& r, float dt)
 
     if (contacts.size() <= 0) return;
 
-    vec3 normal = vec3::Zero;
+    vector3 normal = vector3::Zero;
     std::vector<uint> affected_ctrlpts;
     for (auto const& c : contacts)
     {
@@ -291,14 +291,14 @@ void ffd_object::resolve_collision_interior(aabb const& r, float dt)
     }
 }
 
-uint ffd_object::closest_controlpoint(vec3 point) const
+uint ffd_object::closest_controlpoint(vector3 point) const
 {
     point -= center;
     uint ctrlpt_idx = 0;
     float distsqr_min = std::numeric_limits<float>::max();
     for (uint i = 0; i < volume.numcontrolpts; ++i)
     {
-        if (auto const distsqr = vec3::DistanceSquared(point, volume.controlnet[i]); distsqr < distsqr_min)
+        if (auto const distsqr = vector3::DistanceSquared(point, volume.controlnet[i]); distsqr < distsqr_min)
         {
             distsqr_min = distsqr;
             ctrlpt_idx = i;
@@ -308,17 +308,17 @@ uint ffd_object::closest_controlpoint(vec3 point) const
     return ctrlpt_idx;
 }
 
-std::vector<vec3> ffd_object::compute_contacts(ffd_object const& other) const
+std::vector<vector3> ffd_object::compute_contacts(ffd_object const& other) const
 {
     auto const lines = intersect(*this, other);
 
-    std::vector<vec3> mids;
+    std::vector<vector3> mids;
     mids.reserve(lines.size() / 2);
     for (uint i = 0; i < lines.size(); i++) { mids.push_back((lines[i].v0 + lines[i].v1) / 2.f); }
 
     auto constexpr contact_radius = 0.1f;
     auto constexpr contact_radius_squared2 = 2 * contact_radius * contact_radius;
-    std::vector<vec3> contacts;
+    std::vector<vector3> contacts;
 
     // naively cluster points around first point that is not in existing clusters
     for (uint i = 0; i < mids.size(); ++i)
@@ -326,7 +326,7 @@ std::vector<vec3> ffd_object::compute_contacts(ffd_object const& other) const
         contacts.push_back(mids[i]);
         for (uint j = i + 1; j < mids.size(); ++j)
         {
-            if (vec3::DistanceSquared(mids[i], mids[j]) < contact_radius_squared2)
+            if (vector3::DistanceSquared(mids[i], mids[j]) < contact_radius_squared2)
             {
                 std::swap(mids[j], mids[mids.size() - 1]);
                 mids.pop_back();
@@ -338,12 +338,12 @@ std::vector<vec3> ffd_object::compute_contacts(ffd_object const& other) const
     return contacts;
 }
 
-vec3 ffd_object::compute_contact(ffd_object const& r) const
+vector3 ffd_object::compute_contact(ffd_object const& r) const
 {
     // compute a simple single contact
     auto const& isect_box = box.intersect(r.gaabb());
     if (!isect_box)
-        return stdx::invalid<vec3>();
+        return stdx::invalid<vector3>();
 
     return (isect_box->max_pt + isect_box->min_pt) / 2.f;
 }

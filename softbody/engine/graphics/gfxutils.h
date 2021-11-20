@@ -1,6 +1,8 @@
 #pragma once
 
 #include "gfxcore.h"
+// todo : mvoe this somewhere appropriate 
+#include "engine/geometry/geocore.h"
 #include "engine/stdx.h"
 
 #include <optional>
@@ -18,6 +20,7 @@ namespace gfx
 	viewinfo& getview();
 	sceneconstants& getglobals();
 	psomapref getpsomap();
+	materialcref addmat(std::string const& name, material const& mat, bool twosided = false);
 	materialcref getmat(std::string const &name);
 	std::string const& generaterandom_matcolor(materialcref definition, std::optional<std::string> const& preferred_name = {});
 

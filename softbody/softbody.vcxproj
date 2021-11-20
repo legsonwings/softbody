@@ -181,6 +181,8 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="engine\ui\uicore.cpp" />
+    <ClCompile Include="engine\ui\canvas.cpp" />
     <ClCompile Include="engine\cursor.cpp" />
     <ClCompile Include="engine\dxsample.cpp" />
     <ClCompile Include="engine\engineutils.cpp" />
@@ -206,8 +208,13 @@
     <ClCompile Include="gameimplementations\softbodydemo\softbodydemo.cpp" />
     <ClCompile Include="gameinterfaces\gamebase.cpp" />
     <ClCompile Include="gameinterfaces\gameutils.cpp" />
+    <ClCompile Include="engine\ui\image.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="engine\core.h" />
+    <ClInclude Include="engine\stdxcore.h" />
+    <ClInclude Include="engine\ui\uicore.h" />
+    <ClInclude Include="engine\ui\canvas.h" />
     <ClInclude Include="engine\cursor.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="engine\debugutils.h" />
@@ -239,6 +246,7 @@
     <ClInclude Include="gameimplementations\softbodydemo\softbodydemo.h" />
     <ClInclude Include="gameinterfaces\gamebase.h" />
     <ClInclude Include="gameinterfaces\gameutils.h" />
+    <ClInclude Include="engine\ui\image.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="engine\assets\basic_ps.hlsl">
@@ -357,6 +365,22 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.5</ShaderModel>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">-Qembed_debug %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">-Qembed_debug %(AdditionalOptions)</AdditionalOptions>
+    </FxCompile>
+    <FxCompile Include="engine\assets\texturess_ms.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Mesh</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">6.5</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Mesh</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">6.5</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Mesh</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.5</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Mesh</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.5</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="engine\assets\texturess_ps.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>

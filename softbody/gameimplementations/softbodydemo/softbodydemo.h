@@ -27,7 +27,7 @@ public:
 	void update(float dt) override;
 	void render(float dt) override;
 	
-	std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> load_assets_and_geometry() override;
+	gfx::resourcelist load_assets_and_geometry() override;
 
 	void on_key_down(unsigned key) override;
 
