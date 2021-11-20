@@ -3,8 +3,12 @@
 #include <d3d12.h>
 #include <wrl.h>
 #include <string>
+#include <array>
 #include <vector>
 #include <utility>
+
+#include "engine/core.h"
+#include "engine/stdxcore.h"
 
 struct renderparams;
 
@@ -14,6 +18,7 @@ namespace gfx
 	{
 		std::string psoname;
 		std::string matname;
+		std::array<uint, 2> texdims;
 	};
 
 	class bodyinterface

@@ -109,9 +109,8 @@ vecfield21<l> divergence(vecfield22<l> const& f)
 {
 	using idx = stdx::hypercubeidx<1>;
 	vecfield21<l> r;
-	for (uint i(1); i < l - 1; ++i)
-		for (uint j(1); j < l - 1; ++j)
-			// todo : implement unary - for vector fields
+	for (uint j(1); j < l - 1; ++j)
+		for (uint i(1); i < l - 1; ++i)
 			r[idx::to1d<l - 1>({ i, j })] = -0.5f * vec1{ f[idx::to1d<l - 1>({ i + 1, j })][0] - f[idx::to1d<l - 1>({ i - 1, j })][0] + f[idx::to1d<l - 1>({ i, j + 1 })][1] - f[idx::to1d<l - 1>({ i, j - 1 })][1] };
 
 	return r;
@@ -122,8 +121,8 @@ vecfield22<l> gradient(vecfield21<l> const& f)
 {
 	using idx = stdx::hypercubeidx<1>;
 	vecfield22<l> r{};
-	for (uint i(1); i < l - 1; ++i)
-		for (uint j(1); j < l - 1; ++j)
+	for (uint j(1); j < l - 1; ++j)
+		for (uint i(1); i < l - 1; ++i)
 			r[idx::to1d<l - 1>({ i, j })] = 0.5f * vec2{ f[idx::to1d<l - 1>({ i + 1, j })] - f[idx::to1d<l - 1>({ i - 1, j })], f[idx::to1d<l - 1>({ i, j + 1 })] - f[idx::to1d<l - 1>({ i, j - 1 })] };
 	
 	return r;
@@ -138,8 +137,8 @@ vecfield2<vd, l> jacobi2d(vecfield2<vd, l> const& x, vecfield2<vd, l> const& b, 
 	auto const rcbeta = 1.f / beta;
 	for (uint k(0); k < niters; ++k)
 	{
-		for (uint i(1); i < l - 1; ++i)
-			for (uint j(1); j < l - 1; ++j)
+		for (uint j(1); j < l - 1; ++j)
+			for (uint i(1); i < l - 1; ++i)
 				r[idx::to1d<l - 1>({ i, j })] = ((r[idx::to1d<l - 1>({ i - 1, j })] + r[idx::to1d<l - 1>({ i + 1, j })] + r[idx::to1d<l - 1>({ i, j - 1 })] +
 					r[idx::to1d<l - 1>({ i, j + 1 })]) * alpha + b[idx::to1d<l - 1>({ i, j })]) * rcbeta;
 	}
@@ -151,8 +150,8 @@ vecfield2<vd, l> advect2d(vecfield2<vd, l> const& a, vecfield22<l> const& v, flo
 {
 	using idx = stdx::hypercubeidx<1>;
 	vecfield2<vd, l> r{};
-	for (uint i(1); i < l - 1; ++i)
-		for (uint j(1); j < l - 1; ++j)
+	for (uint j(1); j < l - 1; ++j)
+		for (uint i(1); i < l - 1; ++i)
 		{
 			auto const cell = idx::to1d<l - 1>({ i, j });
 

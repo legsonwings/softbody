@@ -3,7 +3,7 @@
 
 namespace beziermaths
 {
-vec3 evaluateavx2(beziervolume<2> const& v, vec3 const& bt0, vec3 const& bt1, vec3 const& bt2)
+vector3 evaluateavx2(beziervolume<2> const& v, vector3 const& bt0, vector3 const& bt1, vector3 const& bt2)
 {
     // literally vectorizes the following expression
     // bt2.x * (bt1.x * (v[0] * bt0.x + v[1] * bt0.y + v[2] * bt0.z) + bt1.y * (v[3] * bt0.x + v[4] * bt0.y + v[5] * bt0.z) + bt1.z * (v[6] * bt0.x + v[7] * bt0.y + v[8] * bt0.z))
@@ -42,7 +42,7 @@ vec3 evaluateavx2(beziervolume<2> const& v, vec3 const& bt0, vec3 const& bt1, ve
 
     // compute the remaining value the scalar way
     float const l = bt2.z * (bt1.x * (v[18].z * bt0.x + v[19].z * bt0.y + v[20].z * bt0.z) + bt1.y * (v[21].z * bt0.x + v[22].z * bt0.y + v[23].z * bt0.z) + bt1.z * (v[24].z * bt0.x + v[25].z * bt0.y + v[26].z * bt0.z));
-    return vec3{ res[0] + res[3] + res[6], res[1] + res[4] + res[7], res[2] + res[5] + l };
+    return vector3{ res[0] + res[3] + res[6], res[1] + res[4] + res[7], res[2] + res[5] + l };
 }
 
 // some computations are duplicated, but performance actually is worse when caching them
@@ -67,14 +67,14 @@ std::vector<geometry::vertex> bulkevaluate(beziervolume<2> const& v, std::vector
     for (auto const& vtx : vertices)
     {
         auto const [p0, p2, p1] = vtx.position;
-        vec3 const bt0 = qbasis(p0);
-        vec3 const bt1 = qbasis(p1);
-        vec3 const bt2 = qbasis(p2);
-        vec3 const dt0 = dqbasis(p0);
-        vec3 const dt1 = dqbasis(p1);
-        vec3 const dt2 = dqbasis(p2);
+        vector3 const bt0 = qbasis(p0);
+        vector3 const bt1 = qbasis(p1);
+        vector3 const bt2 = qbasis(p2);
+        vector3 const dt0 = dqbasis(p0);
+        vector3 const dt1 = dqbasis(p1);
+        vector3 const dt2 = dqbasis(p2);
 
-        vec3 pos, tn0, tn1, tn2;
+        vector3 pos, tn0, tn1, tn2;
 
         {
             __m256 t0x = _mm256_set1_ps(bt0.x);
@@ -95,7 +95,7 @@ std::vector<geometry::vertex> bulkevaluate(beziervolume<2> const& v, std::vector
 
             // compute the remaining value the scalar way
             float const l = bt2.z * (bt1.x * (v[18].z * bt0.x + v[19].z * bt0.y + v[20].z * bt0.z) + bt1.y * (v[21].z * bt0.x + v[22].z * bt0.y + v[23].z * bt0.z) + bt1.z * (v[24].z * bt0.x + v[25].z * bt0.y + v[26].z * bt0.z));
-            pos = vec3{ res[0] + res[3] + res[6], res[1] + res[4] + res[7], res[2] + res[5] + l };
+            pos = vector3{ res[0] + res[3] + res[6], res[1] + res[4] + res[7], res[2] + res[5] + l };
         }
 
         // compute the normals
@@ -116,7 +116,7 @@ std::vector<geometry::vertex> bulkevaluate(beziervolume<2> const& v, std::vector
             _mm256_store_ps(res, _mm256_mul_ps(t2, _mm256_fmadd_ps(t1x, r0b1, _mm256_fmadd_ps(t1y, r1b1, _mm256_mul_ps(t1z, r2b1)))));
 
             float const l = bt2.z * (bt1.x * (v[18].z * dt0.x + v[19].z * dt0.y + v[20].z * dt0.z) + bt1.y * (v[21].z * dt0.x + v[22].z * dt0.y + v[23].z * dt0.z) + bt1.z * (v[24].z * dt0.x + v[25].z * dt0.y + v[26].z * dt0.z));
-            tn0 = vec3{ res[0] + res[3] + res[6], res[1] + res[4] + res[7], res[2] + res[5] + l };
+            tn0 = vector3{ res[0] + res[3] + res[6], res[1] + res[4] + res[7], res[2] + res[5] + l };
         }
 
         {
@@ -136,7 +136,7 @@ std::vector<geometry::vertex> bulkevaluate(beziervolume<2> const& v, std::vector
             _mm256_store_ps(res, _mm256_mul_ps(t2, _mm256_fmadd_ps(t1x, r0b1, _mm256_fmadd_ps(t1y, r1b1, _mm256_mul_ps(t1z, r2b1)))));
 
             float const l = dt2.z * (bt1.x * (v[18].z * bt0.x + v[19].z * bt0.y + v[20].z * bt0.z) + bt1.y * (v[21].z * bt0.x + v[22].z * bt0.y + v[23].z * bt0.z) + bt1.z * (v[24].z * bt0.x + v[25].z * bt0.y + v[26].z * bt0.z));
-            tn1 = vec3{ res[0] + res[3] + res[6], res[1] + res[4] + res[7], res[2] + res[5] + l };
+            tn1 = vector3{ res[0] + res[3] + res[6], res[1] + res[4] + res[7], res[2] + res[5] + l };
         }
 
         {
@@ -156,24 +156,24 @@ std::vector<geometry::vertex> bulkevaluate(beziervolume<2> const& v, std::vector
             _mm256_store_ps(res, _mm256_mul_ps(t2, _mm256_fmadd_ps(t1x, r0b1, _mm256_fmadd_ps(t1y, r1b1, _mm256_mul_ps(t1z, r2b1)))));
 
             float const l = bt2.z * (dt1.x * (v[18].z * bt0.x + v[19].z * bt0.y + v[20].z * bt0.z) + dt1.y * (v[21].z * bt0.x + v[22].z * bt0.y + v[23].z * bt0.z) + dt1.z * (v[24].z * bt0.x + v[25].z * bt0.y + v[26].z * bt0.z));
-            tn2 = vec3{ res[0] + res[3] + res[6], res[1] + res[4] + res[7], res[2] + res[5] + l };
+            tn2 = vector3{ res[0] + res[3] + res[6], res[1] + res[4] + res[7], res[2] + res[5] + l };
         }
 
-        ret.emplace_back(pos, vec3::TransformNormal(vtx.normal, matrix(tn0, tn1, tn2)).Normalized());
+        ret.emplace_back(pos, vector3::TransformNormal(vtx.normal, matrix(tn0, tn1, tn2)).Normalized());
     }
 
     return ret;
 }
 
-voleval evaluatefast(beziervolume<2> const& v, vec3 const& uwv)
+voleval evaluatefast(beziervolume<2> const& v, vector3 const& uwv)
 {
     auto const [t0, t2, t1] = uwv;
-    vec3 const bt0 = qbasis(t0);
-    vec3 const bt1 = qbasis(t1);
-    vec3 const bt2 = qbasis(t2);
-    vec3 const dt0 = dqbasis(t0);
-    vec3 const dt1 = dqbasis(t1);
-    vec3 const dt2 = dqbasis(t2);
+    vector3 const bt0 = qbasis(t0);
+    vector3 const bt1 = qbasis(t1);
+    vector3 const bt2 = qbasis(t2);
+    vector3 const dt0 = dqbasis(t0);
+    vector3 const dt1 = dqbasis(t1);
+    vector3 const dt2 = dqbasis(t2);
 
     // create orientation using partial derivates
     return { evaluateavx2(v, bt0, bt1, bt2), matrix{ evaluateavx2(v, dt0, bt1, bt2).Normalized(), evaluateavx2(v, bt0, bt1, dt2).Normalized(), evaluateavx2(v, bt0, dt1, bt2).Normalized() } };

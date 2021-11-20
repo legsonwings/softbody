@@ -19,6 +19,11 @@ gfx::viewinfo& gfx::getview() { return view; }
 gfx::sceneconstants& gfx::getglobals() { return constbufferdata; }
 gfx::psomapref gfx::getpsomap() { return psos; }
 
+gfx::materialcref gfx::addmat(std::string const& name, material const& mat, bool twosided)
+{
+    return materials.insert({ name, {mat, twosided} }).first->second;
+}
+
 gfx::materialcref gfx::getmat(std::string const& name)
 {
     if (auto const& found = materials.find(name); found != materials.end())
@@ -34,7 +39,7 @@ std::string const& gfx::generaterandom_matcolor(materialcref definition, std::op
     static const std::uniform_int_distribution<uint> matnumberdist(0, matgenlimit);
     static const std::uniform_real_distribution<float> colordist(0.f, 1.f);
 
-    vec3 const color = { colordist(re), colordist(re), colordist(re) };
+    vector3 const color = { colordist(re), colordist(re), colordist(re) };
     static const std::string basename("mat");
 
     std::string matname = preferred_name.has_value() ? preferred_name.value() : basename + std::to_string(matnumberdist(re));
@@ -42,7 +47,7 @@ std::string const& gfx::generaterandom_matcolor(materialcref definition, std::op
     while (materials.find(matname) != materials.end()) { matname = basename + std::to_string(matnumberdist(re)); }
 
     auto m = std::make_pair(matname, definition);
-    m.second->a = geoutils::create_vec4(color, m.second->a.w);
+    m.second->a = geoutils::create_vector4(color, m.second->a.w);
     return materials.insert(std::move(m)).first->first;
 }
 
@@ -50,6 +55,7 @@ void gfx::init_pipelineobjects()
 {
     addpso("lines", L"default_as.cso", L"lines_ms.cso", L"basic_ps.cso");
     addpso("default", L"default_as.cso", L"default_ms.cso", L"default_ps.cso");
+    addpso("texturess", L"", L"texturess_ms.cso", L"texturess_ps.cso");
     addpso("instancedlines", L"instances_asold.cso", L"linesinstances_ms.cso", L"basic_ps.cso");
     addpso("instanced", L"instances_as.cso", L"instances_ms.cso", L"instances_ps.cso");
     addpso("transparent", L"default_as.cso", L"default_ms.cso", L"default_ps.cso", psoflags::transparent);
@@ -57,13 +63,17 @@ void gfx::init_pipelineobjects()
     addpso("wireframe", L"default_as.cso", L"default_ms.cso", L"default_ps.cso", psoflags::wireframe | psoflags::transparent);
     addpso("instancedtransparent", L"instances_as.cso", L"instances_ms.cso", L"instances_ps.cso", psoflags::transparent);
 
-    auto const ballmat = material().roughness(0.95f).diffusealbedo({ 1.f, 1.f, 1.f, 1.f }).fresnelr(vec3{ 0.0f });
-    auto const transparent_ballmat = material().roughness(0.f).diffusealbedo({ 0.7f, 0.9f, 0.6f, 0.1f }).fresnelr(vec3{1.f});
+    // todo :move these materials to specific game
+    auto const ballmat = material().roughness(0.95f).diffuse(gfx::color::white).fresnelr(vector3{ 0.0f });
+    auto const transparent_ballmat = material().roughness(0.f).diffuse({ 0.7f, 0.9f, 0.6f, 0.1f }).fresnelr(vector3{1.f});
 
-    materials.insert({ "ball", {ballmat, false} });
-    materials.insert({ "transparentball", {transparent_ballmat, false}});
-    materials.insert({ "transparentball_twosided", {transparent_ballmat, true } });
-    materials.insert({ "room", {material().roughness(0.9999999f).diffusealbedo({ 0.5f, 0.3f, 0.2f, 1.f }).fresnelr(vec3{ 0.f }), false }});
+    addmat("ball",ballmat);
+    addmat("transparentball", transparent_ballmat);
+    addmat("transparentball_twosided", transparent_ballmat, true);
+    addmat("room", material().roughness(0.99f).diffuse({ 0.5f, 0.3f, 0.2f, 1.f }).fresnelr(vector3{ 0.f }));
+    addmat("black", material().diffuse(gfx::color::black));
+    addmat("white", material().diffuse(gfx::color::black));
+    addmat("red", material().diffuse(gfx::color::black));
 }
 
 void gfx::deinit_pipelineobjects()
@@ -75,18 +85,18 @@ ComPtr<ID3D12Resource> gfx::create_uploadbuffer(uint8_t** mapped_buffer, std::si
 {
     auto device = game_engine::g_engine->get_device();
 
-    ComPtr<ID3D12Resource> vb_upload;
+    ComPtr<ID3D12Resource> b_upload;
     if (buffersize > 0)
     {
         auto resource_desc = CD3DX12_RESOURCE_DESC::Buffer(buffersize);
         auto heap_props = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-        ThrowIfFailed(device->CreateCommittedResource(&heap_props, D3D12_HEAP_FLAG_NONE, &resource_desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(vb_upload.GetAddressOf())));
+        ThrowIfFailed(device->CreateCommittedResource(&heap_props, D3D12_HEAP_FLAG_NONE, &resource_desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(b_upload.GetAddressOf())));
 
         // We do not intend to read from this resource on the CPU.
-        ThrowIfFailed(vb_upload->Map(0, nullptr, reinterpret_cast<void**>(mapped_buffer)));
+        ThrowIfFailed(b_upload->Map(0, nullptr, reinterpret_cast<void**>(mapped_buffer)));
     }
 
-    return vb_upload;
+    return b_upload;
 }
 
 void gfx::addpso(std::string const& name, std::wstring const& as, std::wstring const& ms, std::wstring const& ps, uint flags)
@@ -108,7 +118,7 @@ void gfx::addpso(std::string const& name, std::wstring const& as, std::wstring c
     ReadDataFromFile(engine->get_asset_fullpath(ps).c_str(), &pixelshader.data, &pixelshader.size);
 
     // pull root signature from the precompiled mesh shaders.
-    // todo : root signatures will contain duplicate entries in case shaders share root sig or same shader is used to create multiple psos
+    // todo : root signatures willbe duplicated in case shaders share root sig or same shader is used to create multiple psos
     ThrowIfFailed(device->CreateRootSignature(0, meshshader.data, meshshader.size, IID_PPV_ARGS(psos[name].root_signature.GetAddressOf())));
 
     D3DX12_MESH_SHADER_PIPELINE_STATE_DESC pso_desc = engine->get_pso_desc();

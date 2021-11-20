@@ -16,7 +16,7 @@ struct beziershape
     beziermaths::beziertriangle<n> patches[m] = {};
     static constexpr uint gdgree() { return n; }
     static constexpr uint gnumpatches() { return m; }
-    vec3 gcenter() const { return vec3::Zero; }
+    vector3 gcenter() const { return vector3::Zero; }
 };
 
 template<uint n>
@@ -28,7 +28,7 @@ std::vector<beziermaths::curveeval> tessellate(beziermaths::beziercurve<n> const
 
     // approximate curve length
     for (uint i = 1; i < curve.numcontrolpts; ++i)
-        curvelen += vec3::Distance(curve.controlnet[i - 1], curve.controlnet[i]);
+        curvelen += vector3::Distance(curve.controlnet[i - 1], curve.controlnet[i]);
 
     float const step = unitstep / curvelen;
 
@@ -64,15 +64,15 @@ std::vector<geometry::vertex> tessellate(beziermaths::beziertriangle<n> const& p
         float topV, botV;
         topV = 1.f - row * step;
         botV = 1.f - ((row + 1) * step);
-        vec3 topLeft = { 1.f - topV, topV, 0.f };
-        vec3 topRight = { 0.f, topV, 1.f - topV };
+        vector3 topLeft = { 1.f - topV, topV, 0.f };
+        vector3 topRight = { 0.f, topV, 1.f - topV };
 
-        vec3 botLeft = { 1.f - botV, botV, 0.f };
-        vec3 botRight = { 0.f, botV, 1.f - botV };
+        vector3 botLeft = { 1.f - botV, botV, 0.f };
+        vector3 botRight = { 0.f, botV, 1.f - botV };
 
         // compute the first edge
-        vec3 topVert = stdx::lerp(topLeft, topRight, 0.f);
-        vec3 botLeftVert = stdx::lerp(botLeft, botRight, 0.f);
+        vector3 topVert = stdx::lerp(topLeft, topRight, 0.f);
+        vector3 botLeftVert = stdx::lerp(botLeft, botRight, 0.f);
 
         auto lastEdge = std::make_pair<geometry::vertex>(evaluate(patch, botLeftVert), evaluate(patch, topVert));
         int const numRowTris = (2 * row + 1);
@@ -80,12 +80,12 @@ std::vector<geometry::vertex> tessellate(beziermaths::beziertriangle<n> const& p
         // compute the triangle strip for each layer
         for (int triIdx = 0; triIdx < numRowTris; ++triIdx)
         {
-            static const auto norm = vec3{ 0.f, 0.f, 1.f };
+            static const auto norm = vector3{ 0.f, 0.f, 1.f };
             if (triIdx % 2 == 0)
             {
                 // skip intermediate triangles when calculating interpolation t which do not contribute in change of horizontal(uw) parameter span
                 // in total there will be floor(nTris / 2) such triangles
-                vec3 const botRightVert = stdx::lerp(botLeft, botRight, (float(triIdx - (triIdx / 2)) + 1.f) / (float(row) + 1.f));
+                vector3 const botRightVert = stdx::lerp(botLeft, botRight, (float(triIdx - (triIdx / 2)) + 1.f) / (float(row) + 1.f));
                 result.push_back(lastEdge.first);
                 result.push_back(lastEdge.second);
                 result.push_back(evaluate(patch, botRightVert));
@@ -95,7 +95,7 @@ std::vector<geometry::vertex> tessellate(beziermaths::beziertriangle<n> const& p
             {
                 // skip intermediate triangles when calculating interpolation t which do not contribute in change of horizontal(uw) parameter span
                 // in total there will be floor(nTris / 2) such triangles
-                vec3 const topRightVert = stdx::lerp(topLeft, topRight, (float(triIdx - (triIdx / 2))) / float(row));
+                vector3 const topRightVert = stdx::lerp(topLeft, topRight, (float(triIdx - (triIdx / 2))) / float(row));
                 result.push_back(lastEdge.first);
                 result.push_back(evaluate(patch, topRightVert));
                 result.push_back(lastEdge.second);
@@ -108,7 +108,7 @@ std::vector<geometry::vertex> tessellate(beziermaths::beziertriangle<n> const& p
 }
 
 template<uint n>
-std::vector<vec3> tessellate(beziermaths::beziervolume<n> const& vol)
+std::vector<vector3> tessellate(beziermaths::beziervolume<n> const& vol)
 {
     static constexpr float unitstep = 0.7f;
     auto const& bbox = geometry::aabb(vol.controlnet.data(), vol.numcontrolpts);
@@ -116,7 +116,7 @@ std::vector<vec3> tessellate(beziermaths::beziervolume<n> const& vol)
 
     assert(span.LengthSquared() > stdx::tolerance<>);
 
-    std::vector<vec3> res;
+    std::vector<vector3> res;
     float const step = unitstep / std::max({ span.x, span.y, span.z });
     float const end = 1.f + step - stdx::tolerance<>;
     for (float i(0.f); i <= end; i += step)
@@ -140,9 +140,9 @@ std::vector<geometry::vertex> tessellateshape(beziershape<n, M> const& shape)
 }
 
 template<uint n>
-std::vector<vec3> getwireframe_controlmesh(beziermaths::beziertriangle<n> const& patch)
+std::vector<vector3> getwireframe_controlmesh(beziermaths::beziertriangle<n> const& patch)
 {
-    std::vector<vec3> result;
+    std::vector<vector3> result;
     for (int row = 0; row < n; ++row)
     {
         auto previousRowStart = row * (row + 1) / 2;
@@ -176,29 +176,29 @@ std::vector<vec3> getwireframe_controlmesh(beziermaths::beziertriangle<n> const&
 
 struct qbeziercurve
 {
-    std::vector<vec3> gvertices() const 
+    std::vector<vector3> gvertices() const 
     { 
-        std::vector<vec3> res;
+        std::vector<vector3> res;
         for (auto const& v : tessellate(curve)) res.push_back(v.first);
         return res;
     }
 
-    std::vector<gfx::instance_data> instancedata() const { return { gfx::instance_data(matrix::CreateTranslation(vec3::Zero), gfx::getview(), gfx::getmat("")) }; }
+    std::vector<gfx::instance_data> instancedata() const { return { gfx::instance_data(matrix::CreateTranslation(vector3::Zero), gfx::getview(), gfx::getmat("")) }; }
 
     beziermaths::beziercurve<2u> curve;
 };
 
 struct qbeziervolume
 {
-    std::vector<vec3> gvertices() const
+    std::vector<vector3> gvertices() const
     {
         static constexpr auto delta = 0.01f;
-        static constexpr auto deltax = vec3{ delta, 0.f, 0.f };
-        static constexpr auto deltay = vec3{ 0.f, delta, 0.f };
-        static constexpr auto deltaz = vec3{ 0.f, 0.f, delta };
+        static constexpr auto deltax = vector3{ delta, 0.f, 0.f };
+        static constexpr auto deltay = vector3{ 0.f, delta, 0.f };
+        static constexpr auto deltaz = vector3{ 0.f, 0.f, delta };
 
         auto const& volpoints = tessellate(vol);
-        std::vector<vec3> res;
+        std::vector<vector3> res;
         res.reserve(volpoints.size() * 2);
         for (auto const& v : volpoints)
         {
@@ -212,7 +212,7 @@ struct qbeziervolume
         return res;
     }
 
-    std::vector<gfx::instance_data> instancedata() const { return { gfx::instance_data(matrix::CreateTranslation(vec3::Zero), gfx::getview(), gfx::getmat("")) }; }
+    std::vector<gfx::instance_data> instancedata() const { return { gfx::instance_data(matrix::CreateTranslation(vector3::Zero), gfx::getview(), gfx::getmat("")) }; }
 
     static qbeziervolume create(float len)
     {
@@ -220,7 +220,7 @@ struct qbeziervolume
         for (auto i : std::ranges::iota_view{ 0u, unitvol.vol.numcontrolpts })
         {
             auto const& idx = stdx::hypercubeidx<2>::from1d(2, i);
-            unitvol.vol.controlnet[i] = len * vec3{ static_cast<float>(idx.coords[0]) / 2, static_cast<float>(idx.coords[2]) / 2 , static_cast<float>(idx.coords[1]) / 2 };
+            unitvol.vol.controlnet[i] = len * vector3{ static_cast<float>(idx.coords[0]) / 2, static_cast<float>(idx.coords[2]) / 2 , static_cast<float>(idx.coords[1]) / 2 };
         }
         return unitvol;
     }

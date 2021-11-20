@@ -12,7 +12,7 @@ void cursor::tick(float dt)
     _vel.y = -_vel.y;     // pos is relative to topleft so invert y
 }
 
-vec2 cursor::pos() const
+vector2 cursor::pos() const
 {
     POINT pos;
     GetCursorPos(&pos);
@@ -20,9 +20,9 @@ vec2 cursor::pos() const
     return { static_cast<float>(pos.x), static_cast<float>(pos.y) };
 }
 
-vec2 cursor::vel() const { return _vel; }
+vector2 cursor::vel() const { return _vel; }
 
-vec3 cursor::ray(float nearp, float farp) const
+vector3 cursor::ray(float nearp, float farp) const
 {
     auto const raystart = to3d({ _pos.x, _pos.y, nearp }, nearp, farp);
     auto const rayend = to3d({ _pos.x, _pos.y, farp }, nearp, farp);
@@ -30,7 +30,7 @@ vec3 cursor::ray(float nearp, float farp) const
     return (rayend - raystart).Normalized();
 }
 
-vec3 cursor::to3d(vec3 pos, float nearp, float farp) const
+vector3 cursor::to3d(vector3 pos, float nearp, float farp) const
 {
     RECT clientr;
     GetClientRect(Win32Application::GetHwnd(), &clientr);
@@ -42,14 +42,14 @@ vec3 cursor::to3d(vec3 pos, float nearp, float farp) const
 
     // frustum z range = 1000.f
     // convert to ndc [-1, 1]
-    vec4 const ndc = vec4{ pos.x / width, (height - pos.y - 1.f) / height, (pos.z - nearp) / (farp - nearp) , 1.f } * 2.f - vec4{ 1.f };
+    vector4 const ndc = vector4{ pos.x / width, (height - pos.y - 1.f) / height, (pos.z - nearp) / (farp - nearp) , 1.f } * 2.f - vector4{ 1.f };
 
     // homogenous space
-    auto posh = vec4::Transform(ndc, view.proj.Invert());
+    auto posh = vector4::Transform(ndc, view.proj.Invert());
     posh /= posh.w;
 
     // world space
-    posh = vec4::Transform(posh, view.view.Invert());
+    posh = vector4::Transform(posh, view.view.Invert());
 
     return { posh.x, posh.y, posh.z };
 }

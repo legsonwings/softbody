@@ -34,19 +34,26 @@ requires vecfieldrefvalue_c<t, 1, 0, l>
 struct scalarfieldro
 {
     t sf;
-    static constexpr fluid::vec2 origin = -fluid::vec2{ l / 2.f, l / 2.f };
+    static constexpr vec2 origin = -vec2{ l / 2.f, l / 2.f };
 
     std::vector<geometry::vertex> gvertices() const
     {
         float const z = 0.f;
-        static const vec3 normal = vec3::Forward;
+        static const vector3 normal = vector3::Forward;
         std::vector<geometry::vertex> r;
-        r.push_back(geometry::vertex{ {-0.5, 0.5, z}, normal });
-        r.push_back(geometry::vertex{ {0.5, 0.5, z}, normal });
-        r.push_back(geometry::vertex{ {-0.5, -0.5, z}, normal });
-        r.push_back(geometry::vertex{ {-0.5, -0.5, z}, normal });
-        r.push_back(geometry::vertex{ {0.5, 0.5, z}, normal });
-        r.push_back(geometry::vertex{ {0.5, -0.5, z}, normal });
+        //r.push_back(geometry::vertex{ {-0.5, 0.5, z}, normal });
+        //r.push_back(geometry::vertex{ {0.5, 0.5, z}, normal });
+        //r.push_back(geometry::vertex{ {-0.5, -0.5, z}, normal });
+        //r.push_back(geometry::vertex{ {-0.5, -0.5, z}, normal });
+        //r.push_back(geometry::vertex{ {0.5, 0.5, z}, normal });
+        //r.push_back(geometry::vertex{ {0.5, -0.5, z}, normal });
+
+        r.push_back(geometry::vertex{ {-200.f, 200.f, z}, normal });
+        r.push_back(geometry::vertex{ {200.f, 200.f, z}, normal });
+        r.push_back(geometry::vertex{ {-200.f, -200.f, z}, normal });
+        r.push_back(geometry::vertex{ {-200.f, -200.f, z}, normal });
+        r.push_back(geometry::vertex{ {200.f, 200.f, z}, normal });
+        r.push_back(geometry::vertex{ {200.f, -200.f, z}, normal });
 
         return r;
     }
@@ -55,18 +62,59 @@ struct scalarfieldro
     {
         gfx::material mat = gfx::getmat("");
         std::vector<gfx::instance_data> r;
-        for (uint i(0); i < sf.size(); ++i)
-        {
-            float const c = stdx::lerp(0.f, 1.f, sf[i] / maxd);
-            auto const idx = cubeidx::from1d(l - 1, i).coords;
-            auto const pos = fluid::vec2{ static_cast<float>(idx[0]), static_cast<float>(idx[1]) } + origin;
-            mat.diffusealbedo({c, 0.f, 0.f, 1.f});
+        mat.diffuse({ 0.5, 0.5f, 0.f, 1.f });
+        //for (uint i(0); i < sf.size(); ++i)
+        //{
+        //    float const c = stdx::lerp(0.f, 1.f, sf[i] / maxd);
+        //    auto const idx = cubeidx::from1d(l - 1, i).coords;
+        //    auto const pos = vec2{ static_cast<float>(idx[0]), static_cast<float>(idx[1]) } + origin;
+        //    mat.diffuse({c, 0.f, 0.f, 1.f});
 
-            r.push_back(gfx::instance_data(matrix::CreateTranslation({ pos[0], pos[1], 0.f }), gfx::getview(), mat));
-        }
+        //    r.push_back(gfx::instance_data(matrix::CreateTranslation({ pos[0], pos[1], -10.f }), gfx::getview(), mat));
+        //}
+
+        r.push_back(gfx::instance_data(matrix::CreateTranslation({ 0.f, 0.f, -42.8f }), gfx::getview(), mat));
 
         return r;
     }
+};
+
+struct fluidtex
+{
+    std::vector<geometry::vertex> gvertices() const
+    {
+        return _quad.triangles();
+    }
+
+    void update(float dt)
+    {
+
+    }
+
+    vector3 gcenter() const
+    {
+        return { 0.f, 0.f, -40.f };
+    }
+
+    std::vector<uint8_t> texdata()
+    {
+        static_assert(sizeof(float) == 4);
+
+        if (_texdata.size() == 0)
+        {
+            _texdata.resize(10000 * 3 * 4);
+
+            std::vector<float> dataf(10000 * 3, 1.f);
+            memcpy(_texdata.data(), dataf.data(), 10000 * 3 * 4);
+        }
+
+        return _texdata;
+    }
+
+    std::vector<uint8_t> _texdata;
+
+    // todo : move this z to origin. Doesn't matter as long as we are within view frustum
+    geometry::rectangle _quad{ 100.f, 100.f,  gcenter() };
 };
 
 class fluidsimulation : public game_base
@@ -84,20 +132,23 @@ private:
     static constexpr uint l = 70;
 
     fluidbox<vd, l> fluid{ 0.2f};
-    std::vector<gfx::body_static<geometry::cube, gfx::topology::triangle>> boxes;
+    //std::vector<gfx::body_static<geometry::cube, gfx::topology::triangle>> boxes;
     std::vector<gfx::body_static<scalarfieldro<vecfield21<l> const&, l>, gfx::topology::triangle>> dye;
+    std::vector<gfx::body_dynamic<fluidtex, gfx::topology::triangle>> textures;
 
-    resourcelist load_assets_and_geometry() override
+    gfx::resourcelist load_assets_and_geometry() override
     {
         using geometry::cube;
         using gfx::bodyparams;
         cbuffer.createresources<gfx::sceneconstants>();
 
-        boxes.emplace_back(cube{ {vec3{0.f, 0.f, 0.f}}, vec3{40.f} }, &cube::vertices_flipped, &cube::instancedata, bodyparams{ "instanced" });
-        dye.emplace_back(scalarfieldro<vecfield21<l> const& ,l>{fluid.d}, bodyparams{ "instanced" });
+        //boxes.emplace_back(cube{ {vector3{0.f, 0.f, 0.f}}, vector3{40.f} }, &cube::vertices_flipped, &cube::instancedata, bodyparams{ "instanced" });
+        //dye.emplace_back(scalarfieldro<vecfield21<l> const& ,l>{fluid.d}, bodyparams{ "instanced" });
 
-        resourcelist r;
-        for (auto b : stdx::makejoin<gfx::bodyinterface>(dye, boxes)) { stdx::append(b->create_resources(), r); };
+        textures.emplace_back(fluidtex{}, bodyparams{ "texturess", "", {100, 100}}).texturedata(textures.back()->texdata());
+
+        gfx::resourcelist r;
+        for (auto b : stdx::makejoin<gfx::bodyinterface>(textures)) { stdx::append(b->create_resources(), r); };
         return r;
     }
 
@@ -105,19 +156,22 @@ private:
     {
         game_base::update(dt);
 
+        gfx::getview().proj = camera.GetOrthoProjectionMatrix();
+
         auto& constbufferdata = gfx::getglobals();
 
         constbufferdata.campos = camera.GetCurrentPosition();
+        // todo : lights to be used as global dispatch param
         constbufferdata.ambient = { 0.1f, 0.1f, 0.1f, 1.0f };
-        constbufferdata.lights[0].direction = vec3{ 0.3f, -0.27f, 0.57735f }.Normalized();
+        constbufferdata.lights[0].direction = vector3{ 0.3f, -0.27f, 0.57735f }.Normalized();
         constbufferdata.lights[0].color = { 0.2f, 0.2f, 0.2f };
 
-        constbufferdata.lights[1].position = vec3::Zero;
-        constbufferdata.lights[1].color = vec3::Zero;
+        constbufferdata.lights[1].position = vector3::Zero;
+        constbufferdata.lights[1].color = vector3::Zero;
         constbufferdata.lights[1].range = 40.f;
 
-        constbufferdata.lights[2].position = vec3::Zero;
-        constbufferdata.lights[2].color = vec3::Zero;
+        constbufferdata.lights[2].position = vector3::Zero;
+        constbufferdata.lights[2].color = vector3::Zero;
         constbufferdata.lights[2].range = 40.f;
 
         cbuffer.set_data(&constbufferdata);
@@ -127,9 +181,9 @@ private:
         DirectX::SimpleMath::Ray ray(camera.GetCurrentPosition(), cursor.ray(camera.nearplane(), camera.farplane()));
         
         float dist;
-        if (ray.Intersects(plane{ vec3::Zero, vec3::Backward }, dist))  // fluid box is at origin
+        if (ray.Intersects(plane{ vector3::Zero, vector3::Backward }, dist))  // fluid box is at origin
         {
-            vec3 const point = ray.position + ray.direction * dist;
+            vector3 const point = ray.position + ray.direction * dist;
 
             static constexpr float speed = 2.5f;
             static constexpr DirectX::SimpleMath::Vector2 origin = DirectX::SimpleMath::Vector2{ -(l / 2.f), -(l / 2.f) };
@@ -170,7 +224,7 @@ private:
 
     void render(float dt) override
     {
-        for (auto b : stdx::makejoin<gfx::bodyinterface>(dye))  b->render(dt, { false, cbuffer.get_gpuaddress() });
+        //for (auto b : stdx::makejoin<gfx::bodyinterface>(dye))  b->render(dt, { false, cbuffer.get_gpuaddress() });
     }
 };
 }

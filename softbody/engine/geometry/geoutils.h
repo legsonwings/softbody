@@ -8,13 +8,13 @@
 
 namespace geoutils
 {
-    vec4 create_vec4(vec3 const& v, float w = 1.f);
-    matrix get_planematrix(vec3 const &translation, vec3 const &normal);
-	std::vector<geometry::vertex> create_cube(vec3 const& center, vec3 const& extents);
-	std::vector<vec3> create_box_lines(vec3 const &center, vec3 const& extents);
-	std::vector<vec3> create_cube_lines(vec3 const &center, float scale);
+    vector4 create_vector4(vector3 const& v, float w = 1.f);
+    matrix get_planematrix(vector3 const &translation, vector3 const &normal);
+	std::vector<geometry::vertex> create_cube(vector3 const& center, vector3 const& extents);
+	std::vector<vector3> create_box_lines(vector3 const &center, vector3 const& extents);
+	std::vector<vector3> create_cube_lines(vector3 const &center, float scale);
 	bool nearlyequal(stdx::arithmetic_c auto const& l, stdx::arithmetic_c auto const& r, float const& _tolerance = stdx::tolerance<float>);
-	bool nearlyequal(vec2 const& l, vec2 const& r, float const& _tolerance = stdx::tolerance<float>);
-	bool nearlyequal(vec3 const& l, vec3 const& r, float const& _tolerance = stdx::tolerance<float>);
-	bool nearlyequal(vec4 const& l, vec4 const& r, float const& _tolerance = stdx::tolerance<float>);
+	bool nearlyequal(vector2 const& l, vector2 const& r, float const& _tolerance = stdx::tolerance<float>);
+	bool nearlyequal(vector3 const& l, vector3 const& r, float const& _tolerance = stdx::tolerance<float>);
+	bool nearlyequal(vector4 const& l, vector4 const& r, float const& _tolerance = stdx::tolerance<float>);
 }

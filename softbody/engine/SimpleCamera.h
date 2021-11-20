@@ -24,12 +24,14 @@ public:
     DirectX::XMFLOAT3 GetCurrentPosition() const;
     DirectX::XMMATRIX GetViewMatrix();
     DirectX::XMMATRIX GetProjectionMatrix(float fov);
+    DirectX::XMMATRIX GetOrthoProjectionMatrix();
 
     float nearplane() const;
     float farplane() const;
     void nearplane(float nearp);
     void farplane(float farp);
-    void aspectratio(float aspectratio);
+    void width(unsigned width);
+    void height(unsigned height);
 
     void SetMoveSpeed(float unitsPerSecond);
     void SetTurnSpeed(float radiansPerSecond);
@@ -65,7 +67,8 @@ private:
 
     float _nearp = 0.01f;
     float _farp = 1000.f;
-    float _aspectratio = 1.f;
+    unsigned _width = 0;
+    unsigned _height = 0;
 
     KeysPressed m_keysPressed;
 };

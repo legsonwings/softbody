@@ -9,6 +9,7 @@
 #include <wrl.h>
 
 #include "engine/engineutils.h"
+#include "engine/graphics/gfxcore.h"
 #include "engine/graphics/gfxmemory.h"
 #include "engine/SimpleCamera.h"
 
@@ -18,13 +19,11 @@ struct ID3D12Resource;
 class game_base
 {
 public:
-	using resourcelist = std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>;
-
 	game_base(gamedata const &data);
 	
 	virtual ~game_base() {}
 
-	virtual resourcelist load_assets_and_geometry() = 0;
+	virtual gfx::resourcelist load_assets_and_geometry() = 0;
 
 	virtual void update(float dt) { updateview(dt); };
 	virtual void render(float dt) = 0;

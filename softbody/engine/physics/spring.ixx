@@ -1,6 +1,6 @@
 module;
 
-#include "engine/geometry/geodefines.h"
+#include "engine/core.h"
 #include <cmath> 
 
 export module spring;
@@ -10,11 +10,11 @@ export namespace physx
 // simulates shm
 struct spring
 {
-    std::pair<vec3, vec3> dummy(vec3 const& displacement, vec3 const& vel, float dt) const { return { displacement, vel, }; }
+    std::pair<vector3, vector3> dummy(vector3 const& displacement, vector3 const& vel, float dt) const { return { displacement, vel, }; }
 
-    std::pair<vec3, vec3> damped(vec3 const& displacement, vec3 const& vel, float dt) const
+    std::pair<vector3, vector3> damped(vector3 const& displacement, vector3 const& vel, float dt) const
     {
-        std::pair<vec3, vec3> res;
+        std::pair<vector3, vector3> res;
 
         res.first = std::powf(2.71828f, -omega * eta * dt) * (displacement * std::cos(alpha * dt) + (vel + omega * eta * displacement) * std::sin(alpha * dt) / alpha);
         res.second = -std::pow(2.71828f, -omega * eta * dt) * ((displacement * omega * eta - vel - omega * eta * displacement) * cos(alpha * dt) +
@@ -22,9 +22,9 @@ struct spring
         return res;
     }
 
-    std::pair<vec3, vec3> critical(vec3 const& displacement, vec3 const& vel, float dt) const
+    std::pair<vector3, vector3> critical(vector3 const& displacement, vector3 const& vel, float dt) const
     {
-        std::pair<vec3, vec3> res;
+        std::pair<vector3, vector3> res;
 
         res.first = ((vel + displacement * omega) * dt + displacement) * std::powf(2.71828f, -omega * dt);
         res.second = (vel - (vel + displacement * omega) * omega * dt) * std::powf(2.71828f, -omega * dt);

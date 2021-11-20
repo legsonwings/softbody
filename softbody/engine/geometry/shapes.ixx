@@ -16,11 +16,33 @@ export module shapes;
 
 export namespace geometry
 {
+struct rectangle
+{
+    std::vector<geometry::vertex> triangles() const
+    {
+        float const halfl = _length / 2.f;
+        float const halfh = _height / 2.f;
+        static const vector3 normal = vector3::Forward;
+        std::vector<geometry::vertex> r;
+        r.push_back({ _center + vector3{-halfl, halfh, 0.f}, normal, vector2{0.f, 0.f} });
+        r.push_back({ _center + vector3{halfl, halfh, 0.f}, normal, vector2{1.f, 0.f} });
+        r.push_back({ _center + vector3{-halfl, -halfh, 0.f}, normal, vector2{0.f, 1.f} });
+        r.push_back({ _center + vector3{-halfl, -halfh, 0.f}, normal, vector2{0.f, 1.f} });
+        r.push_back({ _center + vector3{halfl, halfh, 0.f}, normal, vector2{1.f, 0.f} });
+        r.push_back({ _center + vector3{halfl, -halfh, 0.f}, normal, vector2{1.f, 1.f} });
+        return r;
+    }
+
+    float _length = 0.f;
+    float _height = 0.f;
+    vector3 _center = {};
+};
+
 struct circle
 {
     std::vector<vertex> triangles() const
     {
-        std::vector<vec3> vertices;
+        std::vector<vector3> vertices;
 
         float x0 = radius * std::cosf(0);
         float y0 = radius * std::sinf(0);
@@ -30,7 +52,7 @@ struct circle
             float const x = radius * std::cosf(t);
             float const y = radius * std::sinf(t);
 
-            vertices.push_back(vec3::Zero);
+            vertices.push_back(vector3::Zero);
             vertices.push_back({ x, y , 0.f });
             vertices.push_back({ x0, y0 , 0.f });
 
@@ -41,16 +63,14 @@ struct circle
         matrix plane_tx = geoutils::get_planematrix(center, normal);
 
         std::vector<vertex> result;
-        for (auto& vert : vertices) { result.push_back({ vec3::Transform(vert, plane_tx), normal }); }
+        for (auto& vert : vertices) { result.push_back({ vector3::Transform(vert, plane_tx), normal }); }
 
         return result;
     }
 
-    std::vector<gfx::instance_data> instancedata() const { return { gfx::instance_data{matrix::CreateTranslation(center), gfx::getview(), gfx::getmat("")} }; }
-
     float radius = 1.f;
-    vec3 center = {};
-    vec3 normal = {};
+    vector3 center = {};
+    vector3 normal = {};
 
     static constexpr uint numsegments = 20;
     static constexpr float step = XM_2PI / numsegments; // needs to be tested
@@ -59,13 +79,13 @@ struct circle
 struct cube
 {
     cube() = default;
-    constexpr cube(vec3 const& _center, vec3 const& _extents) : center(_center), extents(_extents) {}
+    constexpr cube(vector3 const& _center, vector3 const& _extents) : center(_center), extents(_extents) {}
 
     aabb const& gaabb() const
     {
         auto createaabb = [](auto const& verts)
         {
-            std::vector<vec3> positions;
+            std::vector<vector3> positions;
             for (auto const& v : verts) { positions.push_back(v.position); }
             return aabb(positions);
         };
@@ -97,10 +117,10 @@ struct cube
         return invertedvertices;
     }
 
-    std::vector<gfx::instance_data> instancedata() const { return { gfx::instance_data(matrix::CreateTranslation(center), gfx::getview(), gfx::getmat("room")) }; }
+    std::vector<gfx::instance_data> instancedata() const { return { gfx::instance_data(matrix::CreateTranslation(center), gfx::getview(), gfx::getmat("")) }; }
 
 private:
-    vec3 center, extents;
+    vector3 center, extents;
     std::vector<geometry::vertex> vertices;
 };
 
@@ -109,10 +129,10 @@ struct sphere
     using polar_coords = std::pair<float, float>;
 
     sphere() = default;
-    sphere(vec3 const& _center, float _radius) : center(_center), radius(_radius) {}
+    sphere(vector3 const& _center, float _radius) : center(_center), radius(_radius) {}
 
-    vec3 gcenter() const { return center; }
-    void scenter(vec3 const &_center) { center = _center; }
+    vector3 gcenter() const { return center; }
+    void scenter(vector3 const &_center) { center = _center; }
     std::vector<vertex> const& triangles() const { return triangulated_sphere; }
     std::vector<polar_coords> const& triangles_polar() const { return triangulated_sphere_polar; }
 
@@ -126,7 +146,7 @@ struct sphere
 
 private:
 
-    void generate_triangles(std::vector<vec3> const& unitsphere_triangles)
+    void generate_triangles(std::vector<vector3> const& unitsphere_triangles)
     {
         triangulated_sphere.clear();
         triangulated_sphere.reserve(unitsphere_triangles.size());
@@ -200,7 +220,7 @@ private:
         for (float theta = 0.f; theta < theta_end; theta += steptheta)
             for (float phi = 0.f; phi < phi_end; phi += stepphi)
             {
-                vec3 lbv, ltv, rbv, rtv;
+                vector3 lbv, ltv, rbv, rtv;
                 ltv = spherevertex(phi, theta);
                 rtv = spherevertex(phi + stepphi, theta);
                 lbv = spherevertex(phi, theta + steptheta);
@@ -222,19 +242,19 @@ private:
             }
     }
 
-    static vec3 spherevertex(float const phi, float const theta) { return { std::sinf(theta) * std::cosf(phi), std::cosf(theta), std::sinf(theta) * std::sinf(phi) }; }
+    static vector3 spherevertex(float const phi, float const theta) { return { std::sinf(theta) * std::cosf(phi), std::cosf(theta), std::sinf(theta) * std::sinf(phi) }; }
 
     std::vector<vertex> triangulated_sphere;
     std::vector<polar_coords> triangulated_sphere_polar;
-    static std::unordered_map<uint, std::vector<vec3>> unitspheres_tessellated;
+    static std::unordered_map<uint, std::vector<vector3>> unitspheres_tessellated;
 public:
 
     float radius = 1.5f;
-    vec3 center = {};
+    vector3 center = {};
 
     uint numsegments_longitude = 24;
     uint numsegments_latitude = (numsegments_longitude / 2) + (numsegments_longitude % 2);
 };
 
-std::unordered_map<uint, std::vector<vec3>> sphere::unitspheres_tessellated;
+std::unordered_map<uint, std::vector<vector3>> sphere::unitspheres_tessellated;
 }

@@ -15,37 +15,37 @@ export namespace geometry
 struct line2D
 {
     line2D() = default;
-    constexpr line2D(vec2 const& _point, vec2 const& _dir) : point(_point), dir(_dir) {}
+    constexpr line2D(vector2 const& _point, vector2 const& _dir) : point(_point), dir(_dir) {}
 
-    static float getparameter(line2D const& line, vec2 const& point)
+    static float getparameter(line2D const& line, vector2 const& point)
     {
         // assuming point is already on the line
         auto origin = line.point;
         auto const topoint = (point - origin).Normalized();
 
-        return vec2::Distance(origin, point) * (topoint.Dot(line.dir) > 0.f ? 1.f : -1.f);
+        return vector2::Distance(origin, point) * (topoint.Dot(line.dir) > 0.f ? 1.f : -1.f);
     }
 
-    vec2 point, dir;
+    vector2 point, dir;
 };
 
 struct line
 {
     line() = default;
-    constexpr line(vec3 const& _point, vec3 const& _dir) : point(_point), dir(_dir) {}
+    constexpr line(vector3 const& _point, vector3 const& _dir) : point(_point), dir(_dir) {}
 
     line2D to2D() const { return { point.To2D(), dir.To2D() }; }
 
-    static float getparameter(line const& line, vec3 const& point)
+    static float getparameter(line const& line, vector3 const& point)
     {
         // assuming point is already on the line
         auto origin = line.point;
         auto const topoint = (point - origin).Normalized();
 
-        return vec3::Distance(origin, point) * (topoint.Dot(line.dir) > 0.f ? 1.f : -1.f);
+        return vector3::Distance(origin, point) * (topoint.Dot(line.dir) > 0.f ? 1.f : -1.f);
     }
 
-    static std::optional<vec3> intersect_lines(line const& l, line const& r)
+    static std::optional<vector3> intersect_lines(line const& l, line const& r)
     {
         // if the lines intersect they need to be on the same plane.
         // calculate plane normal
@@ -68,22 +68,22 @@ struct line
         return { r.point + t2 * r.dir };
     }
 
-    vec3 point, dir;
+    vector3 point, dir;
 };
 
 struct linesegment
 {
     linesegment() = default;
-    constexpr linesegment(vec3 const& _v0, vec3 const& _v1) : v0(_v0), v1(_v1) {}
+    constexpr linesegment(vector3 const& _v0, vector3 const& _v1) : v0(_v0), v1(_v1) {}
 
-    static std::optional<vec2> intersect_line2D(linesegment const& linesegment, line const& line)
+    static std::optional<vector2> intersect_line2D(linesegment const& linesegment, line const& line)
     {
-        auto cross = [](vec2 const& l, vec2 const& r) { return l.x * r.y - l.y * r.x; };
+        auto cross = [](vector2 const& l, vector2 const& r) { return l.x * r.y - l.y * r.x; };
         // point = p + td1
         // point = q + ud2
 
-        vec2 p(linesegment.v0), q(line.point);
-        vec2 d1(linesegment.v1 - linesegment.v0), d2(line.dir);
+        vector2 p(linesegment.v0), q(line.point);
+        vector2 d1(linesegment.v1 - linesegment.v0), d2(line.dir);
         d1.Normalize();
 
         if (float d1crossd2 = cross(d1, d2); d1crossd2 != 0.f)
@@ -96,41 +96,41 @@ struct linesegment
         return {};
     }
 
-    vec3 v0, v1;
+    vector3 v0, v1;
 };
 
 struct triangle2D
 {
     triangle2D() = default;
-    constexpr triangle2D(vec2 const& _v0, vec2 const& _v1, vec2 const& _v2) : v0(_v0), v1(_v1), v2(_v2) {}
+    constexpr triangle2D(vector2 const& _v0, vector2 const& _v1, vector2 const& _v2) : v0(_v0), v1(_v1), v2(_v2) {}
 
-    bool isin(vec2 const& point) const
+    bool isin(vector2 const& point) const
     {
-        vec2 vec0 = v1 - v0, vec1 = v2 - v0, vec2 = point - v0;
+        vector2 vec0 = v1 - v0, vec1 = v2 - v0, vector2 = point - v0;
         float den = vec0.x * vec1.y - vec1.x * vec0.y;
-        float v = (vec2.x * vec1.y - vec1.x * vec2.y) / den;
-        float w = (vec0.x * vec2.y - vec2.x * vec0.y) / den;
+        float v = (vector2.x * vec1.y - vec1.x * vector2.y) / den;
+        float w = (vec0.x * vector2.y - vector2.x * vec0.y) / den;
         float u = 1.0f - v - w;
 
         return (u >= 0.f && u <= 1.f) && (v >= 0.f && v <= 1.f) && (w >= 0.f && w <= 1.f);
     }
 
-    vec2 v0, v1, v2;
+    vector2 v0, v1, v2;
 };
 
 struct triangle
 {
     triangle() = default;
-    constexpr triangle(vec3 const& _v0, vec3 const& _v1, vec3 const& _v2) : verts{ _v0, _v1, _v2 } {}
+    constexpr triangle(vector3 const& _v0, vector3 const& _v1, vector3 const& _v2) : verts{ _v0, _v1, _v2 } {}
 
     operator plane() const { return { verts[0], verts[1], verts[1] }; }
 
     static std::optional<linesegment> intersect(triangle const& t0, triangle const& t1) { return intersect(t0.verts, t1.verts); }
 
-    static std::optional<linesegment> intersect(vec3 const* t0, vec3 const* t1)
+    static std::optional<linesegment> intersect(vector3 const* t0, vector3 const* t1)
     {
-        vec3 const t0_normal = (t0[1] - t0[0]).Cross(t0[2] - t0[0]).Normalized();
-        vec3 const t1_normal = (t1[1] - t1[0]).Cross(t1[2] - t1[0]).Normalized();
+        vector3 const t0_normal = (t0[1] - t0[0]).Cross(t0[2] - t0[0]).Normalized();
+        vector3 const t1_normal = (t1[1] - t1[0]).Cross(t1[2] - t1[0]).Normalized();
 
         // construct third plane as cross product of the two plane normals and passing through origin
         auto const linedir = t0_normal.Cross(t1_normal).Normalized();
@@ -141,7 +141,7 @@ struct triangle
         if (fabs(det) < FLT_EPSILON)
             return {};
 
-        vec3 const& linepoint0 = (t0[0].Dot(t0_normal) * (t1_normal.Cross(linedir)) + t1[0].Dot(t1_normal) * linedir.Cross(t0_normal)) / det;
+        vector3 const& linepoint0 = (t0[0].Dot(t0_normal) * (t1_normal.Cross(linedir)) + t1[0].Dot(t1_normal) * linedir.Cross(t0_normal)) / det;
 
         line const isect_line{ linepoint0, linedir };
 
@@ -156,7 +156,7 @@ struct triangle
         edges.emplace_back(line{ t1[1], (t1[2] - t1[1]).Normalized() });
         edges.emplace_back(line{ t1[2], (t1[0] - t1[2]).Normalized() });
 
-        std::vector<vec3> isect_linesegment;
+        std::vector<vector3> isect_linesegment;
         isect_linesegment.reserve(2);
 
         for (auto const& edge : edges)
@@ -189,10 +189,10 @@ struct triangle
         return { { isect_linesegment[0], isect_linesegment[1] } };
     }
 
-    static bool isin(vec3 const* tri, vec3 const& point)
+    static bool isin(vector3 const* tri, vector3 const& point)
     {
-        vec3 const normal_unnormalized = (tri[1] - tri[0]).Cross(tri[2] - tri[0]);
-        vec3 const normal = normal_unnormalized.Normalized();
+        vector3 const normal_unnormalized = (tri[1] - tri[0]).Cross(tri[2] - tri[0]);
+        vector3 const normal = normal_unnormalized.Normalized();
 
         float const triarea = normal_unnormalized.Length();
         if (triarea == 0)
@@ -205,6 +205,6 @@ struct triangle
     }
 
     // make this std::array
-    vec3 verts[3];
+    vector3 verts[3];
 };
 }
