@@ -2,6 +2,9 @@
 #include "gfxutils.h"
 #include "engine/sharedconstants.h"
 
+// todo :  remove after reafactor
+#include "engine/interfaces/engineinterface.h"
+
 #include <string>
 #include <functional>
 
@@ -13,8 +16,10 @@ namespace gfx
     void createsrv(D3D12_SHADER_RESOURCE_VIEW_DESC srvdesc, ComPtr<ID3D12Resource> resource, ComPtr<ID3D12DescriptorHeap> srvheap);
     void dispatch(resource_bindings const &bindings, bool wireframe = false, bool twosided = false, uint dispatchx = 1);
     default_and_upload_buffers create_vertexbuffer_default(void* vertexdata_start, std::size_t const vb_size);
+    ComPtr<ID3D12Resource> createtexture_default(uint width, uint height);
     ComPtr<ID3D12Resource> createupdate_uploadbuffer(uint8_t** mapped_buffer, void* data_start, std::size_t const perframe_buffersize);
-    ComPtr<ID3D12Resource> createupdate_uploadtexture(uint width, uint height, uint8_t** mappedtex, void* data_start, std::size_t const perframe_texsize);
+    uint updatesubres(ID3D12Resource* dest, ID3D12Resource* upload, const D3D12_SUBRESOURCE_DATA* srcdata);
+    //ComPtr<ID3D12Resource> createupdate_uploadtexture(uint width, uint height, uint8_t** mappedtex, void* data_start, std::size_t const perframe_texsize);
     D3D12_GPU_VIRTUAL_ADDRESS get_perframe_gpuaddress(D3D12_GPU_VIRTUAL_ADDRESS start, UINT64 perframe_buffersize);
     void update_perframebuffer(uint8_t* mapped_buffer, void* data_start, std::size_t const perframe_buffersize);
     
@@ -137,7 +142,18 @@ namespace gfx
         
         if (texturedatasize() > 0)
         {
-            _texture = createupdate_uploadtexture(getparams().texdims[0], getparams().texdims[1], &_texture_mapped, _texturedata.data(), texturedatasize());
+            // todo : we don't need any mapped pointers for textures
+            _textureupload = create_uploadbuffer(&_texture_mapped, configurable_properties::frame_count * texturedatasize());
+            _texture = createtexture_default(getparams().texdims[0], getparams().texdims[1]);
+
+            D3D12_SUBRESOURCE_DATA subresdata;
+            subresdata.pData = _texturedata.data();
+            subresdata.RowPitch = getparams().texdims[0] * 12;
+            subresdata.SlicePitch = getparams().texdims[0] * getparams().texdims[1] * 12;
+
+            updatesubres(_texture.Get(), _textureupload.Get(), &subresdata);
+
+            //_texture->WriteToSubresource(0, &box, _texturedata.data(), box.right * 12, box.right * box.bottom * 12);
 
             D3D12_SHADER_RESOURCE_VIEW_DESC srvdesc = {};
             srvdesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -147,24 +163,6 @@ namespace gfx
 
             // create srv into the descriptor heap
             createsrv(srvdesc, _texture, _srvheap);
-            
-            //_texture = createsrv(_texture);
-
-            //if (texturedatasize() > 0)
-            //{
-            //    
-
-            //    if (buffersize > 0)
-            //    {
-            //        auto resource_desc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32G32B32_FLOAT, getparams().texdims[0], getparams().texdims[1]);
-            //        auto heap_props = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-            //        ThrowIfFailed(device->CreateCommittedResource(&heap_props, D3D12_HEAP_FLAG_NONE, &resource_desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(_texture.GetAddressOf())));
-
-            //        // We do not intend to read from this resource on the CPU.
-            //        ThrowIfFailed(_texture->Map(0, nullptr, reinterpret_cast<void**>(_texture_mapped)));
-            //    }
-
-            //    update_allframebuffers(_texture_mapped, _texturedata.data(), texturedatasize(), configurable_properties::frame_count);
         }
 
         return {};
@@ -192,7 +190,7 @@ namespace gfx
 
         update_constbuffer();
         update_vertexbuffer();
-        
+        updatetexture();
         struct
         {
             uint32_t numprims;
@@ -212,18 +210,19 @@ namespace gfx
         bindings.pipelineobjs = foundpso->second;
         bindings.rootconstants.slot = 2;
         bindings.rootconstants.values.resize(sizeof(dispatch_params));
+        bindings.srvheap = _srvheap;
 
         if(texturedatasize() > 0)
-            bindings.texture = { 5, texturegpuaddress() };
+            bindings.texture = { 5, 0 };
 
         memcpy(bindings.rootconstants.values.data(), &dispatch_params, sizeof(dispatch_params));
         dispatch(bindings, params.wireframe, gfx::getmat(getparams().matname).ex());
     }
 
     template<typename body_t, topology prim_t>
-    inline void body_dynamic<body_t, prim_t>::texturedata(std::vector<uint8_t> const& texturedata)
+    inline void body_dynamic<body_t, prim_t>::texturedata(std::vector<uint8_t> texturedata)
     {
-        _texturedata = texturedata;
+        _texturedata = std::move(texturedata);
     }
 
     template<typename body_t, topology primitive_t>
@@ -242,7 +241,15 @@ namespace gfx
     template<typename body_t, topology prim_t>
     inline void body_dynamic<body_t, prim_t>::updatetexture()
     {
-        update_perframebuffer(_texture_mapped, _texturedata.data(), texturedatasize());
+        if (texturedatasize() > 0)
+        {
+            D3D12_SUBRESOURCE_DATA subresdata;
+            subresdata.pData = _texturedata.data();
+            subresdata.RowPitch = getparams().texdims[0] * 12;
+            subresdata.SlicePitch = getparams().texdims[0] * getparams().texdims[1] * 12;
+
+            updatesubres(_texture.Get(), _textureupload.Get(), &subresdata);
+        }
     }
 
     template<typename body_t, topology primitive_t>

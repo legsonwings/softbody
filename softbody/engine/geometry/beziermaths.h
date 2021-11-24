@@ -3,7 +3,7 @@
 #include "geodefines.h"
 #include "geocore.h"
 #include "geoutils.h"
-#include "engine/stdx.h"
+#include "stdx/stdx.h"
 #include "engine/engineutils.h"
 #include <array>
 #include <vector>
@@ -97,17 +97,17 @@ struct decasteljau
 
     static beziersurface<s> surface(beziersurface<n> const& patch, vector2 const& uv)
     {
-        static constexpr stdx::hypercubeidx<1> u0(10);
-        static constexpr stdx::hypercubeidx<1> u1(1);
+        static constexpr stdx::grididx<1> u0(10);
+        static constexpr stdx::grididx<1> u1(1);
 
         auto const [u, v] = uv;
         beziersurface<n - 1u> subpatch;
         for (uint i = 0; i < subpatch.numcontrolpts; ++i)
         {
             // bilinear interpolation to calculate subpatch controlnet
-            auto const& idx = stdx::hypercubeidx<1>::from1d(n - 1, i);
-            subpatch.controlnet[i] = (patch[stdx::hypercubeidx<1>::to1d<n>(idx)] * (1.f - u) + patch[stdx::hypercubeidx<1>::to1d<n>(idx) + u0] * u) * (1.f - v)
-                + (patch[stdx::hypercubeidx<1>::to1d<n>(idx + u1)] * (1.f - u) + patch[stdx::hypercubeidx<1>::to1d<n>(idx) + u0 + u1] * u) * v;
+            auto const& idx = stdx::grididx<1>::from1d(n - 1, i);
+            subpatch.controlnet[i] = (patch[stdx::grididx<1>::to1d<n>(idx)] * (1.f - u) + patch[stdx::grididx<1>::to1d<n>(idx) + u0] * u) * (1.f - v)
+                + (patch[stdx::grididx<1>::to1d<n>(idx + u1)] * (1.f - u) + patch[stdx::grididx<1>::to1d<n>(idx) + u0 + u1] * u) * v;
         }
 
         return decasteljau<n - 1u, s>::surface(subpatch, uv);
@@ -115,7 +115,7 @@ struct decasteljau
 
     static beziervolume<s> volume(beziervolume<n> const& vol, vector3 const& uvw)
     {
-        using cubeidx = stdx::hypercubeidx<2>;
+        using cubeidx = stdx::grididx<2>;
         static constexpr auto u0 = cubeidx(100);
         static constexpr auto u1 = cubeidx(10);
         static constexpr auto u2 = cubeidx(100);
@@ -174,9 +174,9 @@ template<uint n>
 constexpr geometry::vertex evaluate(beziersurface<n> const& vol, vector2 const& uv) 
 {
     auto const &square = decasteljau<n, 1>::surface(vol, uv);
-    controlpoint const& p00 = square[stdx::hypercubeidx<1>::to1d<1>(0)];
-    controlpoint const& p10 = square[stdx::hypercubeidx<1>::to1d<1>(10)];
-    controlpoint const& p01 = square[stdx::hypercubeidx<1>::to1d<1>(1)];
+    controlpoint const& p00 = square[stdx::grididx<1>::to1d<1>(0)];
+    controlpoint const& p10 = square[stdx::grididx<1>::to1d<1>(10)];
+    controlpoint const& p01 = square[stdx::grididx<1>::to1d<1>(1)];
 
     return { decasteljau<1, 0>::surface(square, uv).controlnet[0], (p01 - p00).Cross(p10 - p00).Normalized() };
 };

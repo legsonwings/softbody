@@ -106,6 +106,7 @@ namespace gfx
         constant_buffer cbuffer;
         ComPtr<ID3D12Resource> _vertexbuffer;
         ComPtr<ID3D12Resource> _texture;
+        ComPtr<ID3D12Resource> _textureupload;
         uint8_t* _vertexbuffer_mapped = nullptr;
         uint8_t* _texture_mapped = nullptr;
         std::vector<vertextype> m_vertices;
@@ -136,7 +137,7 @@ namespace gfx
         void update(float dt) override;
         void render(float dt, renderparams const&) override;
 
-        void texturedata(std::vector<uint8_t> const& texturedata);
+        void texturedata(std::vector<uint8_t> texturedata);
 
         constexpr body_t &get() { return body; } 
         constexpr body_t const &get() const { return body; }

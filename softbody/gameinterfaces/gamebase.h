@@ -1,5 +1,10 @@
 #pragma once
 
+#include "engine/engineutils.h"
+#include "engine/graphics/gfxcore.h"
+#include "engine/graphics/gfxmemory.h"
+#include "engine/SimpleCamera.h"
+
 #include <string>
 #include <array>
 #include <vector>
@@ -7,11 +12,6 @@
 
 #define NOMINMAX
 #include <wrl.h>
-
-#include "engine/engineutils.h"
-#include "engine/graphics/gfxcore.h"
-#include "engine/graphics/gfxmemory.h"
-#include "engine/SimpleCamera.h"
 
 struct ID3D12Resource;
 

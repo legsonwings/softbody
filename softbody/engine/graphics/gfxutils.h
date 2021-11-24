@@ -3,7 +3,7 @@
 #include "gfxcore.h"
 // todo : mvoe this somewhere appropriate 
 #include "engine/geometry/geocore.h"
-#include "engine/stdx.h"
+#include "stdx/stdx.h"
 
 #include <optional>
 #include <unordered_map>

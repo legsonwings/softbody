@@ -1,14 +1,18 @@
 #pragma once
 
-#include <d3d12.h>
-#include <wrl.h>
+#include "stdx/vec.h"
+#include "engine/core.h"
+#include "engine/graphics/gfxcore.h"
+
 #include <string>
 #include <array>
 #include <vector>
 #include <utility>
 
-#include "engine/core.h"
-#include "engine/stdxcore.h"
+#include <d3d12.h>
+
+#define NOMINMAX
+#include <wrl.h>
 
 struct renderparams;
 
@@ -18,7 +22,7 @@ namespace gfx
 	{
 		std::string psoname;
 		std::string matname;
-		std::array<uint, 2> texdims;
+		stdx::vecui2 texdims;
 	};
 
 	class bodyinterface
@@ -30,7 +34,7 @@ namespace gfx
 		bodyparams const& getparams() const { return params;  }
 		virtual void update(float dt) {};
 		virtual void render(float dt, renderparams const &) {};
-		virtual std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> create_resources() { return {}; };
+		virtual gfx::resourcelist create_resources() { return {}; };
 		virtual D3D12_GPU_VIRTUAL_ADDRESS get_vertexbuffer_gpuaddress() const = 0;
 	};
 }

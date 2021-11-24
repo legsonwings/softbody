@@ -1,6 +1,7 @@
 module;
 
-#include "engine/stdx.h"
+#include "stdx/stdx.h"
+#include "stdx/vec.h"
 #include "engine/engineutils.h"
 #include "engine/engine.h"
 #include "engine/graphics/gfxcore.h"
@@ -14,107 +15,49 @@ module;
 #include "gameutils.h"
 #include "fluidcore.h"
 
+#define PROFILE_TIMING
+#include "engine/debugutils.h"
+
 export module fluidsimulation;
 
 import shapes;
 
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
+using stdx::vec2;
 
 namespace fluid
 {
 static constexpr float maxd = 1.f;
-using cubeidx = stdx::hypercubeidx<1>;
-
-template <typename t, uint d, uint vd, uint l>
-concept vecfieldrefvalue_c = std::is_same_v<std::decay_t<t>, vecfield<d, vd, l>>;
-
-template<typename t, uint l>
-requires vecfieldrefvalue_c<t, 1, 0, l>
-struct scalarfieldro
-{
-    t sf;
-    static constexpr vec2 origin = -vec2{ l / 2.f, l / 2.f };
-
-    std::vector<geometry::vertex> gvertices() const
-    {
-        float const z = 0.f;
-        static const vector3 normal = vector3::Forward;
-        std::vector<geometry::vertex> r;
-        //r.push_back(geometry::vertex{ {-0.5, 0.5, z}, normal });
-        //r.push_back(geometry::vertex{ {0.5, 0.5, z}, normal });
-        //r.push_back(geometry::vertex{ {-0.5, -0.5, z}, normal });
-        //r.push_back(geometry::vertex{ {-0.5, -0.5, z}, normal });
-        //r.push_back(geometry::vertex{ {0.5, 0.5, z}, normal });
-        //r.push_back(geometry::vertex{ {0.5, -0.5, z}, normal });
-
-        r.push_back(geometry::vertex{ {-200.f, 200.f, z}, normal });
-        r.push_back(geometry::vertex{ {200.f, 200.f, z}, normal });
-        r.push_back(geometry::vertex{ {-200.f, -200.f, z}, normal });
-        r.push_back(geometry::vertex{ {-200.f, -200.f, z}, normal });
-        r.push_back(geometry::vertex{ {200.f, 200.f, z}, normal });
-        r.push_back(geometry::vertex{ {200.f, -200.f, z}, normal });
-
-        return r;
-    }
-
-    std::vector<gfx::instance_data> instancedata() const
-    {
-        gfx::material mat = gfx::getmat("");
-        std::vector<gfx::instance_data> r;
-        mat.diffuse({ 0.5, 0.5f, 0.f, 1.f });
-        //for (uint i(0); i < sf.size(); ++i)
-        //{
-        //    float const c = stdx::lerp(0.f, 1.f, sf[i] / maxd);
-        //    auto const idx = cubeidx::from1d(l - 1, i).coords;
-        //    auto const pos = vec2{ static_cast<float>(idx[0]), static_cast<float>(idx[1]) } + origin;
-        //    mat.diffuse({c, 0.f, 0.f, 1.f});
-
-        //    r.push_back(gfx::instance_data(matrix::CreateTranslation({ pos[0], pos[1], -10.f }), gfx::getview(), mat));
-        //}
-
-        r.push_back(gfx::instance_data(matrix::CreateTranslation({ 0.f, 0.f, -42.8f }), gfx::getview(), mat));
-
-        return r;
-    }
-};
+using cubeidx = stdx::grididx<1>;
 
 struct fluidtex
 {
-    std::vector<geometry::vertex> gvertices() const
+    void update(float dt) {}
+    std::vector<geometry::vertex> gvertices() const { return _quad.triangles(); }
+    vector3 gcenter() const { return { vector3::Zero }; }
+
+    fluidtex(stdx::vecui2 dims, uint texelsize = sizeof(float) * 3) : _dims(dims), _texelsize(texelsize), _quad{ static_cast<float>(dims[0]), static_cast<float>(dims[1]), gcenter() } {}
+
+    stdx::vecui2 texpos(stdx::vecui2 fluidpos, stdx::vecui2 fluiddims)
     {
-        return _quad.triangles();
+        float const scale0 = static_cast<float>(fluiddims[0]) / static_cast<float>(_dims[0]);
+        float const scale1 = static_cast<float>(fluiddims[1]) / static_cast<float>(_dims[1]);
+
+        return { static_cast<uint>(fluidpos[0] * scale0), static_cast<uint>(fluidpos[1] * scale1) };
     }
 
-    void update(float dt)
+    stdx::vecui2 fluidpos(stdx::vecui2 texpos, stdx::vecui2 fluiddims)
     {
+        float const scale0 = static_cast<float>(_dims[0]) / static_cast<float>(fluiddims[0]);
+        float const scale1 = static_cast<float>(_dims[1]) / static_cast<float>(fluiddims[1]);
 
+        return { static_cast<uint>(texpos[0] * scale0), static_cast<uint>(texpos[1] * scale1) };
     }
 
-    vector3 gcenter() const
-    {
-        return { 0.f, 0.f, -40.f };
-    }
-
-    std::vector<uint8_t> texdata()
-    {
-        static_assert(sizeof(float) == 4);
-
-        if (_texdata.size() == 0)
-        {
-            _texdata.resize(10000 * 3 * 4);
-
-            std::vector<float> dataf(10000 * 3, 1.f);
-            memcpy(_texdata.data(), dataf.data(), 10000 * 3 * 4);
-        }
-
-        return _texdata;
-    }
-
-    std::vector<uint8_t> _texdata;
-
-    // todo : move this z to origin. Doesn't matter as long as we are within view frustum
-    geometry::rectangle _quad{ 100.f, 100.f,  gcenter() };
+    stdx::vecui2 _dims;
+    uint _texelsize;
+    geometry::rectangle _quad;
 };
 
 class fluidsimulation : public game_base
@@ -122,34 +65,26 @@ class fluidsimulation : public game_base
 public:
     fluidsimulation(gamedata const& data) : game_base(data)
     {
-        camera.Init({ 0.f, 0.f, -43.f });
-        camera.SetMoveSpeed(10.0f);
+        camera.Init({ 0.f, 0.f, -10.f });
+        camera.lock(true);
     }
 
     cursor cursor;
 private:
     static constexpr uint vd = 1;
-    static constexpr uint l = 70;
+    static constexpr uint l = 300;
+
+    static constexpr stdx::vecui2 texdims{720, 720};
 
     fluidbox<vd, l> fluid{ 0.2f};
-    //std::vector<gfx::body_static<geometry::cube, gfx::topology::triangle>> boxes;
-    std::vector<gfx::body_static<scalarfieldro<vecfield21<l> const&, l>, gfx::topology::triangle>> dye;
-    std::vector<gfx::body_dynamic<fluidtex, gfx::topology::triangle>> textures;
+    gfx::body_dynamic<fluidtex, gfx::topology::triangle> texture{ {texdims},  gfx::bodyparams{ "texturess", "", texdims} };
 
     gfx::resourcelist load_assets_and_geometry() override
     {
-        using geometry::cube;
-        using gfx::bodyparams;
         cbuffer.createresources<gfx::sceneconstants>();
-
-        //boxes.emplace_back(cube{ {vector3{0.f, 0.f, 0.f}}, vector3{40.f} }, &cube::vertices_flipped, &cube::instancedata, bodyparams{ "instanced" });
-        //dye.emplace_back(scalarfieldro<vecfield21<l> const& ,l>{fluid.d}, bodyparams{ "instanced" });
-
-        textures.emplace_back(fluidtex{}, bodyparams{ "texturess", "", {100, 100}}).texturedata(textures.back()->texdata());
-
-        gfx::resourcelist r;
-        for (auto b : stdx::makejoin<gfx::bodyinterface>(textures)) { stdx::append(b->create_resources(), r); };
-        return r;
+        
+        updatetexture();
+        return texture.create_resources();
     }
 
     void update(float dt) override
@@ -178,30 +113,24 @@ private:
 
         cursor.tick(dt);
 
-        DirectX::SimpleMath::Ray ray(camera.GetCurrentPosition(), cursor.ray(camera.nearplane(), camera.farplane()));
-        
-        float dist;
-        if (ray.Intersects(plane{ vector3::Zero, vector3::Backward }, dist))  // fluid box is at origin
+        // todo : provide helpers to do type conversions
+        // todo : implement grididx as child of std::array
+        auto const pos = cursor.posicentered();
+        if (std::abs(pos[0]) <= (texdims[0] / 2) && std::abs(pos[1]) <= (texdims[1] / 2))
         {
-            vector3 const point = ray.position + ray.direction * dist;
-
             static constexpr float speed = 2.5f;
-            static constexpr DirectX::SimpleMath::Vector2 origin = DirectX::SimpleMath::Vector2{ -(l / 2.f), -(l / 2.f) };
+            static constexpr auto origin = stdx::veci2{ -static_cast<int>(texdims[0] / 2), static_cast<int>(texdims[1] / 2)};
+            cubeidx const idx = texture->texpos({ static_cast<uint>(pos[0] - origin[0]), static_cast<uint>(origin[1] - pos[1]) }, {l, l});
+            vector2 const idxf = { static_cast<float>(idx[0]), static_cast<float>(idx[1]) };
 
-            // todo : implement the fluid plane as fulscreen canvas
-            // todo : provide helpers to do type conversions
-            // todo : implement hypercubeidx as child of std::array
-            DirectX::SimpleMath::Vector2 const idxf = { std::roundf(point.x - origin.x), std::roundf(point.y - origin.y) };
-            cubeidx const idx = { static_cast<uint>(idxf.x), static_cast<uint>(idxf.y)};
-
-            uint const spread = 1;
+            uint const spread = 5;
             for (uint i(idx[0] - spread); i <= (idx[0] + spread) && (i > 0 && i < (l - 1)); ++i)
                 for (uint j(idx[1] - spread); j <= (idx[1] + spread) && (j > 0 && j < (l - 1)); ++j)
                 {
-                    DirectX::SimpleMath::Vector2 const currentcellf = { static_cast<float>(i), static_cast<float>(j) };
-                    auto const vel = (currentcellf - idxf).Normalized() * speed + cursor.vel() * 0.25f;
-                    fluid.adddensity({ i,j }, 0.2f);
-                    fluid.addvelocity({ i,j }, { vel.x, vel.y });
+                    vector2 const currentcellf = { static_cast<float>(i), static_cast<float>(j) };
+                    auto const vel = (currentcellf - idxf).Normalized() * speed + cursor.vel() * 0.1f;
+                    fluid.adddensity({ i, j }, 0.2f);
+                    fluid.addvelocity({ i, j }, { vel.x, vel.y });
                 }
         }
 
@@ -220,11 +149,34 @@ private:
         fluid.d = advect2d(fluid.d, v, dt);
         fluid.d = diffuse({}, fluid.d, dt, 0.5f);
         sbounds(fluid.d, 1.f);
+
+        updatetexture();
+    }
+
+    void updatetexture()
+    {
+        std::vector<uint8_t> texdata;
+        texdata.reserve(texture->_dims[0] * texture->_dims[1] * texture->_texelsize);
+
+        float const scale0 = static_cast<float>(l) / static_cast<float>(texture->_dims[0]);
+        float const scale1 = static_cast<float>(l) / static_cast<float>(texture->_dims[1]);
+
+        float const zeros[2] = { 0.f, 0.f };
+        uint8_t const* zerosbytes = reinterpret_cast<uint8_t const*>(&zeros);
+        for (uint j(0); j < texture->_dims[1]; ++j)
+            for(uint i(0); i < texture->_dims[0]; ++i)
+            {
+                uint8_t const *den = reinterpret_cast<uint8_t const*>(&fluid.d[cubeidx::to1d<l - 1>(cubeidx{ i * scale0, j * scale1 })]);
+                texdata.insert(texdata.end(), den, den + sizeof(float));
+                texdata.insert(texdata.end(), zerosbytes, zerosbytes + sizeof(float) * 2);
+            }
+
+        texture.texturedata(texdata);
     }
 
     void render(float dt) override
     {
-        //for (auto b : stdx::makejoin<gfx::bodyinterface>(dye))  b->render(dt, { false, cbuffer.get_gpuaddress() });
+       texture.render(dt, { false, cbuffer.get_gpuaddress() });
     }
 };
 }

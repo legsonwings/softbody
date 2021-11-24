@@ -61,7 +61,7 @@
     <ClInclude Include="engine\geometry\geodefines.h" />
     <ClInclude Include="engine\geometry\beziermaths.h" />
     <ClInclude Include="engine\geometry\beziershapes.h" />
-    <ClInclude Include="engine\stdx.h" />
+    <ClInclude Include="stdx\stdx.h" />
     <ClInclude Include="engine\debugutils.h" />
     <ClInclude Include="engine\dxsample.h" />
     <ClInclude Include="engine\dxsamplehelper.h" />
@@ -80,7 +80,8 @@
     <ClInclude Include="engine\ui\image.h" />
     <ClInclude Include="engine\ui\uicore.h" />
     <ClInclude Include="engine\core.h" />
-    <ClInclude Include="engine\stdxcore.h" />
+    <ClInclude Include="stdx\stdxcore.h" />
+    <ClInclude Include="stdx\vec.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="engine\assets\lighting.hlsli" />

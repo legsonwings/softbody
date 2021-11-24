@@ -52,10 +52,7 @@ void gfx::dispatch(resource_bindings const& bindings, bool wireframe, bool twosi
         cmd_list->SetDescriptorHeaps(1, bindings.srvheap.GetAddressOf());
 
     // todo : hack for now, address is never used so its not needed
-    if (bindings.texture.address != 0)
-    {
-        cmd_list->SetGraphicsRootDescriptorTable(bindings.texture.slot, bindings.srvheap->GetGPUDescriptorHandleForHeapStart());
-    }
+    cmd_list->SetGraphicsRootDescriptorTable(bindings.texture.slot, bindings.srvheap->GetGPUDescriptorHandleForHeapStart());
 
     if (wireframe && bindings.pipelineobjs.pso_wireframe)
         cmd_list->SetPipelineState(bindings.pipelineobjs.pso_wireframe.Get());
@@ -111,6 +108,17 @@ gfx::default_and_upload_buffers gfx::create_vertexbuffer_default(void* vertexdat
     return { vb, vb_upload };
 }
 
+ComPtr<ID3D12Resource> gfx::createtexture_default(uint width, uint height)
+{
+    auto device = game_engine::g_engine->get_device();
+    auto texdesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32G32B32_FLOAT, static_cast<UINT64>(width), static_cast<UINT>(height));
+
+    ComPtr<ID3D12Resource> texdefault;
+    auto defaultheap_desc = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    ThrowIfFailed(device->CreateCommittedResource(&defaultheap_desc, D3D12_HEAP_FLAG_NONE, &texdesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(texdefault.ReleaseAndGetAddressOf())));
+    return texdefault;
+}
+
 ComPtr<ID3D12Resource> gfx::createupdate_uploadbuffer(uint8_t** mapped_buffer, void* data_start, std::size_t const perframe_buffersize)
 {
     auto result = create_uploadbuffer(mapped_buffer, configurable_properties::frame_count * perframe_buffersize);
@@ -118,26 +126,38 @@ ComPtr<ID3D12Resource> gfx::createupdate_uploadbuffer(uint8_t** mapped_buffer, v
 
     return result;
 }
-
-ComPtr<ID3D12Resource> gfx::createupdate_uploadtexture(uint width, uint height, uint8_t** mappedtex, void* data_start, std::size_t const perframe_texsize)
+uint gfx::updatesubres(ID3D12Resource* dest, ID3D12Resource* upload, const D3D12_SUBRESOURCE_DATA* srcdata)
 {
-    auto device = game_engine::g_engine->get_device();
-
-    ComPtr<ID3D12Resource> b_upload;
-    if (perframe_texsize > 0)
-    {
-        auto resource_desc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32G32B32_FLOAT, static_cast<UINT64>(width), static_cast<UINT>(height));
-        auto heap_props = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-        ThrowIfFailed(device->CreateCommittedResource(&heap_props, D3D12_HEAP_FLAG_NONE, &resource_desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(b_upload.GetAddressOf())));
-
-        // We do not intend to read from this resource on the CPU.
-        ThrowIfFailed(b_upload->Map(0, nullptr, reinterpret_cast<void**>(mappedtex)));
-    }
-
-    update_allframebuffers(*mappedtex, data_start, perframe_texsize, configurable_properties::frame_count);
-
-    return b_upload;
+    auto cmdlist = game_engine::g_engine->get_command_list();
+    return UpdateSubresources(cmdlist, dest, upload, 0, 0, 1, srcdata);
 }
+//
+//ComPtr<ID3D12Resource> gfx::createupdate_uploadtexture(uint width, uint height, uint8_t** mappedtex, void* data_start, std::size_t const perframe_texsize)
+//{
+//    auto device = game_engine::g_engine->get_device();
+//    auto cmdlist = game_engine::g_engine->get_command_list();
+//
+//    ComPtr<ID3D12Resource> b_upload;
+//    if (perframe_texsize > 0)
+//    {
+//        D3D12_BOX box;
+//        box.left = box.top = 0;
+//        box.right = static_cast<UINT>(width);
+//        box.bottom = static_cast<UINT>(height);
+//
+//        auto resource_desc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32G32B32_FLOAT, static_cast<UINT64>(width), static_cast<UINT>(height));
+//        auto heap_props = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+//        ThrowIfFailed(device->CreateCommittedResource(&heap_props, D3D12_HEAP_FLAG_NONE, &resource_desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(b_upload.GetAddressOf())));
+//        b_upload->WriteToSubresource(0, &box, data_start, width * 12, width * height * 12);
+//        
+//        // We do not intend to read from this resource on the CPU.
+//        //ThrowIfFailed(b_upload->Map(0, nullptr, reinterpret_cast<void**>(mappedtex)));
+//    }
+//
+//    update_allframebuffers(*mappedtex, data_start, perframe_texsize, configurable_properties::frame_count);
+//
+//    return b_upload;
+//}
 
 D3D12_GPU_VIRTUAL_ADDRESS gfx::get_perframe_gpuaddress(D3D12_GPU_VIRTUAL_ADDRESS start, std::size_t perframe_buffersize)
 {

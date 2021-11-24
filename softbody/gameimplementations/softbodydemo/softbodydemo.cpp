@@ -2,7 +2,7 @@
 #include "gameutils.h"
 #include "engine/sharedconstants.h"
 #include "engine/dxsample.h"
-#include "engine/stdx.h"
+#include "stdx/stdx.h"
 #include "engine/engineutils.h"
 #include "engine/geometry/geoutils.h"
 #include "engine/graphics/body.h"
@@ -70,7 +70,7 @@ std::vector<vector3> fillwithspheres(geometry::aabb const& box, uint count, floa
 
         occupied.insert(emptycell);
 
-        auto const thecell = stdx::hypercubeidx<2>::from1d(degree, emptycell);
+        auto const thecell = stdx::grididx<2>::from1d(degree, emptycell);
         spheres.emplace_back((vector3(thecell[0] * celld, thecell[2] * celld, thecell[1] * celld) + vector3(cellr)) + gridorigin);
     }
 

@@ -1,6 +1,8 @@
 #pragma once
 
-#include "engine/stdx.h"
+#include "stdx/stdx.h"
+#include "stdx/vec.h"
+
 #include <array>
 #include <vector>
 #include <functional>
@@ -9,32 +11,17 @@
 
 namespace fluid
 {
-template<stdx::arithmetic_c t, uint d>
-struct vec : public std::array<t, d + 1>
-{
-	static constexpr uint nd = d;
-	constexpr vec operator-() const { return { stdx::unaryop(*this, stdx::uminus()) }; }
-	constexpr vec operator+(vec r) const { return { stdx::binaryop(*this, r, std::plus<>()) }; }
-	constexpr vec operator-(vec r) const { return { stdx::binaryop(*this, r, std::minus<>()) }; }
-	constexpr vec operator/(t r) const { return { stdx::unaryop(*this, std::bind(std::multiplies<>(), std::placeholders::_1, 1 / r)) }; }
-
-	constexpr operator t() const requires (d == 0) { return (*this)[0]; }
-	constexpr t dot(vec r) const { return stdx::dot(*this, r); }
-	constexpr vec clamp(t a, t b) const { return { stdx::clamp(*this, a, b) }; }
-};
-
-template<stdx::arithmetic_c t, uint d>
-vec<t, d> operator*(vec<t, d> l, t r) { return { stdx::unaryop(l, std::bind(std::multiplies<>(), std::placeholders::_1, r)) }; }
-
-template<stdx::arithmetic_c t, uint d>
-vec<t, d> operator*(t l, vec<t, d> r) { return { stdx::unaryop(r, std::bind(std::multiplies<>(), std::placeholders::_1, l)) }; }
-
-using vec1 = vec<float, 0>;
-using vec2 = vec<float, 1>;
-
 // d - dimension of field, vd - dimension of vector, l length of field(assuming hypercubic)
+//template <uint d, uint vd, uint l>
+//struct vecfield : public std::array<stdx::vec<vd>, stdx::pown(l, d + 1)> {};
+
+// todo : this should inherit from a container of fixed size that allocates on heap
 template <uint d, uint vd, uint l>
-struct vecfield : public std::array<vec<float, vd>, stdx::pown(l, d + 1)> {};
+struct vecfield : public std::vector<stdx::vec<vd>>
+{
+	vecfield() { this->resize(stdx::pown(l, d + 1)); }
+	vecfield(std::vector<stdx::vec<vd>> other) : std::vector<stdx::vec<vd>>(other){}
+};
 
 template<uint vd, int l>
 using vecfield2 = vecfield<1, vd, l>;
@@ -57,11 +44,11 @@ vecfield<d, vd, l> operator-(vecfield<d, vd, l> const& a, vecfield<d, vd, l> con
 // n is dimension of simulation(0-based), l is length of box/cube(number of cells)
 template<uint n, uint l>
 requires (n >= 0)
-	struct fluidbox
+struct fluidbox
 {
 	fluidbox(float _diff) : diff(_diff) {}
 	static constexpr uint numcells = stdx::pown(l, n);
-	using cubeidx = stdx::hypercubeidx<n>;
+	using grididx = stdx::grididx<n>;
 
 	float diff;
 
@@ -70,16 +57,16 @@ requires (n >= 0)
 	vecfield22<l> v0;
 	// diffusion coeffecient, density, velocity, oldvelocity
 
-	void addvelocity(cubeidx const& cellidx, vec<float, n> vel)
+	void addvelocity(grididx const& cellidx, stdx::vec<n> vel)
 	{
 		// todo : provide shorthand assignment operators
-		v[cubeidx::to1d<l - 1>(cellidx)] = { v[cubeidx::to1d<l - 1>(cellidx)] + vel };
+		v[grididx::to1d<l - 1>(cellidx)] = { v[grididx::to1d<l - 1>(cellidx)] + vel };
 	}
 
-	void adddensity(cubeidx const& cellidx, float den)
+	void adddensity(grididx const& cellidx, float den)
 	{
 		// todo : provide shorthand assignment operators
-		d[cubeidx::to1d<l - 1>(cellidx)] = { d[cubeidx::to1d<l - 1>(cellidx)] + den };
+		d[grididx::to1d<l - 1>(cellidx)] = { d[grididx::to1d<l - 1>(cellidx)] + den };
 	}
 };
 
@@ -89,8 +76,9 @@ requires (n >= 0)
 // alternatvely a more desirable solution could be to iterate the 1d representation(since data in any dimension is just a 1D array) in single loop
 // This might mean padding the vector field with additional cells outside boundary since we require neighbouring cells for solving poisson equations
 
+// todo : provide a generic nd lerp
 template<uint vd>
-vec<float, vd> bilerp(vec<float, vd> lt, vec<float, vd> rt, vec<float, vd> lb, vec<float, vd> rb, vec2 alpha)
+stdx::vec<vd> bilerp(stdx::vec<vd> lt, stdx::vec<vd> rt, stdx::vec<vd> lb, stdx::vec<vd> rb, stdx::vec2 alpha)
 {
 	return (lt * (1.f - alpha[0]) + rt * alpha[0]) * (1.f - alpha[1]) + (lb * (1.f - alpha[0]) + rb * alpha[0]) * alpha[1];
 }
@@ -99,7 +87,7 @@ vec<float, vd> bilerp(vec<float, vd> lt, vec<float, vd> rt, vec<float, vd> lb, v
 template<uint vd, uint l>
 vecfield2<vd, l> diffuse(vecfield2<vd, l> const& x, vecfield2<vd, l> const& b, float dt, float diff)
 {
-	using idx = stdx::hypercubeidx<1>;
+	using idx = stdx::grididx<1>;
 	float const a = diff * dt;
 	return jacobi2d(x, b, 4, a, 1 + 4 * a);
 }
@@ -107,11 +95,11 @@ vecfield2<vd, l> diffuse(vecfield2<vd, l> const& x, vecfield2<vd, l> const& b, f
 template<uint l>
 vecfield21<l> divergence(vecfield22<l> const& f)
 {
-	using idx = stdx::hypercubeidx<1>;
+	using idx = stdx::grididx<1>;
 	vecfield21<l> r;
 	for (uint j(1); j < l - 1; ++j)
 		for (uint i(1); i < l - 1; ++i)
-			r[idx::to1d<l - 1>({ i, j })] = -0.5f * vec1{ f[idx::to1d<l - 1>({ i + 1, j })][0] - f[idx::to1d<l - 1>({ i - 1, j })][0] + f[idx::to1d<l - 1>({ i, j + 1 })][1] - f[idx::to1d<l - 1>({ i, j - 1 })][1] };
+			r[idx::to1d<l - 1>({ i, j })] = -0.5f * stdx::vec1{ f[idx::to1d<l - 1>({ i + 1, j })][0] - f[idx::to1d<l - 1>({ i - 1, j })][0] + f[idx::to1d<l - 1>({ i, j + 1 })][1] - f[idx::to1d<l - 1>({ i, j - 1 })][1] };
 
 	return r;
 }
@@ -119,11 +107,11 @@ vecfield21<l> divergence(vecfield22<l> const& f)
 template<uint l>
 vecfield22<l> gradient(vecfield21<l> const& f)
 {
-	using idx = stdx::hypercubeidx<1>;
+	using idx = stdx::grididx<1>;
 	vecfield22<l> r{};
 	for (uint j(1); j < l - 1; ++j)
 		for (uint i(1); i < l - 1; ++i)
-			r[idx::to1d<l - 1>({ i, j })] = 0.5f * vec2{ f[idx::to1d<l - 1>({ i + 1, j })] - f[idx::to1d<l - 1>({ i - 1, j })], f[idx::to1d<l - 1>({ i, j + 1 })] - f[idx::to1d<l - 1>({ i, j - 1 })] };
+			r[idx::to1d<l - 1>({ i, j })] = 0.5f * stdx::vec2{ f[idx::to1d<l - 1>({ i + 1, j })] - f[idx::to1d<l - 1>({ i - 1, j })], f[idx::to1d<l - 1>({ i, j + 1 })] - f[idx::to1d<l - 1>({ i, j - 1 })] };
 	
 	return r;
 }
@@ -132,7 +120,7 @@ vecfield22<l> gradient(vecfield21<l> const& f)
 template<uint vd, uint l>
 vecfield2<vd, l> jacobi2d(vecfield2<vd, l> const& x, vecfield2<vd, l> const& b, uint niters, float alpha, float beta)
 {
-	using idx = stdx::hypercubeidx<1>;
+	using idx = stdx::grididx<1>;
 	vecfield2<vd, l> r = x;
 	auto const rcbeta = 1.f / beta;
 	for (uint k(0); k < niters; ++k)
@@ -148,7 +136,7 @@ vecfield2<vd, l> jacobi2d(vecfield2<vd, l> const& x, vecfield2<vd, l> const& b, 
 template<uint vd, uint l>
 vecfield2<vd, l> advect2d(vecfield2<vd, l> const& a, vecfield22<l> const& v, float dt)
 {
-	using idx = stdx::hypercubeidx<1>;
+	using idx = stdx::grididx<1>;
 	vecfield2<vd, l> r{};
 	for (uint j(1); j < l - 1; ++j)
 		for (uint i(1); i < l - 1; ++i)
@@ -156,7 +144,7 @@ vecfield2<vd, l> advect2d(vecfield2<vd, l> const& a, vecfield22<l> const& v, flo
 			auto const cell = idx::to1d<l - 1>({ i, j });
 
 			// find position at -dt
-			vec2 const xy = (vec2{ static_cast<float>(i), static_cast<float>(j) } - v[cell] * dt).clamp(0.5f, l - 1.5f);
+			stdx::vec2 const xy = (stdx::vec2{ static_cast<float>(i), static_cast<float>(j) } - v[cell] * dt).clamp(0.5f, l - 1.5f);
 
 			// bilinearly interpolate the property across 4 neighbouring cells
 			idx const lt2d = { static_cast<int>(xy[0]), static_cast<int>(xy[1]) };
@@ -178,7 +166,7 @@ vecfield2<vd, l> advect2d(vecfield2<vd, l> const& a, vecfield22<l> const& v, flo
 template<uint vd, uint l>
 void sbounds(vecfield2<vd, l>& v, float scale)
 {
-	using idx = stdx::hypercubeidx<1>;
+	using idx = stdx::grididx<1>;
 	std::vector<idx> boundaries;
 	for (uint i(1); i < l - 1; ++i)
 	{

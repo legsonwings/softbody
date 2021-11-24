@@ -1,5 +1,9 @@
 #pragma once
 
+#include <cstddef>
+#include <concepts>
+#include <type_traits>
+
 using uint = std::size_t;
 
 namespace stdx

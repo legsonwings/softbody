@@ -39,7 +39,7 @@ geometry::ffd_object::ffd_object(ffddata data) : center(data.center)
     for (uint idx = 0; idx < volume.numcontrolpts; ++idx)
     {
         // calculate in range [-span/2, span/2]
-        using cubeidx = stdx::hypercubeidx<2>;
+        using cubeidx = stdx::grididx<2>;
         static constexpr float subtt = dim * 0.5f;
         auto const idx3d = cubeidx::from1d(dim, idx);
         rest_config[idx] = vector3{ span.x * (idx3d[0] - subtt), span.y * (idx3d[2] - subtt), span.z * (idx3d[1] - subtt) } / static_cast<float>(dim);

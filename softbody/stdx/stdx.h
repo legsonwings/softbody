@@ -122,6 +122,24 @@ constexpr std::array<t, n> binaryop(std::array<t, n> a, std::array<t, n> b, f_t 
 	return r;
 }
 
+template<typename t, typename f_t>
+constexpr std::vector<t> unaryop(std::vector<t> a, f_t f)
+{
+	std::vector<t> r;
+	r.resize(a.size());
+	for (auto e : a) r.emplace_back(f(e));
+	return r;
+}
+
+template<typename t, typename f_t>
+constexpr std::vector<t> binaryop(std::vector<t> a, std::vector<t> b, f_t f)
+{
+	std::vector<t> r;
+	r.resize(a.size());
+	for (uint i(0); i < a.size(); ++i) r[i] = f(a[i], b[i]);
+	return r;
+}
+
 // triangular index
 template<uint n>
 struct triindex
@@ -153,24 +171,24 @@ struct triindex
 	uint i, j, k;
 };
 
-// n is dimension of the hypercube(0 based)
+// n is dimension of the grid(0 based)
 template<uint n>
 requires (n >= 0)
-struct hypercubeidx
+struct grididx
 {
-	constexpr hypercubeidx() = default;
-	constexpr hypercubeidx(std::array<uint, n + 1> const& _coords) : coords(_coords) {}
-	explicit constexpr hypercubeidx(uint idx) : hypercubeidx{ getdigits<n + 1>(idx) } {}
+	constexpr grididx() = default;
+	constexpr grididx(std::array<uint, n + 1> const& _coords) : coords(_coords) {}
+	explicit constexpr grididx(uint idx) : grididx{ getdigits<n + 1>(idx) } {}
 	template<uint_c ... args>
 	requires (sizeof...(args) == (n + 1))
-	constexpr hypercubeidx(args... _coords) : coords{ static_cast<uint>(_coords)... } {}
+	constexpr grididx(args... _coords) : coords{ static_cast<uint>(_coords)... } {}
 	constexpr uint& operator[](uint idxidx) { return coords[idxidx]; }
 	constexpr uint operator[](uint idxidx) const { return coords[idxidx]; }
-	constexpr hypercubeidx operator+(hypercubeidx const& rhs) const { return { sum(coords, rhs.coords) }; }
+	constexpr grididx operator+(grididx const& rhs) const { return { sum(coords, rhs.coords) }; }
 
 	// d is degree(0 based)
 	template<uint d>
-	static constexpr uint to1d(hypercubeidx const& idx)
+	static constexpr uint to1d(grididx const& idx)
 	{
 		uint res = 0;
 		// idx = x0 + x1d + x2dd + x3ddd + ....
@@ -181,9 +199,9 @@ struct hypercubeidx
 		return res;
 	}
 
-	static constexpr hypercubeidx from1d(uint d, uint idx)
+	static constexpr grididx from1d(uint d, uint idx)
 	{
-		hypercubeidx res;
+		grididx res;
 		for (auto i : std::ranges::iota_view{ 0u,  n + 1 })
 			res.coords[i] = (idx / pown((d + 1), i)) % (d + 1);
 		return res;

@@ -146,7 +146,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3d12.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d12.lib;dxgi.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>d3d12.dll</DelayLoadDLLs>
     </Link>
     <FxCompile>
@@ -173,7 +173,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <DelayLoadDLLs>d3d12.dll</DelayLoadDLLs>
-      <AdditionalDependencies>d3d12.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d12.lib;dxgi.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
     </Link>
     <FxCompile>
@@ -212,7 +212,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="engine\core.h" />
-    <ClInclude Include="engine\stdxcore.h" />
+    <ClInclude Include="stdx\stdxcore.h" />
     <ClInclude Include="engine\ui\uicore.h" />
     <ClInclude Include="engine\ui\canvas.h" />
     <ClInclude Include="engine\cursor.h" />
@@ -239,8 +239,9 @@
     <ClInclude Include="engine\sharedconstants.h" />
     <ClInclude Include="engine\simplecamera.h" />
     <ClInclude Include="engine\simplemath.h" />
-    <ClInclude Include="engine\stdx.h" />
+    <ClInclude Include="stdx\stdx.h" />
     <ClInclude Include="engine\steptimer.h" />
+    <ClInclude Include="stdx\vec.h" />
     <ClInclude Include="engine\win32application.h" />
     <ClInclude Include="gameimplementations\fluidsimulation\fluidcore.h" />
     <ClInclude Include="gameimplementations\softbodydemo\softbodydemo.h" />

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "engine/stdx.h"
+#include "stdx/stdx.h"
 #include "beziermaths.h"
 #include "engine/graphics/gfxcore.h"
 #include "engine/graphics/gfxutils.h"
@@ -219,7 +219,7 @@ struct qbeziervolume
         qbeziervolume unitvol;
         for (auto i : std::ranges::iota_view{ 0u, unitvol.vol.numcontrolpts })
         {
-            auto const& idx = stdx::hypercubeidx<2>::from1d(2, i);
+            auto const& idx = stdx::grididx<2>::from1d(2, i);
             unitvol.vol.controlnet[i] = len * vector3{ static_cast<float>(idx.coords[0]) / 2, static_cast<float>(idx.coords[2]) / 2 , static_cast<float>(idx.coords[1]) / 2 };
         }
         return unitvol;
