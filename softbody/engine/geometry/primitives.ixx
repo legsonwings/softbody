@@ -2,7 +2,7 @@ module;
 
 #include "geocore.h"
 #include "geoutils.h"
-#include "engine/stdx.h"
+#include "stdx/stdx.h"
 
 #include <optional>
 

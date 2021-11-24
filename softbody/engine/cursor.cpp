@@ -12,6 +12,22 @@ void cursor::tick(float dt)
     _vel.y = -_vel.y;     // pos is relative to topleft so invert y
 }
 
+stdx::veci2 cursor::posicentered() const
+{
+    POINT pos;
+    GetCursorPos(&pos);
+    ScreenToClient(Win32Application::GetHwnd(), &pos);
+
+    RECT clientr;
+    GetClientRect(Win32Application::GetHwnd(), &clientr);
+
+    int const width = static_cast<int>(clientr.right - clientr.left);
+    int const height = static_cast<int>(clientr.bottom - clientr.top);
+
+    return { pos.x - width / 2, height / 2 - pos.y};
+}
+
+
 vector2 cursor::pos() const
 {
     POINT pos;

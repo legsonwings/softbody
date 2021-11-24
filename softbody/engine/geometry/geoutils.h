@@ -1,7 +1,7 @@
 #pragma once
 
 #include "geocore.h"
-#include "engine/stdx.h"
+#include "stdx/stdx.h"
 #include "engine/SimpleMath.h"
 
 #include <concepts>

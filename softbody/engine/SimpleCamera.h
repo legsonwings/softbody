@@ -11,6 +11,7 @@
 
 #pragma once
 
+#define NOMINMAX
 #include <wtypes.h>
 #include <DirectXMath.h>
 
@@ -25,6 +26,8 @@ public:
     DirectX::XMMATRIX GetViewMatrix();
     DirectX::XMMATRIX GetProjectionMatrix(float fov);
     DirectX::XMMATRIX GetOrthoProjectionMatrix();
+
+    void lock(bool lock);
 
     float nearplane() const;
     float farplane() const;
@@ -65,6 +68,7 @@ private:
     float m_moveSpeed;            // Speed at which the camera moves, in units per second.
     float m_turnSpeed;            // Speed at which the camera turns, in radians per second.
 
+    bool _locked = false;
     float _nearp = 0.01f;
     float _farp = 1000.f;
     unsigned _width = 0;

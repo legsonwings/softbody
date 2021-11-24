@@ -1,6 +1,6 @@
 #pragma once
 
-#include "engine/stdx.h"
+#include "stdx/stdx.h"
 #include "engine/simplemath.h"
 #include "engine/engineutils.h"
 #include "engine/graphics/gfxcore.h"

@@ -11,6 +11,8 @@
 
 #include "SimpleCamera.h"
 
+#include <algorithm>
+
 using namespace DirectX;
 
 static constexpr XMFLOAT3 defaultlook_dir = { 0.f, 0.f, 1.f };
@@ -54,6 +56,8 @@ void SimpleCamera::Reset()
 
 void SimpleCamera::Update(float elapsedSeconds)
 {
+    if (_locked) return;
+
     // Calculate the move vector in camera space.
     XMFLOAT3 move(0, 0, 0);
 
@@ -86,8 +90,8 @@ void SimpleCamera::Update(float elapsedSeconds)
         m_pitch -= rotateInterval;
 
     // Prevent looking too far up or down.
-    //m_pitch = std::min(m_pitch, XM_PIDIV4);
-    //m_pitch = std::max(-XM_PIDIV4, m_pitch);
+    m_pitch = std::min(m_pitch, XM_PIDIV4);
+    m_pitch = std::max(-XM_PIDIV4, m_pitch);
 
     // Move the camera in model space.
     float x = move.x * cosf(m_yaw) - move.z * sinf(m_yaw);
@@ -121,6 +125,8 @@ DirectX::XMMATRIX SimpleCamera::GetOrthoProjectionMatrix()
 {
     return XMMatrixOrthographicLH (static_cast<float>(_width), static_cast<float>(_height), _nearp, _farp);
 }
+
+void SimpleCamera::lock(bool lock) { _locked = lock; }
 
 float SimpleCamera::nearplane() const { return _nearp; }
 

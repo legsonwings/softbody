@@ -2,7 +2,7 @@
 
 #include "geodefines.h"
 #include "engine/simplemath.h"
-#include "engine/stdx.h"
+#include "stdx/stdx.h"
 
 #include <vector>
 #include <optional>
