@@ -19,6 +19,7 @@ namespace fluid
 template <uint d, uint vd, uint l>
 struct vecfield : public std::vector<stdx::vec<vd>>
 {
+	static constexpr uint _vd = vd;
 	vecfield() { this->resize(stdx::pown(l, d + 1)); }
 	vecfield(std::vector<stdx::vec<vd>> other) : std::vector<stdx::vec<vd>>(other){}
 };
@@ -31,6 +32,9 @@ using vecfield21 = vecfield<1, 0, l>;
 
 template<int l>
 using vecfield22 = vecfield<1, 1, l>;
+
+template<int l>
+using vecfield23 = vecfield<1, 2, l>;
 
 template <uint d, uint vd, uint l>
 vecfield<d, vd, l> operator-(vecfield<d, vd, l> const& a) { return { stdx::binaryop(a, stdx::uminus()) }; }
@@ -46,13 +50,10 @@ template<uint n, uint l>
 requires (n >= 0)
 struct fluidbox
 {
-	fluidbox(float _diff) : diff(_diff) {}
 	static constexpr uint numcells = stdx::pown(l, n);
 	using grididx = stdx::grididx<n>;
 
-	float diff;
-
-	vecfield21<l> d;
+	vecfield23<l> d;
 	vecfield22<l> v;
 	vecfield22<l> v0;
 	// diffusion coeffecient, density, velocity, oldvelocity
@@ -63,10 +64,10 @@ struct fluidbox
 		v[grididx::to1d<l - 1>(cellidx)] = { v[grididx::to1d<l - 1>(cellidx)] + vel };
 	}
 
-	void adddensity(grididx const& cellidx, float den)
+	void adddensity(grididx const& cellidx, uint didx, float den)
 	{
 		// todo : provide shorthand assignment operators
-		d[grididx::to1d<l - 1>(cellidx)] = { d[grididx::to1d<l - 1>(cellidx)] + den };
+		d[grididx::to1d<l - 1>(cellidx)][didx] = { d[grididx::to1d<l - 1>(cellidx)][didx] + den };
 	}
 };
 
@@ -90,6 +91,14 @@ vecfield2<vd, l> diffuse(vecfield2<vd, l> const& x, vecfield2<vd, l> const& b, f
 	using idx = stdx::grididx<1>;
 	float const a = diff * dt;
 	return jacobi2d(x, b, 4, a, 1 + 4 * a);
+}
+
+template<uint vd, uint l>
+vecfield2<vd, l> diffusecolor(vecfield2<vd, l> const& x, vecfield2<vd, l> const& b, float dt, float diff, std::vector<stdx::vec3> &col)
+{
+	using idx = stdx::grididx<1>;
+	float const a = diff * dt;
+	return jacobi2dcolor(x, b, 4, a, 1 + 4 * a, col);
 }
 
 template<uint l>
@@ -129,6 +138,29 @@ vecfield2<vd, l> jacobi2d(vecfield2<vd, l> const& x, vecfield2<vd, l> const& b, 
 			for (uint i(1); i < l - 1; ++i)
 				r[idx::to1d<l - 1>({ i, j })] = ((r[idx::to1d<l - 1>({ i - 1, j })] + r[idx::to1d<l - 1>({ i + 1, j })] + r[idx::to1d<l - 1>({ i, j - 1 })] +
 					r[idx::to1d<l - 1>({ i, j + 1 })]) * alpha + b[idx::to1d<l - 1>({ i, j })]) * rcbeta;
+	}
+	return r;
+}
+
+// jacobi iteration to solve poisson equations
+template<uint vd, uint l>
+vecfield2<vd, l> jacobi2dcolor(vecfield2<vd, l> const& x, vecfield2<vd, l> const& b, uint niters, float alpha, float beta, std::vector<stdx::vec3> &col)
+{
+	static constexpr stdx::vec3 const color{ 1.f, 0.f, 0.f };
+	using idx = stdx::grididx<1>;
+	vecfield2<vd, l> r = x;
+	auto const rcbeta = 1.f / beta;
+	for (uint k(0); k < niters; ++k)
+	{
+		for (uint j(1); j < l - 1; ++j)
+			for (uint i(1); i < l - 1; ++i)
+			{
+				auto const idx1d = idx::to1d<l - 1>({ i, j });
+				r[idx1d] = ((r[idx::to1d<l - 1>({ i - 1, j })] + r[idx::to1d<l - 1>({ i + 1, j })] + r[idx::to1d<l - 1>({ i, j - 1 })] +
+					r[idx::to1d<l - 1>({ i, j + 1 })]) * alpha + b[idx::to1d<l - 1>({ i, j })]) * rcbeta;
+
+				col[idx1d] = color * r[idx1d][0];
+			}
 	}
 	return r;
 }

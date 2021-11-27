@@ -138,6 +138,8 @@ namespace gfx
         vector3 campos;
         uint8_t padding[4];
         vector4 ambient;
-        light lights[NUM_LIGHTS];
+        light lights[MAX_NUM_LIGHTS];
+        uint32_t numdirlights = 0;
+        uint32_t numpointlights;
     };
 }
