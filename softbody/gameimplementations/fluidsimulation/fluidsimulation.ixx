@@ -2,18 +2,20 @@ module;
 
 #include "stdx/stdx.h"
 #include "stdx/vec.h"
-#include "engine/engineutils.h"
-#include "engine/engine.h"
-#include "engine/graphics/gfxcore.h"
-#include "engine/graphics/gfxmemory.h"
-#include "engine/graphics/body.h"
-#include "engine/interfaces/bodyinterface.h"
-#include "engine/geometry/geoutils.h"
-#include "engine/geometry/geocore.h"
-#include "engine/cursor.h"
+
 #include "gamebase.h"
 #include "gameutils.h"
 #include "fluidcore.h"
+
+#include "engine/cursor.h"
+#include "engine/engine.h"
+#include "engine/engineutils.h"
+#include "engine/graphics/body.h"
+#include "engine/geometry/geocore.h"
+#include "engine/graphics/gfxcore.h"
+#include "engine/geometry/geoutils.h"
+#include "engine/graphics/gfxmemory.h"
+#include "engine/interfaces/bodyinterface.h"
 
 export module fluidsimulation;
 
