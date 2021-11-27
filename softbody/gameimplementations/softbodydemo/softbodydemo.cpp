@@ -105,18 +105,6 @@ void soft_body::update(float dt)
     auto &constbufferdata = gfx::getglobals();
 
     constbufferdata.campos = camera.GetCurrentPosition();
-    constbufferdata.ambient = { 0.1f, 0.1f, 0.1f, 1.0f };
-    constbufferdata.lights[0].direction = vector3{ 0.3f, -0.27f, 0.57735f }.Normalized();
-    constbufferdata.lights[0].color = { 0.2f, 0.2f, 0.2f };
-
-    constbufferdata.lights[1].position = { -15.f, 15.f, -15.f};
-    constbufferdata.lights[1].color = { 1.f, 1.f, 1.f };
-    constbufferdata.lights[1].range = 40.f;
-
-    constbufferdata.lights[2].position = { 15.f, 15.f, -15.f };
-    constbufferdata.lights[2].color = { 1.f, 1.f, 1.f };
-    constbufferdata.lights[2].range = 40.f;
-
     cbuffer.set_data(&constbufferdata);
 }
 
@@ -134,6 +122,24 @@ gfx::resourcelist soft_body::load_assets_and_geometry()
     using geometry::ffd_object;
 
     cbuffer.createresources<gfx::sceneconstants>();
+
+    auto& constbufferdata = gfx::getglobals();
+
+    // initialize lights
+    constbufferdata.numdirlights = 1;
+    constbufferdata.numpointlights = 2;
+
+    constbufferdata.ambient = { 0.1f, 0.1f, 0.1f, 1.0f };
+    constbufferdata.lights[0].direction = vector3{ 0.3f, -0.27f, 0.57735f }.Normalized();
+    constbufferdata.lights[0].color = { 0.2f, 0.2f, 0.2f };
+
+    constbufferdata.lights[1].position = { -15.f, 15.f, -15.f };
+    constbufferdata.lights[1].color = { 1.f, 1.f, 1.f };
+    constbufferdata.lights[1].range = 40.f;
+
+    constbufferdata.lights[2].position = { 15.f, 15.f, -15.f };
+    constbufferdata.lights[2].color = { 1.f, 1.f, 1.f };
+    constbufferdata.lights[2].range = 40.f;
 
     boxes.emplace_back(cube{ {vector3{0.f, 0.f, 0.f}}, vector3{40.f} }, &cube::vertices_flipped, &cube::instancedata, bodyparams{ "instanced" });
     

@@ -148,8 +148,8 @@ namespace gfx
 
             D3D12_SUBRESOURCE_DATA subresdata;
             subresdata.pData = _texturedata.data();
-            subresdata.RowPitch = getparams().texdims[0] * 12;
-            subresdata.SlicePitch = getparams().texdims[0] * getparams().texdims[1] * 12;
+            subresdata.RowPitch = getparams().texdims[0] * 4;
+            subresdata.SlicePitch = getparams().texdims[0] * getparams().texdims[1] * 4;
 
             updatesubres(_texture.Get(), _textureupload.Get(), &subresdata);
 
@@ -157,7 +157,7 @@ namespace gfx
 
             D3D12_SHADER_RESOURCE_VIEW_DESC srvdesc = {};
             srvdesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-            srvdesc.Format = DXGI_FORMAT_R32G32B32_FLOAT;
+            srvdesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
             srvdesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
             srvdesc.Texture2D.MipLevels = 1;
 
@@ -245,8 +245,8 @@ namespace gfx
         {
             D3D12_SUBRESOURCE_DATA subresdata;
             subresdata.pData = _texturedata.data();
-            subresdata.RowPitch = getparams().texdims[0] * 12;
-            subresdata.SlicePitch = getparams().texdims[0] * getparams().texdims[1] * 12;
+            subresdata.RowPitch = getparams().texdims[0] * 4;
+            subresdata.SlicePitch = getparams().texdims[0] * getparams().texdims[1] * 4;
 
             updatesubres(_texture.Get(), _textureupload.Get(), &subresdata);
         }

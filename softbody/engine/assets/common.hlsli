@@ -95,7 +95,9 @@ struct sceneconstants
     float3 campos;
     uint padding0;
     float4 ambient;
-    light lights[NUM_LIGHTS];
+    light lights[MAX_NUM_LIGHTS];
+    uint numdirlights;
+    uint numpointlights;
 };
 
 struct instance_data

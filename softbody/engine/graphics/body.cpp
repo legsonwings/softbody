@@ -111,7 +111,7 @@ gfx::default_and_upload_buffers gfx::create_vertexbuffer_default(void* vertexdat
 ComPtr<ID3D12Resource> gfx::createtexture_default(uint width, uint height)
 {
     auto device = game_engine::g_engine->get_device();
-    auto texdesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32G32B32_FLOAT, static_cast<UINT64>(width), static_cast<UINT>(height));
+    auto texdesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, static_cast<UINT64>(width), static_cast<UINT>(height));
 
     ComPtr<ID3D12Resource> texdefault;
     auto defaultheap_desc = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);

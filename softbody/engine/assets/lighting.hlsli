@@ -44,18 +44,18 @@ float3 pointlight(light l, material m, float3 normal, float3 pos, float3 toeye)
 	return blinnphong(toeye, normal, lightintensity, m, lightvec);
 }
 
-float4 computelighting(light lights[NUM_LIGHTS], material m, float3 pos, float3 normal)
+float4 computelighting(light lights[MAX_NUM_LIGHTS], material m, float3 pos, float3 normal)
 {
 	float3 result = 0;
 	float3 const toeye = normalize(globals.campos - pos);
-
+	
 	int i = 0;
-	for (; i < NUM_DIR_LIGHTS; ++i)
+	for (; i < globals.numdirlights; ++i)
 	{
 		result += directionallight(lights[i], m, normal, toeye);
 	}
 
-	for (i = NUM_DIR_LIGHTS; i < NUM_DIR_LIGHTS + NUM_POINT_LIGHTS; ++i)
+	for (; i < globals.numdirlights + globals.numpointlights; ++i)
 	{
 		result += pointlight(lights[i], m, normal, pos, toeye);
 	}

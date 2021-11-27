@@ -3,6 +3,7 @@ module;
 #include "geocore.h"
 #include "geoutils.h"
 #include "stdx/stdx.h"
+#include "stdx/vec.h"
 #include "engine/graphics/gfxcore.h"
 #include "engine/graphics/gfxutils.h"
 
@@ -20,8 +21,8 @@ struct rectangle
 {
     std::vector<geometry::vertex> triangles() const
     {
-        float const halfl = _length / 2.f;
-        float const halfh = _height / 2.f;
+        float const halfl = _dims[0] / 2.f;
+        float const halfh = _dims[1] / 2.f;
         static const vector3 normal = vector3::Forward;
         std::vector<geometry::vertex> r;
         r.push_back({ _center + vector3{-halfl, halfh, 0.f}, normal, vector2{0.f, 0.f} });
@@ -33,8 +34,7 @@ struct rectangle
         return r;
     }
 
-    float _length = 0.f;
-    float _height = 0.f;
+    stdx::vec2 _dims = {};
     vector3 _center = {};
 };
 

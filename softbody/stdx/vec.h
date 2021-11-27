@@ -20,6 +20,9 @@ struct vec : public std::array<t, d + 1>
 	constexpr operator t() const requires (d == 0) { return (*this)[0]; }
 	constexpr t dot(vec r) const { return stdx::dot(*this, r); }
 	constexpr vec clamp(t a, t b) const { return { stdx::clamp(*this, a, b) }; }
+
+	template<typename d_t>
+	constexpr vec<d, d_t> casted() const { return { stdx::casted<d_t>(*this) }; }
 };
 
 template<stdx::arithmetic_c t, uint d>

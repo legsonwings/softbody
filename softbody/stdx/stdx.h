@@ -97,6 +97,7 @@ constexpr t dot(std::array<t, n> a, std::array<t, n> b)
 	return r;
 }
 
+// todo : can we make these algorithms return the correct type
 template<arithmetic_c t, uint n>
 constexpr std::array<t, n> clamp(std::array<t, n> a, t l, t h)
 {
@@ -111,6 +112,14 @@ constexpr std::array<t, n> unaryop(std::array<t, n> a, f_t f)
 {
 	std::array<t, n> r;
 	for (uint i(0); i < n; ++i) r[i] = f(a[i]);
+	return r;
+}
+
+template<typename d_t, typename s_t, uint n>
+constexpr auto casted(std::array<s_t, n> a)
+{
+	std::array<d_t, n> r;
+	for (uint i(0); i < n; ++i) r[i] = static_cast<d_t>(a[i]);
 	return r;
 }
 
