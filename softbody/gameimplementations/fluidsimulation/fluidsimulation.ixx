@@ -41,7 +41,7 @@ struct fluidtex
         float const scale0 = static_cast<float>(fluiddims[0]) / static_cast<float>(_dims[0]);
         float const scale1 = static_cast<float>(fluiddims[1]) / static_cast<float>(_dims[1]);
 
-        return { static_cast<uint>(fluidpos[0] * scale0), static_cast<uint>(fluidpos[1] * scale1) };
+        return stdx::vec2{ fluidpos[0] * scale0, fluidpos[1] * scale1 }.casted<uint>();
     }
 
     stdx::vecui2 fluidpos(stdx::vecui2 texpos, stdx::vecui2 fluiddims)
@@ -49,7 +49,7 @@ struct fluidtex
         float const scale0 = static_cast<float>(_dims[0]) / static_cast<float>(fluiddims[0]);
         float const scale1 = static_cast<float>(_dims[1]) / static_cast<float>(fluiddims[1]);
 
-        return { static_cast<uint>(texpos[0] * scale0), static_cast<uint>(texpos[1] * scale1) };
+        return stdx::vec2{ texpos[0] * scale0, texpos[1] * scale1 }.casted<uint>();
     }
 
     stdx::vecui2 _dims;
