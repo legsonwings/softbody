@@ -29,7 +29,7 @@ concept arithmeticvector_c = requires(t v)
 template <typename t>
 concept indexablecontainer_c = requires(t v)
 {
-	{v.size()} -> std::convertible_to<uint>;
-	v.operator[](uint());
+	{v.size()} -> std::convertible_to<std::size_t>;
+	v.operator[](std::size_t());
 };
 }
