@@ -17,6 +17,7 @@ module;
 #include "engine/graphics/gfxmemory.h"
 #include "engine/interfaces/bodyinterface.h"
 
+#include "engine/debugutils.h"
 export module fluidsimulation;
 
 import shapes;
@@ -36,14 +37,14 @@ struct fluidtex
     std::vector<geometry::vertex> gvertices() const { return _quad.triangles(); }
     vector3 gcenter() const { return { vector3::Zero }; }
 
-    fluidtex(stdx::vecui2 dims, uint texelsize = sizeof(uint32_t)) : _dims(dims), _texelsize(texelsize), _quad{ dims.casted<float>(), gcenter() } {}
+    fluidtex(stdx::vecui2 dims, uint texelsize = sizeof(uint32_t)) : _dims(dims), _texelsize(texelsize), _quad{ dims.castas<float>(), gcenter() } {}
 
     stdx::vecui2 texpos(stdx::vecui2 fluidpos, stdx::vecui2 fluiddims)
     {
         float const scale0 = static_cast<float>(fluiddims[0]) / static_cast<float>(_dims[0]);
         float const scale1 = static_cast<float>(fluiddims[1]) / static_cast<float>(_dims[1]);
 
-        return stdx::vec2{ fluidpos[0] * scale0, fluidpos[1] * scale1 }.casted<uint>();
+        return stdx::vec2{ fluidpos[0] * scale0, fluidpos[1] * scale1 }.castas<uint>();
     }
 
     stdx::vecui2 fluidpos(stdx::vecui2 texpos, stdx::vecui2 fluiddims)
@@ -51,7 +52,7 @@ struct fluidtex
         float const scale0 = static_cast<float>(_dims[0]) / static_cast<float>(fluiddims[0]);
         float const scale1 = static_cast<float>(_dims[1]) / static_cast<float>(fluiddims[1]);
 
-        return stdx::vec2{ texpos[0] * scale0, texpos[1] * scale1 }.casted<uint>();
+        return stdx::vec2{ texpos[0] * scale0, texpos[1] * scale1 }.castas<uint>();
     }
 
     stdx::vecui2 _dims;
@@ -115,7 +116,7 @@ private:
         {
             static constexpr float speed = 2.5f;
             static constexpr auto origin = stdx::veci2{ -static_cast<int>(texdims[0] / 2), static_cast<int>(texdims[1] / 2)};
-            cubeidx const idx = texture->texpos(stdx::veci2{ pos[0] - origin[0], origin[1] - pos[1]}.casted<uint>(), {l, l});
+            cubeidx const idx = texture->texpos(stdx::veci2{ pos[0] - origin[0], origin[1] - pos[1]}.castas<uint>(), {l, l});
             vector2 const idxf = { static_cast<float>(idx[0]), static_cast<float>(idx[1]) };
 
             uint const spread = 5;

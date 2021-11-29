@@ -7,7 +7,7 @@ class game_engine;
 
 struct gamedata
 {
-	unsigned width = 1280;
+	unsigned width = 720;
 	unsigned height = 720;
 	float nearplane = 0.1f;
 	float farplane = 1000.f;

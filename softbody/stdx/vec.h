@@ -12,17 +12,15 @@ template<uint d, stdx::arithmetic_c t = float>
 struct vec : public std::array<t, d + 1>
 {
 	static constexpr uint nd = d;
-	constexpr vec operator-() const { return { stdx::unaryop(*this, stdx::uminus()) }; }
-	constexpr vec operator+(vec r) const { return { stdx::binaryop(*this, r, std::plus<>()) }; }
-	constexpr vec operator-(vec r) const { return { stdx::binaryop(*this, r, std::minus<>()) }; }
-	constexpr vec operator/(t r) const { return { stdx::unaryop(*this, std::bind(std::multiplies<>(), std::placeholders::_1, 1 / r)) }; }
+	constexpr vec operator-() const { return stdx::unaryop(*this, stdx::uminus()); }
+	constexpr vec operator+(vec r) const { return stdx::binaryop(*this, r, std::plus<>()); }
+	constexpr vec operator-(vec r) const { return stdx::binaryop(*this, r, std::minus<>()); }
+	constexpr vec operator/(t r) const { return stdx::unaryop(*this, std::bind(std::multiplies<>(), std::placeholders::_1, t(1) / r)); }
 
 	constexpr operator t() const requires (d == 0) { return (*this)[0]; }
-	constexpr t dot(vec r) const { return stdx::dot(*this, r); }
-	constexpr vec clamp(t a, t b) const { return { stdx::clamp(*this, a, b) }; }
 
 	template<typename d_t>
-	constexpr vec<d, d_t> casted() const { return { stdx::casted<d_t>(*this) }; }
+	constexpr vec<d, d_t> castas() const { return { stdx::castas<d_t>(*this) }; }
 };
 
 template<stdx::arithmetic_c t, uint d>

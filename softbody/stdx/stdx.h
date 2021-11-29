@@ -1,12 +1,15 @@
 #pragma once
 
+#ifdef _WIN32
 #include "assert.h"
+#endif 
 
 #include <array>
 #include <vector>
 #include <limits>
 #include <ranges>
 #include <concepts>
+#include <algorithm>
 
 #include "stdxcore.h"
 
@@ -30,6 +33,9 @@ bool constexpr nearlyequal(arithmetic_c auto const& l, arithmetic_c auto const& 
 template <typename t>
 requires arithmetic_c<t> || arithmeticvector_c<t>
 bool constexpr isvalid(t const& val) { return !nearlyequal(std::numeric_limits<t>::max(), val); }
+
+template<typename t>
+using containervalue_t = std::decay_t<t>::value_type;
 
 constexpr int ceil(float value)
 {
@@ -89,11 +95,21 @@ void append(std::vector<t> const& source, std::vector<t>& dest)
 	for (auto const& e : source) { dest.emplace_back(e); }
 }
 
-template<arithmetic_c t, uint n>
-constexpr t dot(std::array<t, n> a, std::array<t, n> b)
+template<typename d_t, typename s_t, uint n>
+constexpr auto castas(std::array<s_t, n> a)
 {
-	t r = 0;
-	for (uint i(0); i < n; ++i) r += a[i] * b[i];
+	std::array<d_t, n> r;
+	for (uint i(0); i < n; ++i) r[i] = static_cast<d_t>(a[i]);
+	return r;
+}
+
+// todo : ensure v_t is arithmetic
+template<indexablecontainer_c l_t, indexablecontainer_c r_t>
+constexpr auto dot(l_t&& a, r_t&& b)
+{
+	using v_t = std::decay_t<l_t>::value_type;
+	v_t r = v_t(0);
+	for (uint i(0); i < std::min(a.size(), b.size()); ++i) r += a[i] * b[i];
 	return r;
 }
 
@@ -106,48 +122,46 @@ constexpr std::array<t, n> clamp(std::array<t, n> a, t l, t h)
 	return r;
 }
 
-// todo : create a concept, std::regular_invocable doesn't work
-template<typename t, uint n, typename f_t>
-constexpr std::array<t, n> unaryop(std::array<t, n> a, f_t f)
+template<indexablecontainer_c t>
+constexpr auto clamped(t&& a, containervalue_t<t> l, containervalue_t<t> h)
 {
-	std::array<t, n> r;
-	for (uint i(0); i < n; ++i) r[i] = f(a[i]);
+	std::decay_t<t> r;
+	ensuresize(r, a.size());
+	for (uint i(0); i < a.size(); ++i) r[i] = (a[i] < l ? l : (a[i] > h ? h : a[i]));
 	return r;
 }
 
-template<typename d_t, typename s_t, uint n>
-constexpr auto casted(std::array<s_t, n> a)
+template<indexablecontainer_c t>
+constexpr auto clamp(t& a, containervalue_t<t> l, containervalue_t<t> h)
 {
-	std::array<d_t, n> r;
-	for (uint i(0); i < n; ++i) r[i] = static_cast<d_t>(a[i]);
+	for (uint i(0); i < a.size(); ++i) a[i] = (a[i] < l ? l : (a[i] > h ? h : a[i]));
+}
+
+template<indexablecontainer_c t, typename f_t>
+requires std::invocable<f_t, typename std::decay_t<t>::value_type>
+constexpr auto unaryop(t&& a, f_t f)
+{
+	std::decay_t<t> r;
+	ensuresize(r, a.size());
+	for (uint i(0); i < a.size(); ++i) r[i] = f(a[i]);
 	return r;
 }
 
-template<typename t, uint n, typename f_t>
-constexpr std::array<t, n> binaryop(std::array<t, n> a, std::array<t, n> b, f_t f)
+template<indexablecontainer_c l_t, indexablecontainer_c r_t, typename f_t>
+requires std::invocable<f_t, containervalue_t<l_t>, containervalue_t<r_t>>
+constexpr auto binaryop(l_t&& a, r_t&& b, f_t f)
 {
-	std::array<t, n> r;
-	for (uint i(0); i < n; ++i) r[i] = f(a[i], b[i]);
+	std::decay_t<l_t> r;
+	ensuresize(r, std::min(a.size(), b.size()));
+	for (uint i(0); i < std::min(a.size(), b.size()); ++i) r[i] = f(a[i], b[i]);
 	return r;
 }
 
-template<typename t, typename f_t>
-constexpr std::vector<t> unaryop(std::vector<t> a, f_t f)
-{
-	std::vector<t> r;
-	r.resize(a.size());
-	for (auto e : a) r.emplace_back(f(e));
-	return r;
-}
+template<indexablecontainer_c t>
+void ensuresize(t &c, uint size) {}
 
-template<typename t, typename f_t>
-constexpr std::vector<t> binaryop(std::vector<t> a, std::vector<t> b, f_t f)
-{
-	std::vector<t> r;
-	r.resize(a.size());
-	for (uint i(0); i < a.size(); ++i) r[i] = f(a[i], b[i]);
-	return r;
-}
+template<typename t>
+void ensuresize(std::vector<t>& v, uint size) { v.resize(size); }
 
 // triangular index
 template<uint n>
@@ -298,7 +312,9 @@ private:
 
 	t* get(uint idx)
 	{
+#ifdef _WIN32
 		assert(idx < calcsizes());
+#endif
 		auto const& [idxrel, idxc] = container(idx);
 		return getimpl(idxrel, idxc);
 	}
@@ -306,7 +322,9 @@ private:
 	template<uint n = 0>
 	t* getimpl(uint idx, uint idxc)
 	{
+#ifdef _WIN32
 		assert(idxc < mysize);
+#endif
 		if (n == idxc)
 			return static_cast<t*>(&(std::get<n>(data)[idx]));
 		if constexpr (n + 1 < mysize) return getimpl<n + 1>(idx, idxc);
@@ -316,7 +334,9 @@ private:
 	template<uint n = 0>
 	uint getsize(uint idxc) const
 	{
+#ifdef _WIN32
 		assert(idxc < mysize);
+#endif
 		if (n == idxc) return std::get<n>(data).size();
 		if constexpr (n + 1 < mysize) return getsize<n + 1>(idxc);
 		return 0;

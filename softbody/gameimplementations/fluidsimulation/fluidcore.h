@@ -84,7 +84,6 @@ stdx::vec<vd> bilerp(stdx::vec<vd> lt, stdx::vec<vd> rt, stdx::vec<vd> lb, stdx:
 	return (lt * (1.f - alpha[0]) + rt * alpha[0]) * (1.f - alpha[1]) + (lb * (1.f - alpha[0]) + rb * alpha[0]) * alpha[1];
 }
 
-// todo : use callable concept
 template<uint vd, uint l>
 vecfield2<vd, l> diffuse(vecfield2<vd, l> const& x, vecfield2<vd, l> const& b, float dt, float diff)
 {
@@ -93,34 +92,26 @@ vecfield2<vd, l> diffuse(vecfield2<vd, l> const& x, vecfield2<vd, l> const& b, f
 	return jacobi2d(x, b, 4, a, 1 + 4 * a);
 }
 
-template<uint vd, uint l>
-vecfield2<vd, l> diffusecolor(vecfield2<vd, l> const& x, vecfield2<vd, l> const& b, float dt, float diff, std::vector<stdx::vec3> &col)
-{
-	using idx = stdx::grididx<1>;
-	float const a = diff * dt;
-	return jacobi2dcolor(x, b, 4, a, 1 + 4 * a, col);
-}
-
 template<uint l>
-vecfield21<l> divergence(vecfield22<l> const& f)
+vecfield21<l> divergence(vecfield22<l> const& v)
 {
 	using idx = stdx::grididx<1>;
 	vecfield21<l> r;
 	for (uint j(1); j < l - 1; ++j)
 		for (uint i(1); i < l - 1; ++i)
-			r[idx::to1d<l - 1>({ i, j })] = -0.5f * stdx::vec1{ f[idx::to1d<l - 1>({ i + 1, j })][0] - f[idx::to1d<l - 1>({ i - 1, j })][0] + f[idx::to1d<l - 1>({ i, j + 1 })][1] - f[idx::to1d<l - 1>({ i, j - 1 })][1] };
+			r[idx::to1d<l - 1>({ i, j })] = -0.5f * stdx::vec1{ v[idx::to1d<l - 1>({ i + 1, j })][0] - v[idx::to1d<l - 1>({ i - 1, j })][0] + v[idx::to1d<l - 1>({ i, j + 1 })][1] - v[idx::to1d<l - 1>({ i, j - 1 })][1] };
 
 	return r;
 }
 
 template<uint l>
-vecfield22<l> gradient(vecfield21<l> const& f)
+vecfield22<l> gradient(vecfield21<l> const& v)
 {
 	using idx = stdx::grididx<1>;
 	vecfield22<l> r{};
 	for (uint j(1); j < l - 1; ++j)
 		for (uint i(1); i < l - 1; ++i)
-			r[idx::to1d<l - 1>({ i, j })] = 0.5f * stdx::vec2{ f[idx::to1d<l - 1>({ i + 1, j })] - f[idx::to1d<l - 1>({ i - 1, j })], f[idx::to1d<l - 1>({ i, j + 1 })] - f[idx::to1d<l - 1>({ i, j - 1 })] };
+			r[idx::to1d<l - 1>({ i, j })] = 0.5f * stdx::vec2{ v[idx::to1d<l - 1>({ i + 1, j })] - v[idx::to1d<l - 1>({ i - 1, j })],  v[idx::to1d<l - 1>({ i, j + 1 })] - v[idx::to1d<l - 1>({ i, j - 1 })] };
 	
 	return r;
 }
@@ -142,29 +133,6 @@ vecfield2<vd, l> jacobi2d(vecfield2<vd, l> const& x, vecfield2<vd, l> const& b, 
 	return r;
 }
 
-// jacobi iteration to solve poisson equations
-template<uint vd, uint l>
-vecfield2<vd, l> jacobi2dcolor(vecfield2<vd, l> const& x, vecfield2<vd, l> const& b, uint niters, float alpha, float beta, std::vector<stdx::vec3> &col)
-{
-	static constexpr stdx::vec3 const color{ 1.f, 0.f, 0.f };
-	using idx = stdx::grididx<1>;
-	vecfield2<vd, l> r = x;
-	auto const rcbeta = 1.f / beta;
-	for (uint k(0); k < niters; ++k)
-	{
-		for (uint j(1); j < l - 1; ++j)
-			for (uint i(1); i < l - 1; ++i)
-			{
-				auto const idx1d = idx::to1d<l - 1>({ i, j });
-				r[idx1d] = ((r[idx::to1d<l - 1>({ i - 1, j })] + r[idx::to1d<l - 1>({ i + 1, j })] + r[idx::to1d<l - 1>({ i, j - 1 })] +
-					r[idx::to1d<l - 1>({ i, j + 1 })]) * alpha + b[idx::to1d<l - 1>({ i, j })]) * rcbeta;
-
-				col[idx1d] = color * r[idx1d][0];
-			}
-	}
-	return r;
-}
-
 template<uint vd, uint l>
 vecfield2<vd, l> advect2d(vecfield2<vd, l> const& a, vecfield22<l> const& v, float dt)
 {
@@ -176,7 +144,7 @@ vecfield2<vd, l> advect2d(vecfield2<vd, l> const& a, vecfield22<l> const& v, flo
 			auto const cell = idx::to1d<l - 1>({ i, j });
 
 			// find position at -dt
-			stdx::vec2 const xy = (stdx::vec2{ static_cast<float>(i), static_cast<float>(j) } - v[cell] * dt).clamp(0.5f, l - 1.5f);
+			stdx::vec2 const xy = stdx::clamped(stdx::vec2{ static_cast<float>(i), static_cast<float>(j) } - v[cell] * dt, 0.5f, l - 1.5f);
 
 			// bilinearly interpolate the property across 4 neighbouring cells
 			idx const lt2d = { static_cast<int>(xy[0]), static_cast<int>(xy[1]) };
