@@ -197,7 +197,6 @@
     <ClCompile Include="engine\graphics\gfxmemory.cpp" />
     <ClCompile Include="engine\graphics\gfxutils.cpp" />
     <ClCompile Include="engine\interfaces\bodyinterface.cpp" />
-    <ClCompile Include="engine\interfaces\engineinterface.cpp" />
     <ClCompile Include="engine\main.cpp" />
     <ClCompile Include="engine\physics\collision.cpp" />
     <ClCompile Include="engine\physics\spring.ixx" />
@@ -209,9 +208,12 @@
     <ClCompile Include="gameinterfaces\gamebase.cpp" />
     <ClCompile Include="gameinterfaces\gameutils.cpp" />
     <ClCompile Include="engine\ui\image.cpp" />
+    <ClCompile Include="engine\graphics\globalresources.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="engine\core.h" />
+    <ClInclude Include="engine\graphics\resources.hpp" />
+    <ClInclude Include="engine\graphics\globalresources.h" />
     <ClInclude Include="stdx\stdxcore.h" />
     <ClInclude Include="engine\ui\uicore.h" />
     <ClInclude Include="engine\ui\canvas.h" />
@@ -225,7 +227,6 @@
     <ClInclude Include="engine\geometry\beziermaths.h" />
     <ClInclude Include="engine\geometry\beziershapes.h" />
     <ClInclude Include="engine\geometry\geocore.h" />
-    <ClInclude Include="engine\geometry\geodefines.h" />
     <ClInclude Include="engine\geometry\geoutils.h" />
     <ClInclude Include="engine\geometry\ffd.h" />
     <ClInclude Include="engine\graphics\body.h" />
@@ -234,7 +235,6 @@
     <ClInclude Include="engine\graphics\gfxmemory.h" />
     <ClInclude Include="engine\graphics\gfxutils.h" />
     <ClInclude Include="engine\interfaces\bodyinterface.h" />
-    <ClInclude Include="engine\interfaces\engineinterface.h" />
     <ClInclude Include="engine\physics\collision.h" />
     <ClInclude Include="engine\sharedconstants.h" />
     <ClInclude Include="engine\simplecamera.h" />

@@ -7,6 +7,7 @@
 #include "engine/engineutils.h"
 #include "engine/interfaces/bodyinterface.h"
 #include "gfxmemory.h"
+#include "resources.hpp"
 
 #include <type_traits>
 #include <unordered_map>
@@ -57,14 +58,10 @@ namespace gfx
         using vertextype = typename topologyconstants<prim_t>::vertextype;
 
         body_t body;
-        uint num_instances;
-        ComPtr<ID3D12Resource> _vertexbuffer;
-        ComPtr<ID3D12Resource> _instancebuffer;
-        uint8_t* m_instancebuffer_mapped = nullptr;
-        std::vector<vertextype> m_vertices;
-        std::vector<instance_data> m_instancedata;
+        staticbuffer<vertextype> _vertexbuffer;
+        dynamicbuffer<instance_data> _instancebuffer;
 
-        using vertexfetch_r = decltype(m_vertices);
+        using vertexfetch_r = std::vector<vertextype>;
         using vertexfetch = std::function<vertexfetch_r(rawbody_t const&)>;
         using instancedatafetch_r = std::vector<instance_data>;
         using instancedatafetch = std::function<instancedatafetch_r(rawbody_t const&)>;
@@ -72,14 +69,6 @@ namespace gfx
         vertexfetch get_vertices;
         instancedatafetch get_instancedata;
 
-        uint get_vertexbuffersize() const { return m_vertices.size() * sizeof(vertextype); }
-        uint get_instancebuffersize() const { return num_instances * sizeof(instance_data); }
-        void update_instancebuffer();
-        uint get_numinstances() const { return num_instances; }
-        uint get_numvertices() const { return m_vertices.size(); }
-
-        D3D12_GPU_VIRTUAL_ADDRESS get_instancebuffer_gpuaddress() const;
-        D3D12_GPU_VIRTUAL_ADDRESS get_vertexbuffer_gpuaddress() const override { return _vertexbuffer->GetGPUVirtualAddress(); }
     public:
         body_static(rawbody_t _body, bodyparams const& _params);
         body_static(body_t const& _body, vertexfetch_r(rawbody_t::* vfun)() const, instancedatafetch_r(rawbody_t::* ifun)() const, bodyparams const& _params);
@@ -104,40 +93,24 @@ namespace gfx
 
         body_t body;
         constant_buffer cbuffer;
-        ComPtr<ID3D12Resource> _vertexbuffer;
-        ComPtr<ID3D12Resource> _texture;
-        ComPtr<ID3D12Resource> _textureupload;
-        uint8_t* _vertexbuffer_mapped = nullptr;
-        uint8_t* _texture_mapped = nullptr;
-        std::vector<vertextype> m_vertices;
-        std::vector<uint8_t> _texturedata;
-        
-        // todo : major changes might be needed on how to manage efficiently(right now its one heap per body)
-        ComPtr<ID3D12DescriptorHeap> _srvheap;
+        dynamicbuffer<vertextype> _vertexbuffer;
+        texture _texture{ 0, DXGI_FORMAT_R8G8B8A8_UNORM };
 
-        using vertexfetch_r = decltype(m_vertices);
+        using vertexfetch_r = std::vector<vertextype>;
         using vertexfetch = std::function<vertexfetch_r (rawbody_t const&)>;
 
         vertexfetch get_vertices;
 
         void update_constbuffer();
-        void update_vertexbuffer();
-        void updatetexture();
-        unsigned get_numvertices() const { return static_cast<unsigned>(m_vertices.size()); }
-        uint get_vertexbuffersize() const { return m_vertices.size() * sizeof(vertextype); }
-        uint texturedatasize() const { return _texturedata.size(); }
-        D3D12_GPU_VIRTUAL_ADDRESS get_vertexbuffer_gpuaddress() const override;
-        D3D12_GPU_VIRTUAL_ADDRESS texturegpuaddress() const;
+        uint vertexbuffersize() const { return _vertexbuffer.size(); }
     public:
-        body_dynamic(rawbody_t _body, bodyparams const& _params);
-        body_dynamic(body_t const& _body, vertexfetch_r (rawbody_t::*fun)() const, bodyparams const& _params);
+        body_dynamic(rawbody_t _body, bodyparams const& _params, stdx::vecui2 texdims = {});
+        body_dynamic(body_t const& _body, vertexfetch_r (rawbody_t::*fun)() const, bodyparams const& _params, stdx::vecui2 texdims = {});
 
         gfx::resourcelist create_resources() override;
 
         void update(float dt) override;
         void render(float dt, renderparams const&) override;
-
-        void texturedata(std::vector<uint8_t> texturedata);
 
         constexpr body_t &get() { return body; } 
         constexpr body_t const &get() const { return body; }

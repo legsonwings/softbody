@@ -1,31 +1,29 @@
 #pragma once
 
-#include "gfxcore.h"
-// todo : mvoe this somewhere appropriate 
-#include "engine/geometry/geocore.h"
 #include "stdx/stdx.h"
+#include "gfxcore.h"
 
 #include <optional>
-#include <unordered_map>
 
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 
 namespace gfx
 {
-	using psomapref = std::unordered_map<std::string, pipeline_objects> const&;
-	using materialentry = stdx::ext<material, bool>;
-	using materialcref = stdx::ext<material, bool> const&;
+	std::string const& generaterandom_matcolor(stdx::ext<material, bool> definition, std::optional<std::string> const& preferred_name = {});
 
-	viewinfo& getview();
-	sceneconstants& getglobals();
-	psomapref getpsomap();
-	materialcref addmat(std::string const& name, material const& mat, bool twosided = false);
-	materialcref getmat(std::string const &name);
-	std::string const& generaterandom_matcolor(materialcref definition, std::optional<std::string> const& preferred_name = {});
+	using default_and_upload_buffers = std::pair<ComPtr<ID3D12Resource>, ComPtr<ID3D12Resource>>;
 
-	void init_pipelineobjects();
-	void deinit_pipelineobjects();
-	ComPtr<ID3D12Resource> create_uploadbuffer(uint8_t** mapped_buffer, std::size_t const buffersize);
-	void addpso(std::string const& name, std::wstring const& as, std::wstring const& ms, std::wstring const& ps, uint flags = psoflags::none);
+	uint dxgiformatsize(DXGI_FORMAT format);
+	uint srvsbvuav_descincrementsize();
+	ComPtr<ID3D12Resource> create_uploadbuffer(uint8_t** mapped_buffer, uint const buffersize);
+	ComPtr<ID3D12Resource> create_uploadbufferunmapped(uint const buffersize);
+	ComPtr<ID3D12DescriptorHeap> createsrvdescriptorheap(D3D12_DESCRIPTOR_HEAP_DESC heapdesc);
+	void createsrv(D3D12_SHADER_RESOURCE_VIEW_DESC srvdesc, ID3D12Resource* resource, ID3D12DescriptorHeap* srvheap, uint heapslot = 0);
+	default_and_upload_buffers create_defaultbuffer(void const* datastart, std::size_t const vb_size);
+	ComPtr<ID3D12Resource> createtexture_default(uint width, uint height, DXGI_FORMAT format);
+	uint updatesubres(ID3D12Resource* dest, ID3D12Resource* upload, D3D12_SUBRESOURCE_DATA const* srcdata);
+	D3D12_GPU_VIRTUAL_ADDRESS get_perframe_gpuaddress(D3D12_GPU_VIRTUAL_ADDRESS start, UINT64 perframe_buffersize);
+	void update_perframebuffer(uint8_t* mapped_buffer, void const* data_start, std::size_t const perframe_buffersize);
+	void update_allframebuffers(uint8_t* mapped_buffer, void const* data_start, uint const perframe_buffersize);
 }

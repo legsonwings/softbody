@@ -7,6 +7,7 @@
 #include "engine/geometry/geoutils.h"
 #include "engine/graphics/body.h"
 #include "engine/graphics/gfxmemory.h"
+#include "engine/graphics/globalresources.h"
 #include "engine/geometry/beziershapes.h"
 
 #include <set>
@@ -56,7 +57,7 @@ std::vector<vector3> fillwithspheres(geometry::aabb const& box, uint count, floa
     float const celld = cubelen / (degree + 1);
     float const cellr = celld / 2.f;;
 
-    // check if this box can contain all voxels
+    // check if this box can contain all cells
     assert(cubelen * cubelen * cubelen > gridvol);
 
     vector3 const gridorigin = { box.center() - vector3(cubelen / 2.f) };
@@ -101,8 +102,8 @@ void soft_body::update(float dt)
 
     for (auto b : stdx::makejoin<gfx::bodyinterface>(balls, reflines)) b->update(dt);
 
-    gfx::getview().proj = camera.GetProjectionMatrix(XM_PI / 3.0f);
-    auto &constbufferdata = gfx::getglobals();
+    gfx::globalresources::get().view().proj = camera.GetProjectionMatrix(XM_PI / 3.0f);
+    auto &constbufferdata = gfx::globalresources::get().globals();
 
     constbufferdata.campos = camera.GetCurrentPosition();
     cbuffer.set_data(&constbufferdata);
@@ -123,7 +124,7 @@ gfx::resourcelist soft_body::load_assets_and_geometry()
 
     cbuffer.createresources<gfx::sceneconstants>();
 
-    auto& constbufferdata = gfx::getglobals();
+    auto& constbufferdata = gfx::globalresources::get().globals();
 
     // initialize lights
     constbufferdata.numdirlights = 1;
@@ -149,7 +150,7 @@ gfx::resourcelist soft_body::load_assets_and_geometry()
     static auto& re = engineutils::getrandomengine();
     static const std::uniform_real_distribution<float> distvelocity(-1.f, 1.f);
 
-    static const auto basemat_ball = gfx::getmat("ball");
+    static const auto basemat_ball = gfx::globalresources::get().mat("ball");
     for (auto const& center : fillwithspheres(roomaabb, gameparams::numballs, gameparams::ballradius))
     {
         auto const velocity = vector3{ distvelocity(re), distvelocity(re), distvelocity(re) }.Normalized() * gameparams::speed;

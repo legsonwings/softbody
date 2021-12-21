@@ -22,7 +22,6 @@
     <ClCompile Include="engine\engine.cpp" />
     <ClCompile Include="engine\graphics\body.cpp" />
     <ClCompile Include="engine\interfaces\bodyinterface.cpp" />
-    <ClCompile Include="engine\interfaces\engineinterface.cpp" />
     <ClCompile Include="engine\graphics\gfxmemory.cpp" />
     <ClCompile Include="engine\graphics\gfxutils.cpp" />
     <ClCompile Include="engine\engineutils.cpp" />
@@ -43,6 +42,7 @@
     <ClCompile Include="engine\ui\canvas.cpp" />
     <ClCompile Include="engine\ui\image.cpp" />
     <ClCompile Include="engine\ui\uicore.cpp" />
+    <ClCompile Include="engine\graphics\globalresources.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="d3dx12.h" />
@@ -55,10 +55,8 @@
     <ClInclude Include="engine\graphics\body.hpp" />
     <ClInclude Include="engine\graphics\gfxcore.h" />
     <ClInclude Include="engine\interfaces\bodyinterface.h" />
-    <ClInclude Include="engine\interfaces\engineinterface.h" />
     <ClInclude Include="engine\graphics\gfxmemory.h" />
     <ClInclude Include="engine\graphics\gfxutils.h" />
-    <ClInclude Include="engine\geometry\geodefines.h" />
     <ClInclude Include="engine\geometry\beziermaths.h" />
     <ClInclude Include="engine\geometry\beziershapes.h" />
     <ClInclude Include="stdx\stdx.h" />
@@ -82,6 +80,8 @@
     <ClInclude Include="engine\core.h" />
     <ClInclude Include="stdx\stdxcore.h" />
     <ClInclude Include="stdx\vec.h" />
+    <ClInclude Include="engine\graphics\resources.hpp" />
+    <ClInclude Include="engine\graphics\globalresources.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="engine\assets\lighting.hlsli" />
