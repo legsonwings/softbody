@@ -3,7 +3,7 @@
 #include "engine/core.h"
 #include "engine/sharedconstants.h"
 #include "engine/engineutils.h"
-#include "engine/SimpleMath.h"
+#include "engine/simplemath.h"
 
 #include <wrl.h>
 #include <string>
@@ -57,6 +57,12 @@ namespace gfx
     struct buffer
     {
         uint32_t slot;
+        D3D12_GPU_DESCRIPTOR_HANDLE deschandle = { 0 };
+    };
+
+    struct rootbuffer
+    {
+        uint32_t slot;
         D3D12_GPU_VIRTUAL_ADDRESS address = 0;
     };
 
@@ -76,14 +82,13 @@ namespace gfx
 
     struct resource_bindings
     {
-        buffer constant;
-        buffer objectconstant;
-        buffer vertex;
-        buffer instance;
+        rootbuffer constant;
+        rootbuffer objectconstant;
+        rootbuffer vertex;
+        rootbuffer instance;
         buffer texture;
         rootconstants rootconstants;
         pipeline_objects pipelineobjs;
-        ComPtr<ID3D12DescriptorHeap> srvheap;
     };
 
     struct viewinfo

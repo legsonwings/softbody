@@ -3,7 +3,7 @@
 #include "stdx/stdx.h"
 #include "beziermaths.h"
 #include "engine/graphics/gfxcore.h"
-#include "engine/graphics/gfxutils.h"
+#include "engine/graphics/globalresources.h"
 
 #include <vector>
 #include <iterator>
@@ -183,7 +183,7 @@ struct qbeziercurve
         return res;
     }
 
-    std::vector<gfx::instance_data> instancedata() const { return { gfx::instance_data(matrix::CreateTranslation(vector3::Zero), gfx::getview(), gfx::getmat("")) }; }
+    std::vector<gfx::instance_data> instancedata() const { return { gfx::instance_data(matrix::CreateTranslation(vector3::Zero), gfx::globalresources::get().view(), gfx::globalresources::get().mat("")) }; }
 
     beziermaths::beziercurve<2u> curve;
 };
@@ -212,7 +212,7 @@ struct qbeziervolume
         return res;
     }
 
-    std::vector<gfx::instance_data> instancedata() const { return { gfx::instance_data(matrix::CreateTranslation(vector3::Zero), gfx::getview(), gfx::getmat("")) }; }
+    std::vector<gfx::instance_data> instancedata() const { return { gfx::instance_data(matrix::CreateTranslation(vector3::Zero), gfx::globalresources::get().view(),gfx::globalresources::get().mat("")) }; }
 
     static qbeziervolume create(float len)
     {

@@ -15,6 +15,7 @@ module;
 #include "engine/graphics/gfxcore.h"
 #include "engine/geometry/geoutils.h"
 #include "engine/graphics/gfxmemory.h"
+#include "engine/graphics/globalresources.h"
 #include "engine/interfaces/bodyinterface.h"
 
 #include "engine/debugutils.h"
@@ -54,10 +55,15 @@ struct fluidtex
 
         return stdx::vec2{ texpos[0] * scale0, texpos[1] * scale1 }.castas<uint>();
     }
+    
+    std::vector<uint8_t> const& texturedata() const { return _texdata; }
 
     stdx::vecui2 _dims;
     uint _texelsize;
     geometry::rectangle _quad;
+
+    // todo : use std::byte
+    std::vector<uint8_t> _texdata;
 };
 
 class fluidsimulation : public game_base
@@ -80,8 +86,8 @@ private:
     static constexpr stdx::vecui2 texdims{720, 720};
 
     uint _currentcolor = 0;
-    fluidbox<vd, l> fluid;
-    gfx::body_dynamic<fluidtex, gfx::topology::triangle> texture{ {texdims},  gfx::bodyparams{ "texturess", "", texdims} };
+    fluidbox<vd, l> _fluid;
+    gfx::body_dynamic<fluidtex, gfx::topology::triangle> _texture{ {texdims},  gfx::bodyparams{ "texturess", ""} };
 
     void on_key_up(unsigned key) override
     {
@@ -93,18 +99,19 @@ private:
     gfx::resourcelist load_assets_and_geometry() override
     {
         cbuffer.createresources<gfx::sceneconstants>();
+        _texture->_texdata.reserve(_texture->_dims[0] * _texture->_dims[1] * _texture->_texelsize);
 
         updatetexture();
-        return texture.create_resources();
+        return _texture.create_resources();
     }
 
     void update(float dt) override
     {
         game_base::update(dt);
 
-        gfx::getview().proj = camera.GetOrthoProjectionMatrix();
+        gfx::globalresources::get().view().proj = camera.GetOrthoProjectionMatrix();
 
-        auto& constbufferdata = gfx::getglobals();
+        auto& constbufferdata = gfx::globalresources::get().globals();
         constbufferdata.campos = camera.GetCurrentPosition();
 
         cbuffer.set_data(&constbufferdata);
@@ -116,7 +123,7 @@ private:
         {
             static constexpr float speed = 2.5f;
             static constexpr auto origin = stdx::veci2{ -static_cast<int>(texdims[0] / 2), static_cast<int>(texdims[1] / 2)};
-            cubeidx const idx = texture->texpos(stdx::veci2{ pos[0] - origin[0], origin[1] - pos[1]}.castas<uint>(), {l, l});
+            cubeidx const idx = _texture->texpos(stdx::veci2{ pos[0] - origin[0], origin[1] - pos[1]}.castas<uint>(), {l, l});
             vector2 const idxf = { static_cast<float>(idx[0]), static_cast<float>(idx[1]) };
 
             uint const spread = 5;
@@ -125,12 +132,12 @@ private:
                 {
                     vector2 const currentcellf = { static_cast<float>(i), static_cast<float>(j) };
                     auto const vel = (currentcellf - idxf).Normalized() * speed + cursor.vel() * 0.1f;
-                    fluid.adddensity({ i, j }, _currentcolor, maxd);
-                    fluid.addvelocity({ i, j }, { vel.x, vel.y });
+                    _fluid.adddensity({ i, j }, _currentcolor, maxd);
+                    _fluid.addvelocity({ i, j }, { vel.x, vel.y });
                 }
         }
 
-        auto& v = fluid.v;
+        auto& v = _fluid.v;
         v = advect2d(v, v, dt);
         v = diffuse({}, v, dt, 0.5f);  // this new field has divergence
 
@@ -143,10 +150,10 @@ private:
         sbounds(v, -1.f);
 
         // diffuse dyes
-        fluid.d = advect2d(fluid.d, v, dt);
-        fluid.d = diffuse({}, fluid.d, dt, 0.5f);
+        _fluid.d = advect2d(_fluid.d, v, dt);
+        _fluid.d = diffuse({}, _fluid.d, dt, 0.5f);
         
-        sbounds(fluid.d, 1.f);
+        sbounds(_fluid.d, 1.f);
 
         updatetexture();
     }
@@ -163,27 +170,23 @@ private:
 
     void updatetexture()
     {
-        std::vector<uint8_t> texdata;
-        texdata.reserve(texture->_dims[0] * texture->_dims[1] * texture->_texelsize);
+        _texture->_texdata.clear();
+        float const scale0 = static_cast<float>(l) / static_cast<float>(_texture->_dims[0]);
+        float const scale1 = static_cast<float>(l) / static_cast<float>(_texture->_dims[1]);
 
-        float const scale0 = static_cast<float>(l) / static_cast<float>(texture->_dims[0]);
-        float const scale1 = static_cast<float>(l) / static_cast<float>(texture->_dims[1]);
-
-        for (uint j(0); j < texture->_dims[1]; ++j)
-            for(uint i(0); i < texture->_dims[0]; ++i)
+        for (uint j(0); j < _texture->_dims[1]; ++j)
+            for(uint i(0); i < _texture->_dims[0]; ++i)
             {
                 auto const fluidcell = cubeidx::to1d<l - 1>(cubeidx{ i * scale0, j * scale1 });
-                uint32_t const color = packcolor({ stdx::clamp(fluid.d[fluidcell] / maxd , 0.f, 1.f)});
+                uint32_t const color = packcolor({ stdx::clamp(_fluid.d[fluidcell] / maxd , 0.f, 1.f)});
                 uint8_t const *den = reinterpret_cast<uint8_t const*>(&color);
-                texdata.insert(texdata.end(), den, den + sizeof(color));
+                _texture->_texdata.insert(_texture->_texdata.end(), den, den + sizeof(color));
             }
-
-        texture.texturedata(texdata);
     }
 
     void render(float dt) override
     {
-       texture.render(dt, { false, cbuffer.get_gpuaddress() });
+       _texture.render(dt, { false, cbuffer.get_gpuaddress() });
     }
 };
 }

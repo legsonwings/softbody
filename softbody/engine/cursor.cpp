@@ -1,5 +1,5 @@
 #include "cursor.h"
-#include "engine/graphics/gfxutils.h"
+#include "engine/graphics/globalresources.h"
 #include "engine/win32application.h"
 
 using viewport = DirectX::SimpleMath::Viewport;
@@ -54,7 +54,7 @@ vector3 cursor::to3d(vector3 pos, float nearp, float farp) const
     float const width = static_cast<float>(clientr.right - clientr.left);
     float const height = static_cast<float>(clientr.bottom - clientr.top);
 
-    auto const& view = gfx::getview();
+    auto const& view = gfx::globalresources::get().view();
 
     // frustum z range = 1000.f
     // convert to ndc [-1, 1]

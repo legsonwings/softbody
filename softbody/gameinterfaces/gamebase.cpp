@@ -1,5 +1,5 @@
 #include "gamebase.h"
-#include "engine/graphics/gfxutils.h"
+#include "engine/graphics/globalresources.h"
 #include "directxmath.h"
 
 game_base::game_base(gamedata const& data)
@@ -14,5 +14,5 @@ void game_base::updateview(float dt)
 {
 	camera.Update(dt);
 
-    gfx::getview().view = camera.GetViewMatrix();
+    gfx::globalresources::get().view().view = camera.GetViewMatrix();
 }

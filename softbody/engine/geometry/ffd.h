@@ -43,6 +43,7 @@ namespace geometry
         std::vector<vector3> boxvertices() const { return gbox().gvertices(); }
         std::vector<vertex> const& gvertices() const { return evaluated_verts; }
         std::vector<vector3> const& physx_triangles() const { return physx_verts; }
+        std::vector<uint8_t> const& texturedata() const { return {}; }
 
         void move(vector3 delta);
         void update(float dt);

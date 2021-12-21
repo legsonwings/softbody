@@ -1,6 +1,6 @@
 #include "ffd.h"
 #include "geoutils.h"
-#include "engine/graphics/gfxutils.h"
+#include "engine/graphics/globalresources.h"
 
 #include <ranges>
 #include <vector>
@@ -125,7 +125,7 @@ std::vector<gfx::instance_data> ffd_object::controlnet_instancedata() const
 {
     std::vector<gfx::instance_data> instances_info;
     instances_info.reserve(volume.numcontrolpts);
-    for (auto const& ctrl_pt : volume.controlnet) { instances_info.emplace_back(matrix::CreateTranslation(ctrl_pt + center), gfx::getview(), gfx::getmat("")); }
+    for (auto const& ctrl_pt : volume.controlnet) { instances_info.emplace_back(matrix::CreateTranslation(ctrl_pt + center), gfx::globalresources::get().view(), gfx::globalresources::get().mat("")); }
     return instances_info;
 }
 

@@ -5,7 +5,7 @@ module;
 #include "stdx/stdx.h"
 #include "stdx/vec.h"
 #include "engine/graphics/gfxcore.h"
-#include "engine/graphics/gfxutils.h"
+#include "engine/graphics/globalresources.h"
 
 #include <utility>
 #include <vector>
@@ -117,7 +117,7 @@ struct cube
         return invertedvertices;
     }
 
-    std::vector<gfx::instance_data> instancedata() const { return { gfx::instance_data(matrix::CreateTranslation(center), gfx::getview(), gfx::getmat("")) }; }
+    std::vector<gfx::instance_data> instancedata() const { return { gfx::instance_data(matrix::CreateTranslation(center), gfx::globalresources::get().view(), gfx::globalresources::get().mat(""))}; }
 
 private:
     vector3 center, extents;

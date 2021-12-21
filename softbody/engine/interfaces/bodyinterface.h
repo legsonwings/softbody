@@ -22,7 +22,6 @@ namespace gfx
 	{
 		std::string psoname;
 		std::string matname;
-		stdx::vecui2 texdims;
 	};
 
 	class bodyinterface
@@ -35,6 +34,6 @@ namespace gfx
 		virtual void update(float dt) {};
 		virtual void render(float dt, renderparams const &) {};
 		virtual gfx::resourcelist create_resources() { return {}; };
-		virtual D3D12_GPU_VIRTUAL_ADDRESS get_vertexbuffer_gpuaddress() const = 0;
+		virtual D3D12_GPU_VIRTUAL_ADDRESS get_vertexbuffer_gpuaddress() const { return 0; };
 	};
 }

@@ -1,38 +1,11 @@
 #include "gfxutils.h"
+#include "globalresources.h"
+
+// todo : move functions from here to this file 
 #include "engine/DXSampleHelper.h"
 #include "engine/engineutils.h"
-#include "engine/interfaces/engineinterface.h"
-#include "engine/geometry/geoutils.h"
 
-#include <utility>
-
-namespace gfx
-{
-    viewinfo view;
-    sceneconstants constbufferdata;
-    std::unordered_map<std::string, pipeline_objects> psos;
-    std::unordered_map <std::string, stdx::ext<material, bool>> materials;
-    stdx::ext<material, bool> defaultmat(material{}, false);
-}
-
-gfx::viewinfo& gfx::getview() { return view; }
-gfx::sceneconstants& gfx::getglobals() { return constbufferdata; }
-gfx::psomapref gfx::getpsomap() { return psos; }
-
-gfx::materialcref gfx::addmat(std::string const& name, material const& mat, bool twosided)
-{
-    return materials.insert({ name, {mat, twosided} }).first->second;
-}
-
-gfx::materialcref gfx::getmat(std::string const& name)
-{
-    if (auto const& found = materials.find(name); found != materials.end())
-        return found->second;
-
-    return defaultmat;
-}
-
-std::string const& gfx::generaterandom_matcolor(materialcref definition, std::optional<std::string> const& preferred_name)
+std::string const& gfx::generaterandom_matcolor(stdx::ext<material, bool> definition, std::optional<std::string> const& preferred_name)
 {
     static constexpr uint matgenlimit = 1000u;
     auto & re = engineutils::getrandomengine();
@@ -44,51 +17,38 @@ std::string const& gfx::generaterandom_matcolor(materialcref definition, std::op
 
     std::string matname = preferred_name.has_value() ? preferred_name.value() : basename + std::to_string(matnumberdist(re));
 
-    while (materials.find(matname) != materials.end()) { matname = basename + std::to_string(matnumberdist(re)); }
+    while (globalresources::get().matmap().find(matname) != globalresources::get().matmap().end()) { matname = basename + std::to_string(matnumberdist(re)); }
 
-    auto m = std::make_pair(matname, definition);
-    m.second->a = geoutils::create_vector4(color, m.second->a.w);
-    return materials.insert(std::move(m)).first->first;
+    definition->a = vector4(color.x, color.y, color.z, definition->a.w);
+    globalresources::get().addmat(matname, definition, definition.ex());
+    return matname;
 }
 
-void gfx::init_pipelineobjects()
+void gfx::update_allframebuffers(uint8_t* mapped_buffer, void const* data_start, uint const perframe_buffersize)
 {
-    addpso("lines", L"default_as.cso", L"lines_ms.cso", L"basic_ps.cso");
-    addpso("default", L"default_as.cso", L"default_ms.cso", L"default_ps.cso");
-    addpso("texturess", L"", L"texturess_ms.cso", L"texturess_ps.cso");
-    addpso("instancedlines", L"instances_asold.cso", L"linesinstances_ms.cso", L"basic_ps.cso");
-    addpso("instanced", L"instances_as.cso", L"instances_ms.cso", L"instances_ps.cso");
-    addpso("transparent", L"default_as.cso", L"default_ms.cso", L"default_ps.cso", psoflags::transparent);
-    addpso("transparent_twosided", L"default_as.cso", L"default_ms.cso", L"default_ps.cso", psoflags::transparent | psoflags::twosided);
-    addpso("wireframe", L"default_as.cso", L"default_ms.cso", L"default_ps.cso", psoflags::wireframe | psoflags::transparent);
-    addpso("instancedtransparent", L"instances_as.cso", L"instances_ms.cso", L"instances_ps.cso", psoflags::transparent);
-
-    // todo :move these materials to specific game
-    auto const ballmat = material().roughness(0.95f).diffuse(gfx::color::white).fresnelr(vector3{ 0.0f });
-    auto const transparent_ballmat = material().roughness(0.f).diffuse({ 0.7f, 0.9f, 0.6f, 0.1f }).fresnelr(vector3{1.f});
-
-    addmat("ball",ballmat);
-    addmat("transparentball", transparent_ballmat);
-    addmat("transparentball_twosided", transparent_ballmat, true);
-    addmat("room", material().roughness(0.99f).diffuse({ 0.5f, 0.3f, 0.2f, 1.f }).fresnelr(vector3{ 0.f }));
-    addmat("black", material().diffuse(gfx::color::black));
-    addmat("white", material().diffuse(gfx::color::black));
-    addmat("red", material().diffuse(gfx::color::black));
+    for (uint i = 0; i < configurable_properties::frame_count; ++i)
+        memcpy(mapped_buffer + perframe_buffersize * i, data_start, perframe_buffersize);
 }
 
-void gfx::deinit_pipelineobjects()
+uint gfx::srvsbvuav_descincrementsize()
 {
-    psos.clear();
+    auto device = globalresources::get().device();
+    return static_cast<uint>(device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 }
 
-ComPtr<ID3D12Resource> gfx::create_uploadbuffer(uint8_t** mapped_buffer, std::size_t const buffersize)
+uint gfx::dxgiformatsize(DXGI_FORMAT format)
 {
-    auto device = game_engine::g_engine->get_device();
+    return globalresources::get().dxgisize(format);
+}
+
+ComPtr<ID3D12Resource> gfx::create_uploadbuffer(uint8_t** mapped_buffer, uint const buffersize)
+{
+    auto device = globalresources::get().device();
 
     ComPtr<ID3D12Resource> b_upload;
     if (buffersize > 0)
     {
-        auto resource_desc = CD3DX12_RESOURCE_DESC::Buffer(buffersize);
+        auto resource_desc = CD3DX12_RESOURCE_DESC::Buffer(configurable_properties::frame_count * buffersize);
         auto heap_props = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
         ThrowIfFailed(device->CreateCommittedResource(&heap_props, D3D12_HEAP_FLAG_NONE, &resource_desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(b_upload.GetAddressOf())));
 
@@ -99,77 +59,106 @@ ComPtr<ID3D12Resource> gfx::create_uploadbuffer(uint8_t** mapped_buffer, std::si
     return b_upload;
 }
 
-void gfx::addpso(std::string const& name, std::wstring const& as, std::wstring const& ms, std::wstring const& ps, uint flags)
-{    
-    if (psos.find(name) != psos.cend())
+ComPtr<ID3D12Resource> gfx::create_uploadbufferunmapped(uint const buffersize)
+{
+    auto device = globalresources::get().device();
+
+    ComPtr<ID3D12Resource> b_upload;
+    if (buffersize > 0)
     {
-        assert("trying to add pso of speciifed name when it already exists");
+        auto resource_desc = CD3DX12_RESOURCE_DESC::Buffer(configurable_properties::frame_count * buffersize);
+        auto heap_props = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+        ThrowIfFailed(device->CreateCommittedResource(&heap_props, D3D12_HEAP_FLAG_NONE, &resource_desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(b_upload.GetAddressOf())));
     }
 
-    auto engine = game_engine::g_engine;
-    auto device = engine->get_device();
-    shader ampshader, meshshader, pixelshader;
+    return b_upload;
+}
 
-    // todo : cache file reads
-    if (!as.empty())
-        ReadDataFromFile(engine->get_asset_fullpath(as).c_str(), &ampshader.data, &ampshader.size);
+ComPtr<ID3D12DescriptorHeap> gfx::createsrvdescriptorheap(D3D12_DESCRIPTOR_HEAP_DESC heapdesc)
+{
+    auto device = globalresources::get().device();
 
-    ReadDataFromFile(engine->get_asset_fullpath(ms).c_str(), &meshshader.data, &meshshader.size);
-    ReadDataFromFile(engine->get_asset_fullpath(ps).c_str(), &pixelshader.data, &pixelshader.size);
+    ComPtr<ID3D12DescriptorHeap> heap;
+    ThrowIfFailed(device->CreateDescriptorHeap(&heapdesc, IID_PPV_ARGS(heap.ReleaseAndGetAddressOf())));
+    return heap;
+}
 
-    // pull root signature from the precompiled mesh shaders.
-    // todo : root signatures willbe duplicated in case shaders share root sig or same shader is used to create multiple psos
-    ThrowIfFailed(device->CreateRootSignature(0, meshshader.data, meshshader.size, IID_PPV_ARGS(psos[name].root_signature.GetAddressOf())));
+void gfx::createsrv(D3D12_SHADER_RESOURCE_VIEW_DESC srvdesc, ID3D12Resource* resource, ID3D12DescriptorHeap* srvheap, uint heapslot)
+{
+    auto device = globalresources::get().device();
 
-    D3DX12_MESH_SHADER_PIPELINE_STATE_DESC pso_desc = engine->get_pso_desc();
+    CD3DX12_CPU_DESCRIPTOR_HANDLE deschandle(srvheap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(heapslot * srvsbvuav_descincrementsize()));
+    device->CreateShaderResourceView(resource, &srvdesc, deschandle);
+}
 
-    pso_desc.pRootSignature = psos[name].root_signature.Get();
+gfx::default_and_upload_buffers gfx::create_defaultbuffer(void const* datastart, std::size_t const vb_size)
+{
+    auto device = globalresources::get().device();
 
-    if (!as.empty())
-        pso_desc.AS = { ampshader.data, ampshader.size };
+    ComPtr<ID3D12Resource> vb;
+    ComPtr<ID3D12Resource> vb_upload;
 
-    pso_desc.MS = { meshshader.data, meshshader.size };
-    pso_desc.PS = { pixelshader.data, pixelshader.size };
-
-    if (flags & psoflags::transparent)
+    if (vb_size > 0)
     {
-        D3D12_RENDER_TARGET_BLEND_DESC transparency_blenddesc = CD3DX12_RENDER_TARGET_BLEND_DESC(D3D12_DEFAULT);
-        transparency_blenddesc.BlendEnable = true;
-        transparency_blenddesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
-        transparency_blenddesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+        auto vb_desc = CD3DX12_RESOURCE_DESC::Buffer(vb_size);
 
-        pso_desc.BlendState.RenderTarget[0] = transparency_blenddesc;
+        // Create vertex buffer on the default heap
+        auto defaultheap_desc = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+        ThrowIfFailed(device->CreateCommittedResource(&defaultheap_desc, D3D12_HEAP_FLAG_NONE, &vb_desc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(vb.ReleaseAndGetAddressOf())));
+
+        // Create vertex resource on the upload heap
+        auto uploadheap_desc = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+        ThrowIfFailed(device->CreateCommittedResource(&uploadheap_desc, D3D12_HEAP_FLAG_NONE, &vb_desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(vb_upload.GetAddressOf())));
+
+        {
+            uint8_t* vb_upload_start = nullptr;
+
+            // We do not intend to read from this resource on the CPU.
+            vb_upload->Map(0, nullptr, reinterpret_cast<void**>(&vb_upload_start));
+
+            // copy vertex data to upload heap
+            memcpy(vb_upload_start, datastart, vb_size);
+
+            vb_upload->Unmap(0, nullptr);
+        }
+
+        auto resource_transition = CD3DX12_RESOURCE_BARRIER::Transition(vb.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+
+        auto cmdlist = globalresources::get().cmdlist();
+
+        // copy vertex data from upload heap to default heap
+        cmdlist->CopyResource(vb.Get(), vb_upload.Get());
+        cmdlist->ResourceBarrier(1, &resource_transition);
     }
- 
-    auto psostream = CD3DX12_PIPELINE_MESH_STATE_STREAM(pso_desc);
 
-    D3D12_PIPELINE_STATE_STREAM_DESC stream_desc;
-    stream_desc.pPipelineStateSubobjectStream = &psostream;
-    stream_desc.SizeInBytes = sizeof(psostream);
+    return { vb, vb_upload };
+}
 
-    ThrowIfFailed(device->CreatePipelineState(&stream_desc, IID_PPV_ARGS(psos[name].pso.GetAddressOf())));
+ComPtr<ID3D12Resource> gfx::createtexture_default(uint width, uint height, DXGI_FORMAT format)
+{
+    auto device = globalresources::get().device();
+    auto texdesc = CD3DX12_RESOURCE_DESC::Tex2D(format, static_cast<UINT64>(width), static_cast<UINT>(height));
 
-    if (flags & psoflags::wireframe)
-    {
-        D3DX12_MESH_SHADER_PIPELINE_STATE_DESC wireframepso = pso_desc;
-        wireframepso.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
-        
-        auto psostream = CD3DX12_PIPELINE_MESH_STATE_STREAM(wireframepso);
-        D3D12_PIPELINE_STATE_STREAM_DESC stream_desc;
-        stream_desc.pPipelineStateSubobjectStream = &psostream;
-        stream_desc.SizeInBytes = sizeof(psostream);
-        ThrowIfFailed(device->CreatePipelineState(&stream_desc, IID_PPV_ARGS(psos[name].pso_wireframe.GetAddressOf())));
-    }
+    ComPtr<ID3D12Resource> texdefault;
+    auto defaultheap_desc = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    ThrowIfFailed(device->CreateCommittedResource(&defaultheap_desc, D3D12_HEAP_FLAG_NONE, &texdesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(texdefault.ReleaseAndGetAddressOf())));
+    return texdefault;
+}
 
-    if (flags & psoflags::twosided)
-    {
-        pso_desc.RasterizerState.CullMode = D3D12_CULL_MODE_FRONT;
-        auto psostream_twosides = CD3DX12_PIPELINE_MESH_STATE_STREAM(pso_desc);
+uint gfx::updatesubres(ID3D12Resource* dest, ID3D12Resource* upload, D3D12_SUBRESOURCE_DATA const* srcdata)
+{
+    auto cmdlist = globalresources::get().cmdlist();
+    return UpdateSubresources(cmdlist.Get(), dest, upload, 0, 0, 1, srcdata);
+}
 
-        D3D12_PIPELINE_STATE_STREAM_DESC stream_desc_twosides;
-        stream_desc_twosides.pPipelineStateSubobjectStream = &psostream_twosides;
-        stream_desc_twosides.SizeInBytes = sizeof(psostream_twosides);
+D3D12_GPU_VIRTUAL_ADDRESS gfx::get_perframe_gpuaddress(D3D12_GPU_VIRTUAL_ADDRESS start, std::size_t perframe_buffersize)
+{
+    auto frame_idx = globalresources::get().frameindex();
+    return start + perframe_buffersize * frame_idx;
+}
 
-        ThrowIfFailed(device->CreatePipelineState(&stream_desc_twosides, IID_PPV_ARGS(psos[name].pso_twosided.GetAddressOf())));
-    }
+void gfx::update_perframebuffer(uint8_t* mapped_buffer, void const* data_start, std::size_t const perframe_buffersize)
+{
+    auto frame_idx = globalresources::get().frameindex();
+    memcpy(mapped_buffer + perframe_buffersize * frame_idx, data_start, perframe_buffersize);
 }
