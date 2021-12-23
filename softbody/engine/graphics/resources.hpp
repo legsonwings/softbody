@@ -8,9 +8,35 @@
 #include <string>
 #include "d3dx12.h"
 
+#define NOMINMAX
+#include <assert.h>
+
 namespace gfx
 {
 	using Microsoft::WRL::ComPtr;
+
+	template <uint alignment, typename t>
+	bool isaligned(t value) { return ((uint)value & (alignment - 1)) == 0; }
+
+	template<typename t>
+	requires (sizeof(t) % 256 == 0)
+	struct constantbuffer
+	{
+		void createresource() { _buffer = create_uploadbuffer(&_mappeddata, size()); }
+
+		void data(t const* data) 
+		{
+			// constant buffer data needs to be multiple of and aligned to 256 
+			assert(isaligned<256>(data));
+			update_perframebuffer(_mappeddata, data, size()); 
+		}
+
+		uint size() const { return sizeof(t); }
+		D3D12_GPU_VIRTUAL_ADDRESS gpuaddress() const { return get_perframe_gpuaddress(_buffer->GetGPUVirtualAddress(), size()); }
+
+		uint8_t* _mappeddata = nullptr;
+		ComPtr<ID3D12Resource> _buffer;
+	};
 
 	template<typename t>
 	struct staticbuffer

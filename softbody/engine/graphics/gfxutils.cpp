@@ -2,7 +2,8 @@
 #include "globalresources.h"
 
 // todo : move functions from here to this file 
-#include "engine/DXSampleHelper.h"
+#include "engine/dxsamplehelper.h"
+
 #include "engine/engineutils.h"
 
 std::string const& gfx::generaterandom_matcolor(stdx::ext<material, bool> definition, std::optional<std::string> const& preferred_name)

@@ -112,7 +112,7 @@ void softbody::load_pipeline()
 
     // Describe and create the swap chain.
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-    swapChainDesc.BufferCount = config_properties.frame_count;
+    swapChainDesc.BufferCount = configurable_properties::frame_count;
     swapChainDesc.Width = m_width;
     swapChainDesc.Height = m_height;
     swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -140,7 +140,7 @@ void softbody::load_pipeline()
     {
         // Describe and create a render target view (RTV) descriptor heap.
         D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-        rtvHeapDesc.NumDescriptors = config_properties.frame_count;
+        rtvHeapDesc.NumDescriptors = configurable_properties::frame_count;
         rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
         rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
         ThrowIfFailed(device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
@@ -162,7 +162,7 @@ void softbody::load_pipeline()
         CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart());
 
         // Create a RTV and a command allocator for each frame.
-        for (UINT n = 0; n < config_properties.frame_count; n++)
+        for (UINT n = 0; n < configurable_properties::frame_count; n++)
         {
             ThrowIfFailed(m_swapChain->GetBuffer(n, IID_PPV_ARGS(&m_renderTargets[n])));
             device->CreateRenderTargetView(m_renderTargets[n].Get(), nullptr, rtvHandle);

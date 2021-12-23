@@ -1,14 +1,16 @@
 #include "softbodydemo.h"
-#include "gameutils.h"
+#include "stdx/stdx.h"
 #include "engine/sharedconstants.h"
 #include "engine/dxsample.h"
-#include "stdx/stdx.h"
 #include "engine/engineutils.h"
 #include "engine/geometry/geoutils.h"
+#include "engine/graphics/gfxcore.h"
 #include "engine/graphics/body.h"
 #include "engine/graphics/gfxmemory.h"
 #include "engine/graphics/globalresources.h"
 #include "engine/geometry/beziershapes.h"
+
+#include "gameutils.h"
 
 #include <set>
 #include <utility>
@@ -120,7 +122,17 @@ gfx::resourcelist soft_body::load_assets_and_geometry()
     using geometry::cube;
     using geometry::sphere;
     using gfx::bodyparams;
+    using gfx::material;
     using geometry::ffd_object;
+
+    auto& globalres = gfx::globalresources::get();
+    auto const ballmat = material().roughness(0.95f).diffuse(gfx::color::white).fresnelr(vector3{ 0.0f });
+    auto const transparent_ballmat = material().roughness(0.f).diffuse({ 0.7f, 0.9f, 0.6f, 0.1f }).fresnelr(vector3{ 1.f });
+
+    globalres.addmat("ball", ballmat);
+    globalres.addmat("transparentball", transparent_ballmat);
+    globalres.addmat("transparentball_twosided", transparent_ballmat, true);
+    globalres.addmat("room", material().roughness(0.99f).diffuse({ 0.5f, 0.3f, 0.2f, 1.f }).fresnelr(vector3{ 0.f }));
 
     cbuffer.createresources<gfx::sceneconstants>();
 

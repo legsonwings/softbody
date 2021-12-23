@@ -1,8 +1,8 @@
 #include "common.hlsli"
 
-StructuredBuffer<VertexIn> triangle_verts : register(t0);
+StructuredBuffer<vertexin> triangle_verts : register(t0);
 
-texturessvertex GetVertAttribute(VertexIn vertex)
+texturessvertex getvertattribute(vertexin vertex)
 {
     texturessvertex outvert;
     outvert.positionh = mul(float4(vertex.position, 1.f), objectconstants.mvpmatx);
@@ -24,13 +24,13 @@ void main(
     SetMeshOutputCounts(numprims * 3, numprims);
 
     // The out buffers are local to group but input buffer is global
-    int v0Idx = gtid * 3;
-    int v1Idx = v0Idx + 1;
-    int v2Idx = v0Idx + 2;
+    int v0idx = gtid * 3;
+    int v1idx = v0idx + 1;
+    int v2idx = v0idx + 2;
 
-    tris[gtid] = uint3(v0Idx, v1Idx, v2Idx);
+    tris[gtid] = uint3(v0idx, v1idx, v2idx);
         
-    verts[v0Idx] = GetVertAttribute(triangle_verts[v0Idx]);
-    verts[v1Idx] = GetVertAttribute(triangle_verts[v1Idx]);
-    verts[v2Idx] = GetVertAttribute(triangle_verts[v2Idx]);
+    verts[v0idx] = getvertattribute(triangle_verts[v0idx]);
+    verts[v1idx] = getvertattribute(triangle_verts[v1idx]);
+    verts[v2idx] = getvertattribute(triangle_verts[v2idx]);
 }

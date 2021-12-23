@@ -122,6 +122,7 @@ namespace gfx
             : matx(m.Transpose()), normalmatx(m.Invert()), mvpmatx((m* v.view* v.proj).Transpose()), mat(_material) {}
     };
 
+    // todo : replace with std::alignas
     _declspec(align(256u)) struct objectconstants : public instance_data
     {
         objectconstants() = default;

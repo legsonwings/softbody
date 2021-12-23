@@ -1,7 +1,6 @@
 #pragma once
 
-#include "DXSample.h"
-#include "interfaces/engineinterface.h"
+#include "dxsample.h"
 
 #include "StepTimer.h"
 #include "simplemath.h"
@@ -12,7 +11,7 @@
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 
-class softbody : public DXSample, public game_engine
+class softbody : public DXSample
 {
 public:
     softbody(gamedata const& data = {});
@@ -47,9 +46,6 @@ private:
 
     StepTimer m_timer;
     std::unique_ptr<game_base> game;
-
-    // todo : is this useful anymore?
-    configurable_properties config_properties;
 
     unsigned m_frameCounter;
 

@@ -18,30 +18,15 @@
                   DescriptorTable(SRV(t2), visibility = SHADER_VISIBILITY_PIXEL ), \
                   StaticSampler(s0, visibility = SHADER_VISIBILITY_PIXEL)"
 
-// todo : these should be array of structs for ease of debugging and efficiency
-struct payload_default
-{
-    uint startingvert_indices[MAX_MSGROUPS_PER_ASGROUP];
-    uint numprims[MAX_MSGROUPS_PER_ASGROUP];
-};
-
-struct payload_instances
-{
-    uint instance_indices[MAX_MSGROUPS_PER_ASGROUP];
-    uint starting_vertindices[MAX_MSGROUPS_PER_ASGROUP];
-    uint numprims[MAX_MSGROUPS_PER_ASGROUP];
-};
-
-struct msdata_instanced
+struct msdata
 {
     uint start;
     uint numprims;
 };
 
-// todo : can we just use array instead of the outer struct?
-struct payload_instanced
+struct payloaddata
 {
-    msdata_instanced data[MAX_MSGROUPS_PER_ASGROUPTRI];
+    msdata data[MAX_MSGROUPS_PER_ASGROUP];
 };
 
 struct dispatch_parameters
@@ -52,14 +37,14 @@ struct dispatch_parameters
     uint numprims_perinstance;
 };
 
-struct VertexIn
+struct vertexin
 {
     float3 position;
     float3 normal;
     float2 texcoord;
 };
 
-struct MeshShaderVertex
+struct meshshadervertex
 {
     uint instanceid : instance_id;
     float4 positionh : SV_Position;

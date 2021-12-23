@@ -144,7 +144,7 @@ vecfield2<vd, l> advect2d(vecfield2<vd, l> const& a, vecfield22<l> const& v, flo
 			auto const cell = idx::to1d<l - 1>({ i, j });
 
 			// find position at -dt
-			stdx::vec2 const xy = stdx::clamped(stdx::vec2{ static_cast<float>(i), static_cast<float>(j) } - v[cell] * dt, 0.5f, l - 1.5f);
+			stdx::vec2 const xy = stdx::clamp(stdx::vec2{ static_cast<float>(i), static_cast<float>(j) } - v[cell] * dt, 0.5f, l - 1.5f);
 
 			// bilinearly interpolate the property across 4 neighbouring cells
 			idx const lt2d = { static_cast<int>(xy[0]), static_cast<int>(xy[1]) };

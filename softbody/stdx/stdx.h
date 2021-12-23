@@ -4,6 +4,7 @@
 #include "assert.h"
 #endif 
 
+#include <cmath>
 #include <array>
 #include <vector>
 #include <limits>
@@ -103,27 +104,19 @@ constexpr auto castas(std::array<s_t, n> a)
 	return r;
 }
 
-// todo : ensure v_t is arithmetic
 template<indexablecontainer_c l_t, indexablecontainer_c r_t>
+requires stdx::arithmetic_c<containervalue_t<l_t>> && stdx::arithmetic_c<containervalue_t<r_t>>
 constexpr auto dot(l_t&& a, r_t&& b)
 {
-	using v_t = std::decay_t<l_t>::value_type;
+	using v_t = containervalue_t<l_t>;
 	v_t r = v_t(0);
 	for (uint i(0); i < std::min(a.size(), b.size()); ++i) r += a[i] * b[i];
 	return r;
 }
 
-// todo : can we make these algorithms return the correct type
-template<arithmetic_c t, uint n>
-constexpr std::array<t, n> clamp(std::array<t, n> a, t l, t h)
-{
-	std::array<t, n> r;
-	for (uint i(0); i < n; ++i) r[i] = (a[i] < l ? l : (a[i] > h ? h : a[i]));
-	return r;
-}
-
 template<indexablecontainer_c t>
-constexpr auto clamped(t&& a, containervalue_t<t> l, containervalue_t<t> h)
+requires stdx::arithmetic_c<containervalue_t<t>>
+constexpr auto clamp(t&& a, containervalue_t<t> l, containervalue_t<t> h)
 {
 	std::decay_t<t> r;
 	ensuresize(r, a.size());
@@ -132,13 +125,14 @@ constexpr auto clamped(t&& a, containervalue_t<t> l, containervalue_t<t> h)
 }
 
 template<indexablecontainer_c t>
-constexpr auto clamp(t& a, containervalue_t<t> l, containervalue_t<t> h)
+requires stdx::arithmetic_c<containervalue_t<t>>
+constexpr void clamp(t& a, containervalue_t<t> l, containervalue_t<t> h)
 {
 	for (uint i(0); i < a.size(); ++i) a[i] = (a[i] < l ? l : (a[i] > h ? h : a[i]));
 }
 
 template<indexablecontainer_c t, typename f_t>
-requires std::invocable<f_t, typename std::decay_t<t>::value_type>
+requires std::invocable<f_t, containervalue_t<t>>
 constexpr auto unaryop(t&& a, f_t f)
 {
 	std::decay_t<t> r;
@@ -174,18 +168,18 @@ struct triindex
 	static triindex to3d(uint idx1d)
 	{
 		// determine which row the control point belongs to
-		// how was this derived?
-		float const temp = (sqrt((static_cast<float>(idx1d) + 1.f) * 8.f + 1.f) - 1.f) / 2.0f - tolerance<>;
+		// this was derived empirically
+		float const temp = (std::sqrt((static_cast<float>(idx1d) + 1.f) * 8.f + 1.f) - 1.f) / 2.0f - tolerance<>;
 
 		// convert to 0 based index
 		uint const row = static_cast<uint>(ceil(temp)) - 1u;
 
 		// this will give the index of starting vertex of the row
 		// number of vertices till row n(0-based) is n(n+1)/2
-		uint const rowStartVertex = (row) * (row + 1) / 2;
+		uint const rowstartvertex = (row) * (row + 1) / 2;
 
 		uint const j = n - row;
-		uint const k = idx1d - rowStartVertex;
+		uint const k = idx1d - rowstartvertex;
 		uint const i = n - j - k;
 
 		return triindex(i, j, k);
@@ -299,9 +293,9 @@ private:
 
 	std::pair<uint, uint> container(uint idx) const
 	{
-		static constexpr auto invalid = std::make_pair(std::numeric_limits<uint>::max(), std::numeric_limits<uint>::max());
+		static constexpr auto invalidcont = std::make_pair(invalid<uint>(), invalid<uint>());
 		uint sum = 0;
-		std::pair<uint, uint> ret = invalid;
+		std::pair<uint, uint> ret = invalidcont;
 		for (uint i = 0; i < sizes.size(); ++i)
 		{
 			sum += sizes[i];
@@ -348,7 +342,6 @@ private:
 
 template<typename t, typename... args_t>
 auto makejoin(args_t&... _args) { return join<t, args_t...>(_args...); }
-
 }
 
 namespace std

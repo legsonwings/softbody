@@ -2,7 +2,6 @@
 #include "globalresources.h"
 #include "engine/sharedconstants.h"
 
-#include <string>
 #include <functional>
 
 namespace gfx
@@ -29,8 +28,7 @@ namespace gfx
         auto const vbupload = _vertexbuffer.createresources(get_vertices(body));
         _instancebuffer.createresource(get_instancedata(body));
 
-        // todo : revise these after making instancing uniform as instancing is different for lines and tris
-        assert(_vertexbuffer.count() < INSTANCE_ASGROUP_SIZE * MAX_MSGROUPS_PER_ASGROUP * topologyconstants<prim_t>::maxprims_permsgroup * topologyconstants<prim_t>::numverts_perprim);
+        assert(_vertexbuffer.count() < ASGROUP_SIZE * MAX_MSGROUPS_PER_ASGROUP * topologyconstants<prim_t>::maxprims_permsgroup * topologyconstants<prim_t>::numverts_perprim);
 
         // return the upload buffer so that engine can keep it alive until vertex data has been uploaded to gpu
         return { vbupload };
@@ -69,9 +67,8 @@ namespace gfx
         bindings.rootconstants.slot = 2;
         bindings.rootconstants.values.resize(sizeof(dispatch_params));
 
-        // todo : correct these after making instancing uniform as instancing is different for lines and tris
-        uint const numasthreads = static_cast<uint>(std::ceil(static_cast<float>(dispatch_params.numprims) / static_cast<float>(INSTANCE_ASGROUP_SIZE * dispatch_params.maxprims_permsgroup)));
-
+        uint const numasthreads = static_cast<uint>(std::ceil(static_cast<float>(dispatch_params.numprims) / static_cast<float>(ASGROUP_SIZE * dispatch_params.maxprims_permsgroup)));
+        assert(numasthreads < 128);
         memcpy(bindings.rootconstants.values.data(), &dispatch_params, sizeof(dispatch_params));
         dispatch(bindings, params.wireframe, gfx::globalresources::get().mat(getparams().matname).ex(), numasthreads);
     }
@@ -102,7 +99,7 @@ namespace gfx
 
         _texture.createresource(0, body.texturedata(), gfx::globalresources::get().srvheap().Get());
 
-        assert(_vertexbuffer.count() < AS_GROUP_SIZE * MAX_MSGROUPS_PER_ASGROUP * MAX_TRIANGLES_PER_GROUP * 3);
+        assert(_vertexbuffer.count() < ASGROUP_SIZE * MAX_MSGROUPS_PER_ASGROUP * topologyconstants<prim_t>::maxprims_permsgroup * topologyconstants<prim_t>::numverts_perprim);
         return {};
     }
 
@@ -125,7 +122,7 @@ namespace gfx
 
         _vertexbuffer.updateresource(get_vertices(body));
         _texture.updateresource(body.texturedata());
-        assert(_vertexbuffer.count() < AS_GROUP_SIZE * MAX_MSGROUPS_PER_ASGROUP * MAX_TRIANGLES_PER_GROUP * 3);
+        assert(_vertexbuffer.count() < ASGROUP_SIZE * MAX_MSGROUPS_PER_ASGROUP * topologyconstants<prim_t>::maxprims_permsgroup * topologyconstants<prim_t>::numverts_perprim);
 
         update_constbuffer();
 

@@ -32,7 +32,7 @@ class globalresources
 	std::unordered_map<std::string, stdx::ext<material, bool>> _materials;
 	stdx::ext<material, bool> _defaultmat{ {}, false };
 	std::unordered_map<DXGI_FORMAT, uint> _dxgisizes{ {DXGI_FORMAT_R8G8B8A8_UNORM, 4} };
-	D3DX12_MESH_SHADER_PIPELINE_STATE_DESC _psodesc;
+	D3DX12_MESH_SHADER_PIPELINE_STATE_DESC _psodesc{};
 
 	std::wstring assetfullpath(std::wstring const& path) const;
 public:
@@ -55,7 +55,4 @@ public:
 
 	static globalresources& get() { static globalresources res; return res; }
 };
-
-
-
 }
