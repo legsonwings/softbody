@@ -49,9 +49,7 @@ namespace gfx
 
     struct renderparams
     {
-        // todo : this is not used now
         bool wireframe = false;
-        D3D12_GPU_VIRTUAL_ADDRESS cbaddress;
     };
 
     struct buffer

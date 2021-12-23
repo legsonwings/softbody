@@ -2,7 +2,6 @@
 
 #include "engine/engineutils.h"
 #include "engine/graphics/gfxcore.h"
-#include "engine/graphics/gfxmemory.h"
 #include "engine/SimpleCamera.h"
 
 #include <string>
@@ -33,7 +32,6 @@ public:
 
 protected:
 	SimpleCamera camera;
-	constant_buffer cbuffer;
 
 	void updateview(float dt);
 };

@@ -60,7 +60,7 @@ namespace gfx
         dispatch_params.maxprims_permsgroup = topologyconstants<primitive_t>::maxprims_permsgroup;
 
         resource_bindings bindings;
-        bindings.constant = { 0, params.cbaddress };
+        bindings.constant = { 0, globalresources::get().cbuffer().gpuaddress() };
         bindings.vertex = { 3, _vertexbuffer.gpuaddress() };
         bindings.instance = { 4, _instancebuffer.gpuaddress() };
         bindings.pipelineobjs = foundpso->second;
@@ -93,10 +93,9 @@ namespace gfx
     template<typename body_t, topology primitive_t>
     inline std::vector<ComPtr<ID3D12Resource>> body_dynamic<body_t, primitive_t>::create_resources()
     {
-        cbuffer.createresources<objectconstants>();
+        _cbuffer.createresource();
         auto const& verts = get_vertices(body);
         _vertexbuffer.createresource(verts);
-
         _texture.createresource(0, body.texturedata(), gfx::globalresources::get().srvheap().Get());
 
         assert(_vertexbuffer.count() < ASGROUP_SIZE * MAX_MSGROUPS_PER_ASGROUP * topologyconstants<prim_t>::maxprims_permsgroup * topologyconstants<prim_t>::numverts_perprim);
@@ -122,10 +121,9 @@ namespace gfx
 
         _vertexbuffer.updateresource(get_vertices(body));
         _texture.updateresource(body.texturedata());
+        _cbuffer.updateresource(objectconstants{ matrix::CreateTranslation(body.gcenter()), globalresources::get().view(), globalresources::get().mat(getparams().matname) });
         assert(_vertexbuffer.count() < ASGROUP_SIZE * MAX_MSGROUPS_PER_ASGROUP * topologyconstants<prim_t>::maxprims_permsgroup * topologyconstants<prim_t>::numverts_perprim);
-
-        update_constbuffer();
-
+        
         struct
         {
             uint32_t numprims;
@@ -139,8 +137,8 @@ namespace gfx
         dispatch_params.maxprims_permsgroup = topologyconstants<primitive_t>::maxprims_permsgroup;
 
         resource_bindings bindings;
-        bindings.constant = { 0, params.cbaddress };
-        bindings.objectconstant = { 1, cbuffer.get_gpuaddress() };
+        bindings.constant = { 0, globalresources::get().cbuffer().gpuaddress() };
+        bindings.objectconstant = { 1, _cbuffer.gpuaddress() };
         bindings.vertex = { 3, _vertexbuffer.gpuaddress() };
         bindings.pipelineobjs = foundpso->second;
         bindings.rootconstants.slot = 2;
@@ -151,12 +149,5 @@ namespace gfx
 
         memcpy(bindings.rootconstants.values.data(), &dispatch_params, sizeof(dispatch_params));
         dispatch(bindings, params.wireframe, gfx::globalresources::get().mat(getparams().matname).ex());
-    }
-
-    template<typename body_t, topology primitive_t>
-    inline void body_dynamic<body_t, primitive_t>::update_constbuffer()
-    {
-        objectconstants objconsts = { matrix::CreateTranslation(body.gcenter()), globalresources::get().view(), globalresources::get().mat(getparams().matname) };
-        cbuffer.set_data(&objconsts);
     }
 }

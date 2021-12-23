@@ -38,6 +38,18 @@ bool constexpr isvalid(t const& val) { return !nearlyequal(std::numeric_limits<t
 template<typename t>
 using containervalue_t = std::decay_t<t>::value_type;
 
+template <uint alignment, typename t>
+constexpr bool isaligned(t value) { return ((uint)value & (alignment - 1)) == 0; }
+
+constexpr bool ispowtwo(uint value) { return (value & (value - 1)) == 0; }
+
+constexpr uint nextpowoftwomultiple(uint value, uint multipleof) 
+{
+	assert(((multipleof & (multipleof - 1)) == 0));
+	auto const mask = multipleof - 1;
+	return (value + mask) & ~mask;
+}
+
 constexpr int ceil(float value)
 {
 	int intval = static_cast<int>(value);
