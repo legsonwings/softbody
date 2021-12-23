@@ -31,12 +31,13 @@ void gfx::globalresources::init()
     srvheapdesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     srvheapdesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
     _srvheap = createsrvdescriptorheap(srvheapdesc);
+    _cbuffer.createresource();
 }
 
 gfx::viewinfo& gfx::globalresources::view() { return _view; }
-gfx::sceneconstants& gfx::globalresources::globals() { return _constbufferdata; }
 gfx::psomapref gfx::globalresources::psomap() const { return _psos; }
 gfx::matmapref gfx::globalresources::matmap() const { return _materials; }
+gfx::constantbuffer<gfx::sceneconstants>& gfx::globalresources::cbuffer() { return _cbuffer; }
 ComPtr<ID3D12DescriptorHeap>& gfx::globalresources::srvheap() { return _srvheap; }
 ComPtr<ID3D12Device2>& gfx::globalresources::device() { return _device; }
 ComPtr<ID3D12GraphicsCommandList6>& gfx::globalresources::cmdlist() { return _commandlist; }

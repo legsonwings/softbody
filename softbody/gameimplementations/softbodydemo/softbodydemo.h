@@ -1,9 +1,7 @@
 #pragma once
 
 #include "gamebase.h"
-#include "engine/SimpleMath.h"
-#include "Engine/geometry/ffd.h"
-#include "Engine/geometry/beziershapes.h"
+#include "engine/geometry/ffd.h"
 
 import shapes;
 class game_engine;

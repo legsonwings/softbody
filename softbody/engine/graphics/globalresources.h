@@ -2,6 +2,7 @@
 
 #include "stdx/stdx.h"
 #include "gfxcore.h"
+#include "resources.hpp"
 
 #include <wrl.h>
 #include "d3dx12.h"
@@ -24,7 +25,7 @@ class globalresources
 	viewinfo _view;
 	uint _frameindex{0};
 	std::wstring _assetspath;
-	sceneconstants _constbufferdata;
+	constantbuffer<sceneconstants> _cbuffer;
 	ComPtr<ID3D12DescriptorHeap> _srvheap;
 	ComPtr<ID3D12Device2> _device;
 	ComPtr<ID3D12GraphicsCommandList6> _commandlist;
@@ -39,9 +40,9 @@ public:
 	void init();
 
 	viewinfo& view();
-	sceneconstants& globals();
 	psomapref psomap() const;
 	matmapref matmap() const;
+	constantbuffer<sceneconstants>& cbuffer();
 	ComPtr<ID3D12Device2>& device();
 	ComPtr<ID3D12DescriptorHeap>& srvheap();
 	ComPtr<ID3D12GraphicsCommandList6>& cmdlist();

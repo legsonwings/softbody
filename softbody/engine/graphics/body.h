@@ -92,7 +92,7 @@ namespace gfx
         using vertextype = typename topologyconstants<prim_t>::vertextype;
 
         body_t body;
-        constant_buffer cbuffer;
+        constantbuffer<objectconstants> _cbuffer;
         dynamicbuffer<vertextype> _vertexbuffer;
         texture _texture{ 0, DXGI_FORMAT_R8G8B8A8_UNORM };
 

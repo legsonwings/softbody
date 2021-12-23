@@ -6,7 +6,32 @@
 #include <wrl.h>
 #include <d3d12.h>
 
-constexpr unsigned cb_alignment = D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
+#include <cstddef>
+
+struct alignedlinearallocator
+{
+	alignedlinearallocator(uint alignment);
+
+	template<typename t>
+	t* allocate()
+	{
+		uint const alignedsize = stdx::nextpowoftwomultiple(sizeof(t), _alignment);
+
+		assert(canallocate(alignedsize));
+		t* r = reinterpret_cast<t*>(_currentpos);
+		*r = t{};
+		_currentpos += alignedsize;
+		return r;
+	}
+private:
+
+	bool canallocate(uint size) const;
+
+	static constexpr uint buffersize = 51200;
+	std::byte _buffer[buffersize];
+	std::byte* _currentpos = &_buffer[0];
+	uint _alignment;
+};
 
 struct cb_memory
 {
