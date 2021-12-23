@@ -1,6 +1,6 @@
 #pragma once
 
-#include "geodefines.h"
+#include "engine/core.h"
 #include "engine/simplemath.h"
 #include "stdx/stdx.h"
 

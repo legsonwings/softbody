@@ -3,26 +3,21 @@
 
 #include "engine/dxsamplehelper.h"
 
+#define NOMINMAX
+#include <assert.h>
+
 void gfx::globalresources::init() 
 {
     addpso("lines", L"default_as.cso", L"lines_ms.cso", L"basic_ps.cso");
     addpso("default", L"default_as.cso", L"default_ms.cso", L"default_ps.cso");
     addpso("texturess", L"", L"texturess_ms.cso", L"texturess_ps.cso");
-    addpso("instancedlines", L"instances_asold.cso", L"linesinstances_ms.cso", L"basic_ps.cso");
-    addpso("instanced", L"instances_as.cso", L"instances_ms.cso", L"instances_ps.cso");
+    addpso("instancedlines", L"default_as.cso", L"linesinstances_ms.cso", L"basic_ps.cso");
+    addpso("instanced", L"default_as.cso", L"instances_ms.cso", L"instances_ps.cso");
     addpso("transparent", L"default_as.cso", L"default_ms.cso", L"default_ps.cso", psoflags::transparent);
     addpso("transparent_twosided", L"default_as.cso", L"default_ms.cso", L"default_ps.cso", psoflags::transparent | psoflags::twosided);
     addpso("wireframe", L"default_as.cso", L"default_ms.cso", L"default_ps.cso", psoflags::wireframe | psoflags::transparent);
-    addpso("instancedtransparent", L"instances_as.cso", L"instances_ms.cso", L"instances_ps.cso", psoflags::transparent);
+    addpso("instancedtransparent", L"default_as.cso", L"instances_ms.cso", L"instances_ps.cso", psoflags::transparent);
 
-    // todo : move these materials to specific game
-    auto const ballmat = material().roughness(0.95f).diffuse(gfx::color::white).fresnelr(vector3{ 0.0f });
-    auto const transparent_ballmat = material().roughness(0.f).diffuse({ 0.7f, 0.9f, 0.6f, 0.1f }).fresnelr(vector3{ 1.f });
-
-    addmat("ball", ballmat);
-    addmat("transparentball", transparent_ballmat);
-    addmat("transparentball_twosided", transparent_ballmat, true);
-    addmat("room", material().roughness(0.99f).diffuse({ 0.5f, 0.3f, 0.2f, 1.f }).fresnelr(vector3{ 0.f }));
     addmat("black", material().diffuse(gfx::color::black));
     addmat("white", material().diffuse(gfx::color::white));
     addmat("red", material().diffuse(gfx::color::red));
@@ -73,7 +68,6 @@ void gfx::globalresources::addpso(std::string const& name, std::wstring const& a
 
     shader ampshader, meshshader, pixelshader;
 
-    // todo : cache file reads
     if (!as.empty())
         ReadDataFromFile(assetfullpath(as).c_str(), &ampshader.data, &ampshader.size);
 
@@ -81,7 +75,7 @@ void gfx::globalresources::addpso(std::string const& name, std::wstring const& a
     ReadDataFromFile(assetfullpath(ps).c_str(), &pixelshader.data, &pixelshader.size);
 
     // pull root signature from the precompiled mesh shaders.
-    // todo : root signatures willbe duplicated in case shaders share root sig or same shader is used to create multiple psos
+    // todo : root signatures will be duplicated in case shaders share root sig or same shader is used to create multiple psos
     ThrowIfFailed(_device->CreateRootSignature(0, meshshader.data, meshshader.size, IID_PPV_ARGS(_psos[name].root_signature.GetAddressOf())));
 
     D3DX12_MESH_SHADER_PIPELINE_STATE_DESC pso_desc = _psodesc;

@@ -1,12 +1,11 @@
-#include "Common.hlsli"
+#include "common.hlsli"
 
-struct vertexin
+struct linevertexin
 {
     float3 position;
-    float intensity;
 };
 
-StructuredBuffer<vertexin> in_vertices : register(t0);
+StructuredBuffer<linevertexin> in_vertices : register(t0);
 
 struct vertexout
 {
@@ -19,23 +18,23 @@ struct vertexout
 void main(
     uint gtid : SV_GroupThreadID,
     uint gid : SV_GroupID,
-    in payload payload_default payload,
+    in payload payloaddata payload,
     out indices uint2 lines[MAX_LINES_PER_GROUP],
     out vertices vertexout verts[MAX_LINES_PER_GROUP * 2]
 )
 {
-    uint const num_prims = payload.numprims[gid];
+    uint const num_prims = payload.data[gid].numprims;
     SetMeshOutputCounts(num_prims * 2, num_prims);
 
     if (gtid < num_prims)
     {
-        uint const outv0Idx = gtid * 2;
-        uint const outv1Idx = outv0Idx + 1;
+        uint const outv0idx = gtid * 2;
+        uint const outv1idx = outv0idx + 1;
 
-        lines[gtid] = uint2(outv0Idx, outv1Idx);
-        uint const inputvert_start = payload.startingvert_indices[gid] + gtid * 2;
+        lines[gtid] = uint2(outv0idx, outv1idx);
+        uint const inputvert_start = payload.data[gid].start + gtid * 2;
 
-        verts[outv0Idx].position = mul(float4(in_vertices[inputvert_start].position, 1), objectconstants.mvpmatx);
-        verts[outv1Idx].position = mul(float4(in_vertices[inputvert_start + 1].position, 1), objectconstants.mvpmatx);
+        verts[outv0idx].position = mul(float4(in_vertices[inputvert_start].position, 1), objectconstants.mvpmatx);
+        verts[outv1idx].position = mul(float4(in_vertices[inputvert_start + 1].position, 1), objectconstants.mvpmatx);
     }
 }

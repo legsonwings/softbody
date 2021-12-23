@@ -7,10 +7,8 @@
     <FxCompile Include="engine\assets\default_ps.hlsl" />
     <FxCompile Include="engine\assets\default_as.hlsl" />
     <FxCompile Include="engine\assets\default_ms.hlsl" />
-    <FxCompile Include="engine\assets\instances_asold.hlsl" />
     <FxCompile Include="engine\assets\instances_ms.hlsl" />
     <FxCompile Include="engine\assets\lines_ms.hlsl" />
-    <FxCompile Include="engine\assets\instances_as.hlsl" />
     <FxCompile Include="engine\assets\texturess_ps.hlsl" />
     <FxCompile Include="engine\assets\texturess_ms.hlsl" />
   </ItemGroup>
@@ -39,9 +37,6 @@
     <ClCompile Include="gameinterfaces\gameutils.cpp" />
     <ClCompile Include="gameimplementations\fluidsimulation\fluidsimulation.ixx" />
     <ClCompile Include="engine\cursor.cpp" />
-    <ClCompile Include="engine\ui\canvas.cpp" />
-    <ClCompile Include="engine\ui\image.cpp" />
-    <ClCompile Include="engine\ui\uicore.cpp" />
     <ClCompile Include="engine\graphics\globalresources.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -74,9 +69,6 @@
     <ClInclude Include="engine\sharedconstants.h" />
     <ClInclude Include="gameimplementations\fluidsimulation\fluidcore.h" />
     <ClInclude Include="engine\cursor.h" />
-    <ClInclude Include="engine\ui\canvas.h" />
-    <ClInclude Include="engine\ui\image.h" />
-    <ClInclude Include="engine\ui\uicore.h" />
     <ClInclude Include="engine\core.h" />
     <ClInclude Include="stdx\stdxcore.h" />
     <ClInclude Include="stdx\vec.h" />
