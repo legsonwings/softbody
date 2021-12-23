@@ -1,27 +1,21 @@
 #include "softbodydemo.h"
 #include "stdx/stdx.h"
-#include "engine/sharedconstants.h"
-#include "engine/dxsample.h"
 #include "engine/engineutils.h"
-#include "engine/geometry/geoutils.h"
-#include "engine/graphics/gfxcore.h"
 #include "engine/graphics/body.h"
-#include "engine/graphics/gfxmemory.h"
+#include "engine/graphics/gfxcore.h"
 #include "engine/graphics/globalresources.h"
-#include "engine/geometry/beziershapes.h"
 
 #include "gameutils.h"
 
-#include <set>
 #include <utility>
 #include <ranges>
 #include <algorithm>
 #include <functional>
+#include <unordered_set>
 
 namespace game_creator
 {
-    template <>
-    std::unique_ptr<game_base> create_instance<game_types::softbodydemo>(gamedata const& data) { return std::move(std::make_unique<soft_body>(data)); }
+    template<> std::unique_ptr<game_base> create_instance<game_types::softbodydemo>(gamedata const& data) { return std::move(std::make_unique<soft_body>(data)); }
 }
 
 namespace gameparams
@@ -41,7 +35,7 @@ geometry::ffddata createffddata(geometry::shapeffd_c auto shape)
 
 std::vector<vector3> fillwithspheres(geometry::aabb const& box, uint count, float radius)
 {
-    std::set<uint> occupied;
+    std::unordered_set<uint> occupied;
     std::vector<vector3> spheres;
 
     auto const roomspan = (box.span() - stdx::tolerance<vector3>);
@@ -105,16 +99,14 @@ void soft_body::update(float dt)
     for (auto b : stdx::makejoin<gfx::bodyinterface>(balls, reflines)) b->update(dt);
 
     gfx::globalresources::get().view().proj = camera.GetProjectionMatrix(XM_PI / 3.0f);
-    auto &constbufferdata = gfx::globalresources::get().globals();
-
-    constbufferdata.campos = camera.GetCurrentPosition();
-    cbuffer.set_data(&constbufferdata);
+    gfx::globalresources::get().cbuffer().data().campos = camera.GetCurrentPosition();
+    gfx::globalresources::get().cbuffer().updateresource();
 }
 
 void soft_body::render(float dt)
 {
-    for (auto b : stdx::makejoin<gfx::bodyinterface>(boxes, balls)) b->render(dt, { wireframe_toggle, cbuffer.get_gpuaddress() });
-    if (debugviz_toggle) for (auto b : stdx::makejoin<gfx::bodyinterface>(reflines, refstaticlines)) b->render(dt, { wireframe_toggle, cbuffer.get_gpuaddress() });
+    for (auto b : stdx::makejoin<gfx::bodyinterface>(boxes, balls)) b->render(dt, { wireframe_toggle });
+    if (debugviz_toggle) for (auto b : stdx::makejoin<gfx::bodyinterface>(reflines, refstaticlines)) b->render(dt, { wireframe_toggle });
 }
 
 gfx::resourcelist soft_body::load_assets_and_geometry()
@@ -134,25 +126,25 @@ gfx::resourcelist soft_body::load_assets_and_geometry()
     globalres.addmat("transparentball_twosided", transparent_ballmat, true);
     globalres.addmat("room", material().roughness(0.99f).diffuse({ 0.5f, 0.3f, 0.2f, 1.f }).fresnelr(vector3{ 0.f }));
 
-    cbuffer.createresources<gfx::sceneconstants>();
-
-    auto& constbufferdata = gfx::globalresources::get().globals();
+    auto& globals = gfx::globalresources::get().cbuffer().data();
 
     // initialize lights
-    constbufferdata.numdirlights = 1;
-    constbufferdata.numpointlights = 2;
+    globals.numdirlights = 1;
+    globals.numpointlights = 2;
 
-    constbufferdata.ambient = { 0.1f, 0.1f, 0.1f, 1.0f };
-    constbufferdata.lights[0].direction = vector3{ 0.3f, -0.27f, 0.57735f }.Normalized();
-    constbufferdata.lights[0].color = { 0.2f, 0.2f, 0.2f };
+    globals.ambient = { 0.1f, 0.1f, 0.1f, 1.0f };
+    globals.lights[0].direction = vector3{ 0.3f, -0.27f, 0.57735f }.Normalized();
+    globals.lights[0].color = { 0.2f, 0.2f, 0.2f };
 
-    constbufferdata.lights[1].position = { -15.f, 15.f, -15.f };
-    constbufferdata.lights[1].color = { 1.f, 1.f, 1.f };
-    constbufferdata.lights[1].range = 40.f;
+    globals.lights[1].position = { -15.f, 15.f, -15.f };
+    globals.lights[1].color = { 1.f, 1.f, 1.f };
+    globals.lights[1].range = 40.f;
 
-    constbufferdata.lights[2].position = { 15.f, 15.f, -15.f };
-    constbufferdata.lights[2].color = { 1.f, 1.f, 1.f };
-    constbufferdata.lights[2].range = 40.f;
+    globals.lights[2].position = { 15.f, 15.f, -15.f };
+    globals.lights[2].color = { 1.f, 1.f, 1.f };
+    globals.lights[2].range = 40.f;
+
+    gfx::globalresources::get().cbuffer().updateresource();
 
     boxes.emplace_back(cube{ {vector3{0.f, 0.f, 0.f}}, vector3{40.f} }, &cube::vertices_flipped, &cube::instancedata, bodyparams{ "instanced" });
     

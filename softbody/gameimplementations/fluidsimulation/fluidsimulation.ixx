@@ -13,8 +13,6 @@ module;
 #include "engine/graphics/body.h"
 #include "engine/geometry/geocore.h"
 #include "engine/graphics/gfxcore.h"
-#include "engine/geometry/geoutils.h"
-#include "engine/graphics/gfxmemory.h"
 #include "engine/graphics/globalresources.h"
 #include "engine/interfaces/bodyinterface.h"
 
@@ -98,7 +96,6 @@ private:
 
     gfx::resourcelist load_assets_and_geometry() override
     {
-        cbuffer.createresources<gfx::sceneconstants>();
         _texture->_texdata.reserve(_texture->_dims[0] * _texture->_dims[1] * _texture->_texelsize);
 
         updatetexture();
@@ -110,11 +107,8 @@ private:
         game_base::update(dt);
 
         gfx::globalresources::get().view().proj = camera.GetOrthoProjectionMatrix();
-
-        auto& constbufferdata = gfx::globalresources::get().globals();
-        constbufferdata.campos = camera.GetCurrentPosition();
-
-        cbuffer.set_data(&constbufferdata);
+        gfx::globalresources::get().cbuffer().data().campos = camera.GetCurrentPosition();
+        gfx::globalresources::get().cbuffer().updateresource();
 
         cursor.tick(dt);
 
@@ -186,13 +180,12 @@ private:
 
     void render(float dt) override
     {
-       _texture.render(dt, { false, cbuffer.get_gpuaddress() });
+       _texture.render(dt, { false });
     }
 };
 }
 
 namespace game_creator
 {
-    template <>
-    std::unique_ptr<game_base> create_instance<game_types::fluidsimulation>(gamedata const& data) { return std::move(std::make_unique<fluid::fluidsimulation>(data)); }
+    template <> std::unique_ptr<game_base> create_instance<game_types::fluidsimulation>(gamedata const& data) { return std::move(std::make_unique<fluid::fluidsimulation>(data)); }
 }

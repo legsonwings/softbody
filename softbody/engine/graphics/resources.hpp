@@ -2,38 +2,52 @@
 
 #include "stdx/stdx.h"
 #include "stdx/vec.h"
+#include "gfxmemory.h"
 #include "gfxutils.h"
 
 #include <wrl.h>
-#include <string>
 #include "d3dx12.h"
 
 #define NOMINMAX
 #include <assert.h>
 
+#include <cstdint>
+
 namespace gfx
 {
 	using Microsoft::WRL::ComPtr;
 
-	template <uint alignment, typename t>
-	bool isaligned(t value) { return ((uint)value & (alignment - 1)) == 0; }
+	struct cballocationhelper
+	{
+		static constexpr unsigned cbalignment = D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
+		static alignedlinearallocator& allocator() { static alignedlinearallocator allocator{ cbalignment }; return allocator; }
+	};
 
 	template<typename t>
 	requires (sizeof(t) % 256 == 0)
 	struct constantbuffer
 	{
-		void createresource() { _buffer = create_uploadbuffer(&_mappeddata, size()); }
-
-		void data(t const* data) 
+		void createresource() 
 		{
-			// constant buffer data needs to be multiple of and aligned to 256 
-			assert(isaligned<256>(data));
-			update_perframebuffer(_mappeddata, data, size()); 
+			_data = cballocationhelper::allocator().allocate<t>();
+			_buffer = create_uploadbuffer(&_mappeddata, size());
+		}
+
+		t& data() const { return *_data; }
+		void updateresource() { update_perframebuffer(_mappeddata, _data, size()); }
+
+		template<typename u>
+		requires std::same_as<t, std::decay_t<u>>
+		void updateresource(u&& data) 
+		{
+			*_data = data;
+			update_perframebuffer(_mappeddata, _data, size()); 
 		}
 
 		uint size() const { return sizeof(t); }
 		D3D12_GPU_VIRTUAL_ADDRESS gpuaddress() const { return get_perframe_gpuaddress(_buffer->GetGPUVirtualAddress(), size()); }
 
+		t* _data;
 		uint8_t* _mappeddata = nullptr;
 		ComPtr<ID3D12Resource> _buffer;
 	};
