@@ -12,6 +12,7 @@
 #include <assert.h>
 
 #include <cstdint>
+#include <cstddef>
 
 namespace gfx
 {
@@ -24,7 +25,7 @@ namespace gfx
 	};
 
 	template<typename t>
-	requires (sizeof(t) % 256 == 0)
+	requires (sizeof(t) % 256 == 0 && stdx::triviallycopyable_c<t>)
 	struct constantbuffer
 	{
 		void createresource() 
@@ -48,7 +49,7 @@ namespace gfx
 		D3D12_GPU_VIRTUAL_ADDRESS gpuaddress() const { return get_perframe_gpuaddress(_buffer->GetGPUVirtualAddress(), size()); }
 
 		t* _data;
-		uint8_t* _mappeddata = nullptr;
+		std::byte* _mappeddata = nullptr;
 		ComPtr<ID3D12Resource> _buffer;
 	};
 
@@ -87,7 +88,7 @@ namespace gfx
 		D3D12_GPU_VIRTUAL_ADDRESS gpuaddress() const { return get_perframe_gpuaddress(_buffer->GetGPUVirtualAddress(), size()); }
 
 		uint _count = 0;
-		uint8_t* _mappeddata = nullptr;
+		std::byte* _mappeddata = nullptr;
 		ComPtr<ID3D12Resource> _buffer;
 	};
 
