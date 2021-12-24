@@ -25,7 +25,7 @@ std::string const& gfx::generaterandom_matcolor(stdx::ext<material, bool> defini
     return matname;
 }
 
-void gfx::update_allframebuffers(uint8_t* mapped_buffer, void const* data_start, uint const perframe_buffersize)
+void gfx::update_allframebuffers(std::byte* mapped_buffer, void const* data_start, uint const perframe_buffersize)
 {
     for (uint i = 0; i < configurable_properties::frame_count; ++i)
         memcpy(mapped_buffer + perframe_buffersize * i, data_start, perframe_buffersize);
@@ -42,7 +42,7 @@ uint gfx::dxgiformatsize(DXGI_FORMAT format)
     return globalresources::get().dxgisize(format);
 }
 
-ComPtr<ID3D12Resource> gfx::create_uploadbuffer(uint8_t** mapped_buffer, uint const buffersize)
+ComPtr<ID3D12Resource> gfx::create_uploadbuffer(std::byte** mapped_buffer, uint const buffersize)
 {
     auto device = globalresources::get().device();
 
@@ -158,7 +158,7 @@ D3D12_GPU_VIRTUAL_ADDRESS gfx::get_perframe_gpuaddress(D3D12_GPU_VIRTUAL_ADDRESS
     return start + perframe_buffersize * frame_idx;
 }
 
-void gfx::update_perframebuffer(uint8_t* mapped_buffer, void const* data_start, std::size_t const perframe_buffersize)
+void gfx::update_perframebuffer(std::byte* mapped_buffer, void const* data_start, std::size_t const perframe_buffersize)
 {
     auto frame_idx = globalresources::get().frameindex();
     memcpy(mapped_buffer + perframe_buffersize * frame_idx, data_start, perframe_buffersize);

@@ -9,6 +9,7 @@
 
 #include <array>
 #include <vector>
+#include <cstdint>
 
 import shapes;
 

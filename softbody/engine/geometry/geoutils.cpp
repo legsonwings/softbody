@@ -144,7 +144,7 @@ std::vector<vector3> geoutils::create_cube_lines(vector3 const& center, float sc
     return create_box_lines(center, { scale, scale, scale });
 }
 
-bool geoutils::nearlyequal(arithmetic_c auto const& l, arithmetic_c auto const& r, float const& _tolerance) 
+bool geoutils::nearlyequal(arithmeticpure_c auto const& l, arithmeticpure_c auto const& r, float const& _tolerance) 
 { 
     return std::fabsf(l - r) < _tolerance;
 }

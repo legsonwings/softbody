@@ -2,12 +2,10 @@
 
 #include "stdx/stdx.h"
 #include "geocore.h"
-#include "geoutils.h"
 #include "engine/engineutils.h"
 
 #include <array>
 #include <vector>
-#include <cstdint>
 #include <utility>
 #include <iterator>
 #include <algorithm>

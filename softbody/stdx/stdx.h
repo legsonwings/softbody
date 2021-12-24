@@ -17,22 +17,19 @@
 namespace stdx
 {
 template <typename t = float>
-requires arithmetic_c<t> || arithmeticvector_c<t>
+requires arithmetic_c<t>
 t constexpr tolerance = t(1e-4f);
 
 template <typename t>
-requires arithmetic_c<t> || arithmeticvector_c<t>
+requires arithmetic_c<t>
 struct invalid { constexpr operator t() const { return { std::numeric_limits<t>::max() }; } };
 
-template <arithmeticvector_c t>
-struct arithmeticvector {};
+struct uminus { constexpr auto operator() (arithmeticpure_c auto v) const { return -v; }; };
 
-struct uminus { constexpr auto operator() (arithmetic_c auto v) const { return -v; }; };
-
-bool constexpr nearlyequal(arithmetic_c auto const& l, arithmetic_c auto const& r) { return l == r; }
+bool constexpr nearlyequal(arithmeticpure_c auto const& l, arithmeticpure_c auto const& r) { return l == r; }
 
 template <typename t>
-requires arithmetic_c<t> || arithmeticvector_c<t>
+requires arithmetic_c<t>
 bool constexpr isvalid(t const& val) { return !nearlyequal(std::numeric_limits<t>::max(), val); }
 
 template<typename t>
@@ -58,12 +55,8 @@ constexpr int ceil(float value)
 	return intval + (value > 0.f ? 1 : 0);
 }
 
-template<typename t>
-requires arithmetic_c<t> || arithmeticvector_c<t>
-constexpr t lerp(t a, t b, float alpha) { return a * (1 - alpha) + b * alpha; }
-
 template<typename t, uint n>
-requires arithmetic_c<t> || arithmeticvector_c<t>
+requires arithmetic_c<t>
 constexpr std::array<t, n> sum(std::array<t, n> const& l, std::array<t, n> const& r)
 {
 	std::array<t, n> res;
@@ -72,7 +65,7 @@ constexpr std::array<t, n> sum(std::array<t, n> const& l, std::array<t, n> const
 	return res;
 }
 
-constexpr auto pown(arithmetic_c auto v, uint n)
+constexpr auto pown(arithmeticpure_c auto v, uint n)
 {
 	decltype(v) res = 1;
 	for (auto i : std::ranges::iota_view{ 0u,  n })
@@ -117,7 +110,7 @@ constexpr auto castas(std::array<s_t, n> a)
 }
 
 template<indexablecontainer_c l_t, indexablecontainer_c r_t>
-requires stdx::arithmetic_c<containervalue_t<l_t>> && stdx::arithmetic_c<containervalue_t<r_t>>
+requires stdx::arithmeticpure_c<containervalue_t<l_t>> && stdx::arithmeticpure_c<containervalue_t<r_t>>
 constexpr auto dot(l_t&& a, r_t&& b)
 {
 	using v_t = containervalue_t<l_t>;
@@ -127,7 +120,7 @@ constexpr auto dot(l_t&& a, r_t&& b)
 }
 
 template<indexablecontainer_c t>
-requires stdx::arithmetic_c<containervalue_t<t>>
+requires stdx::arithmeticpure_c<containervalue_t<t>>
 constexpr auto clamp(t&& a, containervalue_t<t> l, containervalue_t<t> h)
 {
 	std::decay_t<t> r;
@@ -137,7 +130,7 @@ constexpr auto clamp(t&& a, containervalue_t<t> l, containervalue_t<t> h)
 }
 
 template<indexablecontainer_c t>
-requires stdx::arithmetic_c<containervalue_t<t>>
+requires stdx::arithmeticpure_c<containervalue_t<t>>
 constexpr void clamp(t& a, containervalue_t<t> l, containervalue_t<t> h)
 {
 	for (uint i(0); i < a.size(); ++i) a[i] = (a[i] < l ? l : (a[i] > h ? h : a[i]));
@@ -168,6 +161,30 @@ void ensuresize(t &c, uint size) {}
 
 template<typename t>
 void ensuresize(std::vector<t>& v, uint size) { v.resize(size); }
+
+// lerp degree, current dimension being lerped
+template<typename t, uint n, uint d = 0>
+requires (n >= 0 && arithmetic_c<t>)
+struct nlerp
+{
+	static constexpr t lerp(std::array<t, stdx::pown(2, n - d + 1)> const& data, std::array<float, n + 1> alpha)
+	{
+		std::array<t, stdx::pown(2, n - d)> r;
+		for (uint i{ 0 }; i < r.size(); ++i)
+			r[i] = data[i * 2] * (1.f - alpha[d]) + data[i * 2 + 1] * alpha[d];
+		return nlerp<t, n, d + 1>::lerp(r, alpha);
+	}
+};
+
+template<typename t, uint n, uint d>
+requires (n >= 0 && d == n + 1 && arithmetic_c<t>)
+struct nlerp<t, n, d>
+{
+	static constexpr t lerp(std::array<t, 1> const& data, std::array<float, n + 1> alpha) { return data[0]; }
+};
+
+template <arithmetic_c t, uint n, uint d = 0>
+constexpr auto lerp(std::array<t, stdx::pown(2, n - d + 1)> const& data, std::array<float, n + 1> alpha) { return nlerp<t, n, d>::lerp(data, alpha); }
 
 // triangular index
 template<uint n>
@@ -354,15 +371,4 @@ private:
 
 template<typename t, typename... args_t>
 auto makejoin(args_t&... _args) { return join<t, args_t...>(_args...); }
-}
-
-namespace std
-{
-	template <typename t>
-	class numeric_limits<stdx::arithmeticvector<t>>
-	{
-		static constexpr t min() noexcept { return t(std::numeric_limits<decltype(t().x)>::min()); }
-		static constexpr t max() noexcept { return t(std::numeric_limits<decltype(t().x)>::max()); }
-		static constexpr t lowest() noexcept { return t(std::numeric_limits<decltype(t().x)>::lowest()); }
-	};
 }

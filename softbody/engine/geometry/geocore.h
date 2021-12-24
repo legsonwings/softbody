@@ -1,8 +1,8 @@
 #pragma once
 
 #include "engine/core.h"
-#include "engine/simplemath.h"
 #include "stdx/stdx.h"
+#include "engine/simplemath.h"
 
 #include <vector>
 #include <optional>
