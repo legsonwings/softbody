@@ -5,24 +5,27 @@
 
 #include <array>
 #include <vector>
+#include <concepts>
 #include <functional>
-
-// todo : maybe fix this 0 based degree/dimension madness
 
 namespace fluid
 {
-// d - dimension of field, vd - dimension of vector, l length of field(assuming hypercubic)
-//template <uint d, uint vd, uint l>
-//struct vecfield : public std::array<stdx::vec<vd>, stdx::pown(l, d + 1)> {};
+	enum class fieldsize
+	{
+		bounded,
+		unbounded
+	};
 
-// todo : this should inherit from a container of fixed size that allocates on heap
-template <uint d, uint vd, uint l>
+// d - dimension of field, vd - dimension of vector, l length of field(assuming hypercubic)
+template <uint d, uint vd, uint l, fieldsize f = fieldsize::unbounded>
 struct vecfield : public std::vector<stdx::vec<vd>>
 {
-	static constexpr uint _vd = vd;
 	vecfield() { this->resize(stdx::pown(l, d + 1)); }
 	vecfield(std::vector<stdx::vec<vd>> other) : std::vector<stdx::vec<vd>>(other){}
 };
+
+template <uint d, uint vd, uint l>
+struct vecfield<d, vd, l, fieldsize::bounded> : public std::array<stdx::vec<vd>, stdx::pown(l, d + 1)> {};
 
 template<uint vd, int l>
 using vecfield2 = vecfield<1, vd, l>;
@@ -45,6 +48,12 @@ vecfield<d, vd, l> operator+(vecfield<d, vd, l> const& a, vecfield<d, vd, l> con
 template <uint d, uint vd, uint l>
 vecfield<d, vd, l> operator-(vecfield<d, vd, l> const& a, vecfield<d, vd, l> const& b) { return { stdx::binaryop(a, b, std::minus<>()) }; }
 
+template <uint d, uint vd, uint l>
+vecfield<d, vd, l> operator+=(vecfield<d, vd, l>& a, vecfield<d, vd, l> const& b) { a = stdx::binaryop(a, b, std::plus<>()); return a; }
+
+template <uint d, uint vd, uint l>
+vecfield<d, vd, l> operator-(vecfield<d, vd, l>& a, vecfield<d, vd, l> const& b) { a = stdx::binaryop(a, b, std::minus<>()); return a; }
+
 // n is dimension of simulation(0-based), l is length of box/cube(number of cells)
 template<uint n, uint l>
 requires (n >= 0)
@@ -60,14 +69,12 @@ struct fluidbox
 
 	void addvelocity(grididx const& cellidx, stdx::vec<n> vel)
 	{
-		// todo : provide shorthand assignment operators
-		v[grididx::to1d<l - 1>(cellidx)] = { v[grididx::to1d<l - 1>(cellidx)] + vel };
+		v[grididx::to1d<l - 1>(cellidx)] += vel;
 	}
 
 	void adddensity(grididx const& cellidx, uint didx, float den)
 	{
-		// todo : provide shorthand assignment operators
-		d[grididx::to1d<l - 1>(cellidx)][didx] = { d[grididx::to1d<l - 1>(cellidx)][didx] + den };
+		d[grididx::to1d<l - 1>(cellidx)][didx] += den;
 	}
 };
 
@@ -76,13 +83,6 @@ struct fluidbox
 // a potential solution is to wirte loop templates that use recursion
 // alternatvely a more desirable solution could be to iterate the 1d representation(since data in any dimension is just a 1D array) in single loop
 // This might mean padding the vector field with additional cells outside boundary since we require neighbouring cells for solving poisson equations
-
-// todo : provide a generic nd lerp
-template<uint vd>
-stdx::vec<vd> bilerp(stdx::vec<vd> lt, stdx::vec<vd> rt, stdx::vec<vd> lb, stdx::vec<vd> rb, stdx::vec2 alpha)
-{
-	return (lt * (1.f - alpha[0]) + rt * alpha[0]) * (1.f - alpha[1]) + (lb * (1.f - alpha[0]) + rb * alpha[0]) * alpha[1];
-}
 
 template<uint vd, uint l>
 vecfield2<vd, l> diffuse(vecfield2<vd, l> const& x, vecfield2<vd, l> const& b, float dt, float diff)
@@ -153,18 +153,14 @@ vecfield2<vd, l> advect2d(vecfield2<vd, l> const& a, vecfield22<l> const& v, flo
 			auto const lb = idx::to1d<l - 1>({ lt2d + idx{0, 1} });
 			auto const rb = idx::to1d<l - 1>({ lt2d + idx{1, 1} });
 
-			r[cell] = bilerp(a[lt], a[rt], a[lb], a[rb], {xy[0] - lt2d.coords[0], xy[1] - lt2d.coords[1] });
+			r[cell] = stdx::lerp<stdx::vec<vd>, 1>({ a[lt], a[rt], a[lb], a[rb] }, { xy[0] - lt2d.coords[0], xy[1] - lt2d.coords[1] });
 		}
 
 	return r;
 }
 
-// todo : this can be done better by using vectors to set the boundary velocities/densities
-// todo : this can be done even better by making this work for n-dimensional fluids, though it might be really difficult to do so
-
-// todo : this requries 2 dimension vectors
 template<uint vd, uint l>
-void sbounds(vecfield2<vd, l>& v, float scale)
+void bound(vecfield2<vd, l>& v, float scale)
 {
 	using idx = stdx::grididx<1>;
 	std::vector<idx> boundaries;

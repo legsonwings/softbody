@@ -6,8 +6,9 @@
 #include "engine/simplemath.h"
 
 #include <wrl.h>
-#include <string>
 #include "d3dx12.h"
+
+#include <cstdint>
 
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
@@ -120,8 +121,7 @@ namespace gfx
             : matx(m.Transpose()), normalmatx(m.Invert()), mvpmatx((m* v.view* v.proj).Transpose()), mat(_material) {}
     };
 
-    // todo : replace with std::alignas
-    _declspec(align(256u)) struct objectconstants : public instance_data
+    struct alignas(256) objectconstants : public instance_data
     {
         objectconstants() = default;
         objectconstants(matrix const& m, viewinfo const& v, material const& _material) : instance_data(m, v, _material) {}
@@ -137,7 +137,7 @@ namespace gfx
         uint8_t padding2[4];
     };
 
-    _declspec(align(256u)) struct sceneconstants
+    struct alignas(256) sceneconstants
     {
         vector3 campos;
         uint8_t padding[4];

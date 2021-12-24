@@ -8,7 +8,7 @@
 
 namespace stdx
 {
-template<uint d, stdx::arithmetic_c t = float>
+template<uint d, stdx::arithmeticpure_c t = float>
 struct vec : public std::array<t, d + 1>
 {
 	static constexpr uint nd = d;
@@ -23,11 +23,23 @@ struct vec : public std::array<t, d + 1>
 	constexpr vec<d, d_t> castas() const { return { stdx::castas<d_t>(*this) }; }
 };
 
-template<stdx::arithmetic_c t, uint d>
+template<stdx::arithmeticpure_c t, uint d>
 vec<d, t> operator*(vec<d, t> l, t r) { return { stdx::unaryop(l, std::bind(std::multiplies<>(), std::placeholders::_1, r)) }; }
 
-template<stdx::arithmetic_c t, uint d>
+template<stdx::arithmeticpure_c t, uint d>
 vec<d, t> operator*(t l, vec<d, t> r) { return { stdx::unaryop(r, std::bind(std::multiplies<>(), std::placeholders::_1, l)) }; }
+
+template<stdx::arithmeticpure_c t, uint d>
+vec<d, t> operator+=(vec<d, t>& l, vec<d, t> r) { l = stdx::binaryop(l, r, std::plus<>()); return l; }
+
+template<stdx::arithmeticpure_c t, uint d>
+vec<d, t> operator-=(vec<d, t>& l, vec<d, t> r) { l = stdx::binaryop(l, r, std::minus<>()); return l; }
+
+template<stdx::arithmeticpure_c t, uint d>
+vec<d, t> operator*=(vec<d, t>& l, t r) { l = stdx::unaryop(l, std::bind(std::multiplies<>(), std::placeholders::_1, r)); return l; }
+
+template<stdx::arithmeticpure_c t, uint d>
+vec<d, t> operator/=(vec<d, t> l, t r) { l = stdx::unaryop(l, std::bind(std::multiplies<>(), std::placeholders::_1, t(1) / r)); return l; }
 
 template<uint d>
 using veci = vec<d, int>;
@@ -46,4 +58,15 @@ using veci3 = veci<2>;
 using vecui1 = vecui<0>;
 using vecui2 = vecui<1>;
 using vecui3 = vecui<2>;
+}
+
+namespace std
+{
+	template <typename t, uint d>
+	class numeric_limits<stdx::vec<d, t>>
+	{
+		static constexpr stdx::vec<d, t> min() noexcept { return t().fill(std::numeric_limits<stdx::containervalue_t<stdx::vec<d, t>>>::min()); }
+		static constexpr stdx::vec<d, t> max() noexcept { return t().fill(std::numeric_limits<stdx::containervalue_t<stdx::vec<d, t>>>::max()); }
+		static constexpr stdx::vec<d, t> lowest() noexcept { return t().fill(std::numeric_limits<stdx::containervalue_t<stdx::vec<d, t>>>::lowest()); }
+	};
 }

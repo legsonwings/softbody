@@ -2,17 +2,7 @@
 
 #include "engine/engineutils.h"
 #include "engine/graphics/gfxcore.h"
-#include "engine/SimpleCamera.h"
-
-#include <string>
-#include <array>
-#include <vector>
-#include <memory>
-
-#define NOMINMAX
-#include <wrl.h>
-
-struct ID3D12Resource;
+#include "engine/simplecamera.h"
 
 // abstract base game class
 class game_base

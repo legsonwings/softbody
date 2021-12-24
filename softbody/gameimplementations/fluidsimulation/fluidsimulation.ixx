@@ -16,7 +16,8 @@ module;
 #include "engine/graphics/globalresources.h"
 #include "engine/interfaces/bodyinterface.h"
 
-#include "engine/debugutils.h"
+#include <cstdint>
+
 export module fluidsimulation;
 
 import shapes;
@@ -60,7 +61,6 @@ struct fluidtex
     uint _texelsize;
     geometry::rectangle _quad;
 
-    // todo : use std::byte
     std::vector<uint8_t> _texdata;
 };
 
@@ -79,7 +79,7 @@ private:
     static constexpr uint l = 400;
     
     using fluid_t = fluidbox<vd, l>;
-    static constexpr uint numcolors = decltype(fluid_t::d)::_vd + 1;
+    static constexpr uint numcolors = decltype(fluid_t::d)::value_type::nd + 1;
 
     static constexpr stdx::vecui2 texdims{720, 720};
 
@@ -141,13 +141,13 @@ private:
 
         // per helmholtz-hodge, decompose divergent field into one without it and pressure gradient
         v = v - gradient(p);  // this is the divergence free field
-        sbounds(v, -1.f);
+        bound(v, -1.f);
 
         // diffuse dyes
         _fluid.d = advect2d(_fluid.d, v, dt);
         _fluid.d = diffuse({}, _fluid.d, dt, 0.5f);
         
-        sbounds(_fluid.d, 1.f);
+        bound(_fluid.d, 1.f);
 
         updatetexture();
     }
