@@ -12,46 +12,46 @@ import primitives;
 using namespace geometry;
 using namespace DirectX;
 
-geometry::ffd_object::ffd_object(ffddata data) : center(data.center)
+geometry::ffd_object::ffd_object(ffddata data) : _center(data.center)
 {
-    evaluated_verts = std::move(data.vertices);
-    auto const num_verts = evaluated_verts.size();
+    _evaluated_verts = std::move(data.vertices);
+    auto const num_verts = _evaluated_verts.size();
 
-    vertices.reserve(num_verts);
-    physx_verts.reserve(num_verts);
+    _vertices.reserve(num_verts);
+    _physx_verts.reserve(num_verts);
 
-    for (auto const& vert : evaluated_verts)
-        box += vert.position;
+    for (auto const& vert : _evaluated_verts)
+        _box += vert.position;
 
     // correct the geometric center
-    const auto boxcenter = box.center();
-    center += boxcenter;
-    for (auto i : std::ranges::iota_view(0u, evaluated_verts.size()))
+    const auto boxcenter = _box.center();
+    _center += boxcenter;
+    for (auto i : std::ranges::iota_view(0u, _evaluated_verts.size()))
     {
-        evaluated_verts[i].position -= boxcenter;
-        physx_verts.emplace_back(evaluated_verts[i].position + center);
+        _evaluated_verts[i].position -= boxcenter;
+        _physx_verts.emplace_back(_evaluated_verts[i].position + _center);
     }
 
-    auto const& span = box.span();
-    for (auto const& vert : evaluated_verts)
-        vertices.push_back({ parametric_coordinates(vert.position, span), vert.normal });
+    auto const& span = _box.span();
+    for (auto const& vert : _evaluated_verts)
+        _vertices.push_back({ parametric_coordinates(vert.position, span), vert.normal });
 
-    for (uint idx = 0; idx < volume.numcontrolpts; ++idx)
+    for (uint idx = 0; idx < _volume.numcontrolpts; ++idx)
     {
         // calculate in range [-span/2, span/2]
         using cubeidx = stdx::grididx<2>;
         static constexpr float subtt = dim * 0.5f;
         auto const idx3d = cubeidx::from1d(dim, idx);
-        rest_config[idx] = vector3{ span.x * (idx3d[0] - subtt), span.y * (idx3d[2] - subtt), span.z * (idx3d[1] - subtt) } / static_cast<float>(dim);
-        volume.controlnet[idx] = rest_config[idx];
+        _rest_config[idx] = vector3{ span.x * (idx3d[0] - subtt), span.y * (idx3d[2] - subtt), span.z * (idx3d[1] - subtt) } / static_cast<float>(dim);
+        _volume.controlnet[idx] = _rest_config[idx];
     }
 
-    restsize = span.Length();
+    _restsize = span.Length();
 }
 
 std::vector<linesegment> intersect(ffd_object const& l, ffd_object const& r)
 {
-    auto const& isect_box = l.aabbworld().intersect(r.aabbworld());
+    auto const& isect_box = l.bboxworld().intersect(r.bboxworld());
     if (!isect_box)
         return {};
 
@@ -94,38 +94,38 @@ std::vector<linesegment> intersect(ffd_object const& l, ffd_object const& r)
 void ffd_object::update(float dt)
 {
     static const physx::spring spring{};
-    for (uint ctrlpt_idx = 0; ctrlpt_idx < volume.numcontrolpts; ++ctrlpt_idx)
+    for (uint ctrlpt_idx = 0; ctrlpt_idx < _volume.numcontrolpts; ++ctrlpt_idx)
     {
-        auto const displacement = volume.controlnet[ctrlpt_idx] - rest_config[ctrlpt_idx];
+        auto const displacement = _volume.controlnet[ctrlpt_idx] - _rest_config[ctrlpt_idx];
  
-        auto const [deltapos_ctrlpt, newvel] = spring.damped(displacement, velocities[ctrlpt_idx], dt);
+        auto const [deltapos_ctrlpt, newvel] = spring.damped(displacement, _velocities[ctrlpt_idx], dt);
         auto const targetdir = deltapos_ctrlpt.Normalized();
         
         // clamp the displacement from equilibrium so that control points do not cross the center(some objects will escape boxes otherwise)
-        volume.controlnet[ctrlpt_idx] = rest_config[ctrlpt_idx] + std::min(deltapos_ctrlpt.Length(), restsize * 0.96f / 2.f) * targetdir;
+        _volume.controlnet[ctrlpt_idx] = _rest_config[ctrlpt_idx] + std::min(deltapos_ctrlpt.Length(), _restsize * 0.96f / 2.f) * targetdir;
 
-        velocities[ctrlpt_idx] = newvel;
+        _velocities[ctrlpt_idx] = newvel;
     }
 
-    velocity += compute_wholebodyforces() * dt;
+    _velocity += compute_wholebodyforces() * dt;
 
     // center is not the geometric center and is not affected by deformations
-    auto const delta_pos = velocity * dt;
-    center += delta_pos;
-    box = aabb{ volume.controlnet.data(), volume.controlnet.size() };
+    auto const delta_pos = _velocity * dt;
+    _center += delta_pos;
+    _box = aabb{ _volume.controlnet.data(), _volume.controlnet.size() };
 
-    physx_verts.clear();
-    evaluated_verts = beziermaths::bulkevaluate(volume, vertices);
+    _physx_verts.clear();
+    _evaluated_verts = beziermaths::bulkevaluate(_volume, _vertices);
 
-    for (auto const& vtx : evaluated_verts)
-        physx_verts.emplace_back(vtx.position + center);
+    for (auto const& vtx : _evaluated_verts)
+        _physx_verts.emplace_back(vtx.position + _center);
 }
 
 std::vector<gfx::instance_data> ffd_object::controlnet_instancedata() const
 {
     std::vector<gfx::instance_data> instances_info;
-    instances_info.reserve(volume.numcontrolpts);
-    for (auto const& ctrl_pt : volume.controlnet) { instances_info.emplace_back(matrix::CreateTranslation(ctrl_pt + center), gfx::globalresources::get().view(), gfx::globalresources::get().mat("")); }
+    instances_info.reserve(_volume.numcontrolpts);
+    for (auto const& ctrl_pt : _volume.controlnet) { instances_info.emplace_back(matrix::CreateTranslation(ctrl_pt + _center), gfx::globalresources::get().view(), gfx::globalresources::get().mat("")); }
     return instances_info;
 }
 
@@ -149,7 +149,7 @@ vector3 ffd_object::eval_bez_trivariate(float s, float t, float u) const
             for (uint k = 0; k <= 2; ++k)
             {
                 float basis_u = (float(n) / float(fact(k) * fact(n - k))) * std::powf(float(1 - u), float(n - k)) * std::powf(u, float(k));
-                resultk += basis_u * volume.controlnet[to1d(i, j, k)];
+                resultk += basis_u * _volume.controlnet[to1d(i, j, k)];
             }
 
             resultj += resultk * basis_t;
@@ -173,14 +173,14 @@ std::vector<vector3> geometry::ffd_object::controlpoint_visualization() const { 
 
 void ffd_object::move(vector3 delta)
 {
-    center += delta;
-    box.min_pt += delta;
-    box.max_pt += delta;
+    _center += delta;
+    _box.min_pt += delta;
+    _box.max_pt += delta;
 }
 
 vector3 ffd_object::compute_wholebodyforces() const
 {
-    auto const drag = -velocity * 0.001f;
+    auto const drag = -_velocity * 0.001f;
     return drag;
 }
 
@@ -199,16 +199,16 @@ void ffd_object::resolve_collision(ffd_object & r, float dt)
     }
 
     static constexpr float body_mass = 1.f;
-    static constexpr float ctrlpt_mass = body_mass / volume.numcontrolpts;
+    static constexpr float ctrlpt_mass = body_mass / _volume.numcontrolpts;
 
-    auto const normal = (center - r.center).Normalized();
-    auto const relativevel = velocity - r.velocity;
+    auto const normal = (_center - r._center).Normalized();
+    auto const relativevel = _velocity - r._velocity;
 
     static auto constexpr elasticity = 1.f;
     auto const impulse = relativevel.Dot(normal) * elasticity * normal;
 
-    velocity -= impulse;
-    r.velocity += impulse;
+    _velocity -= impulse;
+    r._velocity += impulse;
 
     // move a bit so they no longer collide, ideally should use mtd
     move(normal * 0.1f);
@@ -220,40 +220,40 @@ void ffd_object::resolve_collision(ffd_object & r, float dt)
     {
         auto const [idx, idx_other] = affected_ctrlpts[i];
 
-        auto const relativev = velocities[idx] - r.velocities[idx_other];
-        auto const impulse_ctrlpts = relativev.Dot(normal) * normal * (1.f + elasticity)/ static_cast<float>(volume.numcontrolpts);
+        auto const relativev = _velocities[idx] - r._velocities[idx_other];
+        auto const impulse_ctrlpts = relativev.Dot(normal) * normal * (1.f + elasticity)/ static_cast<float>(_volume.numcontrolpts);
 
-        velocities[idx] -= (impulse_per_ctrlpt + impulse_ctrlpts);
-        r.velocities[idx_other] += (impulse_per_ctrlpt + impulse_ctrlpts);
+        _velocities[idx] -= (impulse_per_ctrlpt + impulse_ctrlpts);
+        r._velocities[idx_other] += (impulse_per_ctrlpt + impulse_ctrlpts);
     }
 }
 
 void ffd_object::resolve_collision_interior(aabb const& r, float dt)
 {
     // this checks only box-box intersection
-    auto const& isect_box = aabbworld().intersect(r);
+    auto const& isect_box = bboxworld().intersect(r);
     if (!isect_box)
         return;
 
     std::vector<vector3> contacts;
 
     if (isect_box->max_pt.x >= (r.max_pt.x - stdx::tolerance<>))
-        contacts.emplace_back(isect_box->max_pt.x, center.y, center.z);
+        contacts.emplace_back(isect_box->max_pt.x, _center.y, _center.z);
 
     if (isect_box->min_pt.x <= (r.min_pt.x + stdx::tolerance<>))
-        contacts.emplace_back(isect_box->min_pt.x, center.y, center.z);
+        contacts.emplace_back(isect_box->min_pt.x, _center.y, _center.z);
 
     if (isect_box->max_pt.y >= (r.max_pt.y - stdx::tolerance<>))
-        contacts.emplace_back(center.x, isect_box->max_pt.y, center.z);
+        contacts.emplace_back(_center.x, isect_box->max_pt.y, _center.z);
 
     if (isect_box->min_pt.y <= (r.min_pt.y + stdx::tolerance<>))
-        contacts.emplace_back(center.x, isect_box->min_pt.y, center.z);
+        contacts.emplace_back(_center.x, isect_box->min_pt.y, _center.z);
 
     if (isect_box->max_pt.z >= (r.max_pt.z - stdx::tolerance<>))
-        contacts.emplace_back(center.x, center.y, isect_box->max_pt.z);
+        contacts.emplace_back(_center.x, _center.y, isect_box->max_pt.z);
 
     if (isect_box->min_pt.z <= (r.min_pt.z + stdx::tolerance<>))
-        contacts.emplace_back(center.x, center.y, isect_box->min_pt.z);
+        contacts.emplace_back(_center.x, _center.y, isect_box->min_pt.z);
 
     if (contacts.size() <= 0) return;
 
@@ -267,16 +267,16 @@ void ffd_object::resolve_collision_interior(aabb const& r, float dt)
 
     // average the contacts to find the normal for computing new velocity
     normal /= static_cast<float>(contacts.size());
-    normal = (center - normal).Normalized();
+    normal = (_center - normal).Normalized();
 
     static constexpr float body_mass = 1.f;
-    static constexpr float ctrlpt_mass = body_mass / volume.numcontrolpts;
+    static constexpr float ctrlpt_mass = body_mass / _volume.numcontrolpts;
 
     static auto constexpr elasticity = 1.f;
-    auto const impulse_magnitude = velocity.Dot(-normal) * elasticity;
+    auto const impulse_magnitude = _velocity.Dot(-normal) * elasticity;
  
     // reflect along normal
-    velocity = velocity.Length() * normal;
+    _velocity = _velocity.Length() * normal;
 
     // move it away from wall, to avoid duplicate collisions, ideally should use mtd
     move(normal * 0.1f);
@@ -286,19 +286,19 @@ void ffd_object::resolve_collision_interior(aabb const& r, float dt)
     // push control points in
     for (uint i = 0; i < affected_ctrlpts.size(); ++i)
     {
-        auto const deltavel_dir = (center - volume.controlnet[affected_ctrlpts[i]]).Normalized();
-        velocities[affected_ctrlpts[i]] += impulse_per_ctrlpt * deltavel_dir;
+        auto const deltavel_dir = (_center - _volume.controlnet[affected_ctrlpts[i]]).Normalized();
+        _velocities[affected_ctrlpts[i]] += impulse_per_ctrlpt * deltavel_dir;
     }
 }
 
 uint ffd_object::closest_controlpoint(vector3 point) const
 {
-    point -= center;
+    point -= _center;
     uint ctrlpt_idx = 0;
     float distsqr_min = std::numeric_limits<float>::max();
-    for (uint i = 0; i < volume.numcontrolpts; ++i)
+    for (uint i = 0; i < _volume.numcontrolpts; ++i)
     {
-        if (auto const distsqr = vector3::DistanceSquared(point, volume.controlnet[i]); distsqr < distsqr_min)
+        if (auto const distsqr = vector3::DistanceSquared(point, _volume.controlnet[i]); distsqr < distsqr_min)
         {
             distsqr_min = distsqr;
             ctrlpt_idx = i;
@@ -341,7 +341,7 @@ std::vector<vector3> ffd_object::compute_contacts(ffd_object const& other) const
 vector3 ffd_object::compute_contact(ffd_object const& r) const
 {
     // compute a simple single contact
-    auto const& isect_box = box.intersect(r.gaabb());
+    auto const& isect_box = _box.intersect(r.bbox());
     if (!isect_box)
         return stdx::invalid<vector3>();
 

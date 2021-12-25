@@ -8,21 +8,21 @@ namespace gfx
 {
     void dispatch(resource_bindings const &bindings, bool wireframe = false, bool twosided = false, uint dispatchx = 1);
 
-    template<typename body_t, topology primitive_t>
+    template<sbody_c body_t, topology primitive_t>
     inline body_static<body_t, primitive_t>::body_static(rawbody_t _body, bodyparams const& _params) : bodyinterface(_params), body(std::move(_body))
     {
-        get_vertices = [](body_t const& geom) { return geom.gvertices(); };
+        get_vertices = [](body_t const& geom) { return geom.vertices(); };
         get_instancedata = [](body_t const& geom) { return geom.instancedata(); };
     }
 
-    template<typename body_t, topology primitive_t>
+    template<sbody_c body_t, topology primitive_t>
     inline body_static<body_t, primitive_t>::body_static(body_t const& _body, vertexfetch_r (rawbody_t::* vfun)() const, instancedatafetch_r (rawbody_t::* ifun)() const, bodyparams const& _params) : bodyinterface(_params), body(_body)
     {
         get_vertices = [vfun](body_t const& geom) { return std::invoke(vfun, geom); };
         get_instancedata = [ifun](body_t const& geom) { return std::invoke(ifun, geom); };
     }
 
-    template<typename body_t, topology primitive_t>
+    template<sbody_c body_t, topology primitive_t>
     std::vector<ComPtr<ID3D12Resource>> body_static<body_t, primitive_t>::create_resources()
     {
         auto const vbupload = _vertexbuffer.createresources(get_vertices(body));
@@ -34,7 +34,7 @@ namespace gfx
         return { vbupload };
     }
 
-    template<typename body_t, topology primitive_t>
+    template<sbody_c body_t, topology primitive_t>
     inline void body_static<body_t, primitive_t>::render(float dt, renderparams const &params)
     {
         auto const foundpso = globalresources::get().psomap().find(getparams().psoname);
@@ -73,24 +73,21 @@ namespace gfx
         dispatch(bindings, params.wireframe, gfx::globalresources::get().mat(getparams().matname).ex(), numasthreads);
     }
 
-    template<typename body_t, topology primitive_t>
-    inline const geometry::aabb body_static<body_t, primitive_t>::getaabb() const { return body.gaabb(); }
-
-    template<typename body_t, topology primitive_t>
+    template<dbody_c body_t, topology primitive_t>
     inline body_dynamic<body_t, primitive_t>::body_dynamic(rawbody_t _body, bodyparams const& _params, stdx::vecui2 texdims)  : bodyinterface(_params), body(std::move(_body))
     {
         _texture._dims = texdims;
-        get_vertices = [](body_t const& geom) { return geom.gvertices(); };
+        get_vertices = [](body_t const& geom) { return geom.vertices(); };
     }
 
-    template<typename body_t, topology primitive_t>
+    template<dbody_c body_t, topology primitive_t>
     inline body_dynamic<body_t, primitive_t>::body_dynamic(body_t const& _body, vertexfetch_r (rawbody_t::*fun)() const, bodyparams const& _params, stdx::vecui2 texdims) : bodyinterface(_params), body(_body)
     {
         _texture._dims = texdims;
         get_vertices = [fun](body_t const& geom) { return std::invoke(fun, geom); };
     }
 
-    template<typename body_t, topology primitive_t>
+    template<dbody_c body_t, topology primitive_t>
     inline std::vector<ComPtr<ID3D12Resource>> body_dynamic<body_t, primitive_t>::create_resources()
     {
         _cbuffer.createresource();
@@ -102,14 +99,14 @@ namespace gfx
         return {};
     }
 
-    template<typename body_t, topology primitive_t>
+    template<dbody_c body_t, topology primitive_t>
     inline void body_dynamic<body_t, primitive_t>::update(float dt) 
     { 
         // update only if we own this body
         if constexpr(std::is_same_v<body_t, rawbody_t>) body.update(dt);
     }
 
-    template<typename body_t, topology primitive_t>
+    template<dbody_c body_t, topology primitive_t>
     inline void body_dynamic<body_t, primitive_t>::render(float dt, renderparams const &params)
     {
         auto const foundpso = globalresources::get().psomap().find(getparams().psoname);
@@ -121,7 +118,7 @@ namespace gfx
 
         _vertexbuffer.updateresource(get_vertices(body));
         _texture.updateresource(body.texturedata());
-        _cbuffer.updateresource(objectconstants{ matrix::CreateTranslation(body.gcenter()), globalresources::get().view(), globalresources::get().mat(getparams().matname) });
+        _cbuffer.updateresource(objectconstants{ matrix::CreateTranslation(body.center()), globalresources::get().view(), globalresources::get().mat(getparams().matname) });
         assert(_vertexbuffer.count() < ASGROUP_SIZE * MAX_MSGROUPS_PER_ASGROUP * topologyconstants<prim_t>::maxprims_permsgroup * topologyconstants<prim_t>::numverts_perprim);
         
         struct

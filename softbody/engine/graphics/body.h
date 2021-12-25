@@ -17,24 +17,6 @@ using Microsoft::WRL::ComPtr;
 
 namespace gfx
 {
-    // todo : ensure these constraints can be satisfied by reference type instantiations
-    // until then cannot constrain body templates
-    template <typename t>
-    concept sbody_c = requires(t v)
-    {
-        {v.gcenter()} -> std::convertible_to<vector3>;
-        v.gvertices();
-        {v.instancedata()} -> std::same_as<std::vector<instance_data>>;
-    };
-
-    template <typename t>
-    concept dbody_c = requires(t v)
-    {
-        {v.gcenter()} -> std::convertible_to<vector3>;
-        v.gvertices();
-        v.update(float{});
-    };
-
     template<topology prim_t = topology::triangle>
     struct topologyconstants
     {
@@ -51,7 +33,7 @@ namespace gfx
         static constexpr uint32_t maxprims_permsgroup = MAX_LINES_PER_GROUP;
     };
 
-    template<typename body_t, topology prim_t>
+    template<sbody_c body_t, topology prim_t>
     class body_static : public bodyinterface
     {
         using rawbody_t = std::decay_t<body_t>;
@@ -75,7 +57,6 @@ namespace gfx
 
         std::vector<ComPtr<ID3D12Resource>> create_resources() override;
         void render(float dt, renderparams const&) override;
-        const geometry::aabb getaabb() const;
 
         constexpr body_t& get() { return body; }
         constexpr body_t const& get() const { return body; }
@@ -85,7 +66,7 @@ namespace gfx
         constexpr rawbody_t const* operator->() const { return &body; }
     };
 
-    template<typename body_t, topology prim_t>
+    template<dbody_c body_t, topology prim_t>
     class body_dynamic : public bodyinterface
     {
         using rawbody_t = std::decay_t<body_t>;
