@@ -34,10 +34,10 @@ using cubeidx = stdx::grididx<1>;
 struct fluidtex
 {
     void update(float dt) {}
-    std::vector<geometry::vertex> gvertices() const { return _quad.triangles(); }
-    vector3 gcenter() const { return { vector3::Zero }; }
+    std::vector<geometry::vertex> vertices() const { return _quad.triangles(); }
+    vector3 center() const { return { vector3::Zero }; }
 
-    fluidtex(stdx::vecui2 dims, uint texelsize = sizeof(uint32_t)) : _dims(dims), _texelsize(texelsize), _quad{ dims.castas<float>(), gcenter() } {}
+    fluidtex(stdx::vecui2 dims, uint texelsize = sizeof(uint32_t)) : _dims(dims), _texelsize(texelsize), _quad{ dims.castas<float>(), center() } {}
 
     stdx::vecui2 texpos(stdx::vecui2 fluidpos, stdx::vecui2 fluiddims)
     {

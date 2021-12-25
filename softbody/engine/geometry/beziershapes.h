@@ -176,28 +176,28 @@ std::vector<vector3> getwireframe_controlmesh(beziermaths::beziertriangle<n> con
 
 struct qbeziercurve
 {
-    std::vector<vector3> gvertices() const 
+    std::vector<vector3> vertices() const 
     { 
         std::vector<vector3> res;
-        for (auto const& v : tessellate(curve)) res.push_back(v.first);
+        for (auto const& v : tessellate(_curve)) res.push_back(v.first);
         return res;
     }
 
     std::vector<gfx::instance_data> instancedata() const { return { gfx::instance_data(matrix::CreateTranslation(vector3::Zero), gfx::globalresources::get().view(), gfx::globalresources::get().mat("")) }; }
 
-    beziermaths::beziercurve<2u> curve;
+    beziermaths::beziercurve<2u> _curve;
 };
 
 struct qbeziervolume
 {
-    std::vector<vector3> gvertices() const
+    std::vector<vector3> vertices() const
     {
         static constexpr auto delta = 0.01f;
         static constexpr auto deltax = vector3{ delta, 0.f, 0.f };
         static constexpr auto deltay = vector3{ 0.f, delta, 0.f };
         static constexpr auto deltaz = vector3{ 0.f, 0.f, delta };
 
-        auto const& volpoints = tessellate(vol);
+        auto const& volpoints = tessellate(_vol);
         std::vector<vector3> res;
         res.reserve(volpoints.size() * 2);
         for (auto const& v : volpoints)
@@ -220,11 +220,11 @@ struct qbeziervolume
         for (auto i : std::ranges::iota_view{ 0u, unitvol.vol.numcontrolpts })
         {
             auto const& idx = stdx::grididx<2>::from1d(2, i);
-            unitvol.vol.controlnet[i] = len * vector3{ static_cast<float>(idx.coords[0]) / 2, static_cast<float>(idx.coords[2]) / 2 , static_cast<float>(idx.coords[1]) / 2 };
+            unitvol._vol.controlnet[i] = len * vector3{ static_cast<float>(idx.coords[0]) / 2, static_cast<float>(idx.coords[2]) / 2 , static_cast<float>(idx.coords[1]) / 2 };
         }
         return unitvol;
     }
 
-    beziermaths::beziervolume<2u> vol;
+    beziermaths::beziervolume<2u> _vol;
 };
 }

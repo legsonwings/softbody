@@ -2,7 +2,6 @@
 #include "stdx/stdx.h"
 #include "engine/engineutils.h"
 #include "engine/graphics/body.h"
-#include "engine/graphics/gfxcore.h"
 #include "engine/graphics/globalresources.h"
 
 #include "gameutils.h"
@@ -87,7 +86,7 @@ void soft_body::update(float dt)
 {
     game_base::update(dt);
 
-    auto const& roomaabb = boxes[0].getaabb();
+    auto const& roomaabb = boxes[0]->bbox();
 
     for (uint i = 0; i < gameparams::numballs; ++i)
         for (uint j = i + 1; j < gameparams::numballs; ++j)
@@ -148,7 +147,7 @@ gfx::resourcelist soft_body::load_assets_and_geometry()
 
     boxes.emplace_back(cube{ {vector3{0.f, 0.f, 0.f}}, vector3{40.f} }, &cube::vertices_flipped, &cube::instancedata, bodyparams{ "instanced" });
     
-    auto const& roomaabb = boxes[0].getaabb();
+    auto const& roomaabb = boxes[0]->bbox();
     auto const roomhalfspan = (roomaabb.max_pt - roomaabb.min_pt - (vector3::One * gameparams::ballradius) - vector3(0.5f)) / 2.f;
 
     static auto& re = engineutils::getrandomengine();

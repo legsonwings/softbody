@@ -28,6 +28,7 @@ class globalresources
 	constantbuffer<sceneconstants> _cbuffer;
 	ComPtr<ID3D12DescriptorHeap> _srvheap;
 	ComPtr<ID3D12Device2> _device;
+	ComPtr<ID3D12RootSignature> _rootsig;
 	ComPtr<ID3D12GraphicsCommandList6> _commandlist;
 	std::unordered_map<std::string, pipeline_objects> _psos;
 	std::unordered_map<std::string, stdx::ext<material, bool>> _materials;

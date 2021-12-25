@@ -26,7 +26,7 @@ namespace geometry
         box() = default;
         box(vector3 const& _center, vector3 const& _extents) : center(_center), extents(_extents) {}
 
-        std::vector<vector3> gvertices();
+        std::vector<vector3> vertices();
         vector3 center, extents;
     };
 
@@ -47,7 +47,7 @@ namespace geometry
         aabb& operator+=(vector3 const& pt);
         std::optional<aabb> intersect(aabb const& r) const;
 
-        // Top left front = min, bot right back = max
+        // top left front = min, bot right back = max
         vector3 min_pt;
         vector3 max_pt;
     };

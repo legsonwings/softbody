@@ -25,7 +25,7 @@
 #include <wrl.h>
 #include <shellapi.h>
 
-#include "DXSampleHelper.h"
+#include "dxhelpers.h"
 #include "Win32Application.h"
 
 class DXSample

@@ -6,7 +6,7 @@
 using namespace DirectX::SimpleMath;
 using namespace geometry;
 
-std::vector<vector3> geometry::box::gvertices() { return geoutils::create_box_lines(center, extents); }
+std::vector<vector3> geometry::box::vertices() { return geoutils::create_box_lines(center, extents); }
 
 geometry::aabb::aabb(vector3 const (&tri)[3])
 {

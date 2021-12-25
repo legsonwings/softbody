@@ -2,6 +2,7 @@
 
 #include "gamebase.h"
 #include "engine/geometry/ffd.h"
+#include "engine/graphics/gfxcore.h"
 
 import shapes;
 class game_engine;
@@ -10,10 +11,10 @@ namespace gfx
 {
 	struct instance_data;
 
-	template<typename geometry_t, gfx::topology primitive_t = gfx::topology::triangle>
+	template<sbody_c body_t, gfx::topology primitive_t = gfx::topology::triangle>
 	class body_static;
 
-	template<typename geometry_t, gfx::topology primitive_t = gfx::topology::triangle>
+	template<dbody_c body_t, gfx::topology primitive_t = gfx::topology::triangle>
 	class body_dynamic;
 }
 
