@@ -162,7 +162,7 @@ void ensuresize(t &c, uint size) {}
 template<typename t>
 void ensuresize(std::vector<t>& v, uint size) { v.resize(size); }
 
-// lerp degree, current dimension being lerped
+// type, lerp degree, current dimension being lerped
 template<typename t, uint n, uint d = 0>
 requires (n >= 0 && arithmetic_c<t>)
 struct nlerp

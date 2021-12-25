@@ -1,7 +1,7 @@
 #include "globalresources.h"
 #include "gfxutils.h"
 
-#include "engine/dxsamplehelper.h"
+#include "engine/dxhelpers.h"
 
 #define NOMINMAX
 #include <assert.h>
@@ -76,11 +76,10 @@ void gfx::globalresources::addpso(std::string const& name, std::wstring const& a
     ReadDataFromFile(assetfullpath(ps).c_str(), &pixelshader.data, &pixelshader.size);
 
     // pull root signature from the precompiled mesh shaders.
-    // todo : root signatures will be duplicated in case shaders share root sig or same shader is used to create multiple psos
-    ThrowIfFailed(_device->CreateRootSignature(0, meshshader.data, meshshader.size, IID_PPV_ARGS(_psos[name].root_signature.GetAddressOf())));
+    if(!_rootsig) ThrowIfFailed(_device->CreateRootSignature(0, meshshader.data, meshshader.size, IID_PPV_ARGS(_rootsig.GetAddressOf())));
+    _psos[name].root_signature = _rootsig;
 
     D3DX12_MESH_SHADER_PIPELINE_STATE_DESC pso_desc = _psodesc;
-
     pso_desc.pRootSignature = _psos[name].root_signature.Get();
 
     if (!as.empty())

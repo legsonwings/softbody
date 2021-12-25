@@ -81,7 +81,7 @@ struct cube
     cube() = default;
     constexpr cube(vector3 const& _center, vector3 const& _extents) : center(_center), extents(_extents) {}
 
-    aabb const& gaabb() const
+    aabb const& bbox() const
     {
         auto createaabb = [](auto const& verts)
         {
@@ -90,11 +90,11 @@ struct cube
             return aabb(positions);
         };
 
-        static const aabb box = createaabb(gvertices());
+        static const aabb box = createaabb(vertices());
         return box;
     }
 
-    std::vector<geometry::vertex> gvertices() const
+    std::vector<geometry::vertex> vertices() const
     {
         static const std::vector<vertex> verts = geoutils::create_cube(center, extents);
         return verts;
@@ -113,7 +113,7 @@ struct cube
             return result;
         };
 
-        static const std::vector<vertex> invertedvertices = invert(gvertices());
+        static const std::vector<vertex> invertedvertices = invert(vertices());
         return invertedvertices;
     }
 
@@ -121,7 +121,6 @@ struct cube
 
 private:
     vector3 center, extents;
-    std::vector<geometry::vertex> vertices;
 };
 
 struct sphere

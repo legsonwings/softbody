@@ -217,7 +217,7 @@
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="engine\debugutils.h" />
     <ClInclude Include="engine\dxsample.h" />
-    <ClInclude Include="engine\dxsamplehelper.h" />
+    <ClInclude Include="engine\dxhelpers.h" />
     <ClInclude Include="engine\engine.h" />
     <ClInclude Include="engine\engineutils.h" />
     <ClInclude Include="engine\geometry\beziermaths.h" />

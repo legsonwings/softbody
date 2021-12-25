@@ -1,5 +1,6 @@
 #pragma once
 
+#include "stdx/stdxcore.h"
 #include "engine/core.h"
 #include "engine/sharedconstants.h"
 #include "engine/engineutils.h"
@@ -9,6 +10,7 @@
 #include "d3dx12.h"
 
 #include <cstdint>
+#include <type_traits>
 
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
@@ -146,4 +148,26 @@ namespace gfx
         uint32_t numdirlights = 0;
         uint32_t numpointlights;
     };
+
+    template <typename t>
+    concept sbodyraw_c = requires(t v)
+    {
+        v.vertices();
+        {v.instancedata()} -> std::same_as<std::vector<instance_data>>;
+    };
+
+    template <typename t>
+    concept dbodyraw_c = requires(t v)
+    {
+        v.vertices();
+        v.update(float{});
+        {v.center()} -> std::convertible_to<vector3>;
+        {v.texturedata()} -> stdx::samedecay_c<std::vector<uint8_t>>;
+    };
+
+    template <typename t>
+    concept sbody_c = (sbodyraw_c<t> || stdx::lvaluereference_c<t> || stdx::rvaluereference_c<t>);
+
+    template <typename t>
+    concept dbody_c = (dbodyraw_c<t> || stdx::lvaluereference_c<t> || stdx::rvaluereference_c<t>);
 }
