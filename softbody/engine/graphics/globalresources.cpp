@@ -8,6 +8,10 @@
 
 void gfx::globalresources::init() 
 {
+    WCHAR assetsPath[512];
+    GetAssetsPath(assetsPath, _countof(assetsPath));
+    _assetspath = assetsPath;
+
     addpso("lines", L"default_as.cso", L"lines_ms.cso", L"basic_ps.cso");
     addpso("default", L"default_as.cso", L"default_ms.cso", L"default_ps.cso");
     addpso("texturess", L"", L"texturess_ms.cso", L"texturess_ps.cso");
@@ -21,10 +25,6 @@ void gfx::globalresources::init()
     addmat("black", material().diffuse(gfx::color::black));
     addmat("white", material().diffuse(gfx::color::white));
     addmat("red", material().diffuse(gfx::color::red));
-
-    WCHAR assetsPath[512];
-    GetAssetsPath(assetsPath, _countof(assetsPath));
-    _assetspath = assetsPath;
 
     D3D12_DESCRIPTOR_HEAP_DESC srvheapdesc = {};
     srvheapdesc.NumDescriptors = 1;

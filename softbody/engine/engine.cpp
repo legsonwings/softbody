@@ -62,7 +62,7 @@ void softbody::load_pipeline()
     ComPtr<IDXGIFactory4> factory;
     ThrowIfFailed(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&factory)));
 
-    auto device = gfx::globalresources::get().device();
+    auto &device = gfx::globalresources::get().device();
 
     if (m_useWarpDevice)
     {
@@ -218,7 +218,7 @@ void softbody::load_pipeline()
 void softbody::load_assetsandgeometry()
 {
     auto device = gfx::globalresources::get().device();
-    auto cmdlist = gfx::globalresources::get().cmdlist();
+    auto &cmdlist = gfx::globalresources::get().cmdlist();
 
     // Create the command list. They are created in recording state
     ThrowIfFailed(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[gfx::globalresources::get().frameindex()].Get(), nullptr, IID_PPV_ARGS(&cmdlist)));

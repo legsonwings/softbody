@@ -22,6 +22,8 @@ namespace gfx
 	{
 		std::string psoname;
 		std::string matname;
+
+		stdx::vecui2 dims;
 	};
 
 	class bodyinterface

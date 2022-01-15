@@ -12,7 +12,7 @@ using Microsoft::WRL::ComPtr;
 
 namespace gfx
 {
-	std::string const& generaterandom_matcolor(stdx::ext<material, bool> definition, std::optional<std::string> const& preferred_name = {});
+	std::string generaterandom_matcolor(stdx::ext<material, bool> definition, std::optional<std::string> const& preferred_name = {});
 
 	using default_and_upload_buffers = std::pair<ComPtr<ID3D12Resource>, ComPtr<ID3D12Resource>>;
 

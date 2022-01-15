@@ -2,9 +2,9 @@
 
 #include "dxsample.h"
 
-#include "StepTimer.h"
+#include "steptimer.h"
 #include "simplemath.h"
-#include "GameBase.h"
+#include "gamebase.h"
 #include "engineutils.h"
 #include "graphics/gfxmemory.h"
 
