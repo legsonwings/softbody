@@ -22,6 +22,7 @@ struct alignedlinearallocator
 		assert(_currentpos);
 		assert(canallocate(alignedsize));
 		t* r = reinterpret_cast<t*>(_currentpos);
+		assert(r);
 		*r = t{};
 		_currentpos += alignedsize;
 		return r;
