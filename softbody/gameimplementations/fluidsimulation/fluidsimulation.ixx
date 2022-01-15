@@ -16,6 +16,7 @@ module;
 #include "engine/graphics/globalresources.h"
 #include "engine/interfaces/bodyinterface.h"
 
+#include <vector>
 #include <cstdint>
 
 export module fluidsimulation;
@@ -85,7 +86,7 @@ private:
 
     uint _currentcolor = 0;
     fluidbox<vd, l> _fluid;
-    gfx::body_dynamic<fluidtex, gfx::topology::triangle> _texture{ {texdims},  gfx::bodyparams{ "texturess", ""} };
+    gfx::body_dynamic<fluidtex, gfx::topology::triangle> _texture{ {texdims},  gfx::bodyparams{ "texturess", "", texdims} };
 
     void on_key_up(unsigned key) override
     {
@@ -139,7 +140,7 @@ private:
         vecfield21<l> p = {};
         p = jacobi2d(p, divergence<l>(v), 4, 1.f, 4.f);
 
-        // per helmholtz-hodge, decompose divergent field into one without it and pressure gradient
+        // per helmholtz-hodge decomposition, decompose divergent field into one without it and pressure gradient
         v = v - gradient(p);  // this is the divergence free field
         bound(v, -1.f);
 

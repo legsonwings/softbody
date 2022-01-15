@@ -4,7 +4,7 @@
 #include "engine/engineutils.h"
 #include "engine/dxhelpers.h"
 
-std::string const& gfx::generaterandom_matcolor(stdx::ext<material, bool> definition, std::optional<std::string> const& preferred_name)
+std::string gfx::generaterandom_matcolor(stdx::ext<material, bool> definition, std::optional<std::string> const& preferred_name)
 {
     static constexpr uint matgenlimit = 1000u;
     auto & re = engineutils::getrandomengine();

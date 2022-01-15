@@ -94,8 +94,9 @@ namespace gfx
 
 	struct texture
 	{
-		void createresource(uint heapidx, std::vector<uint8_t> const& texturedata, ID3D12DescriptorHeap *srvheap)
+		void createresource(uint heapidx, stdx::vecui2 dims, std::vector<uint8_t> const& texturedata, ID3D12DescriptorHeap *srvheap)
 		{
+			_dims = dims;
 			_heapidx = heapidx;
 			_srvheap = srvheap;
 			_bufferupload = create_uploadbufferunmapped(size());
