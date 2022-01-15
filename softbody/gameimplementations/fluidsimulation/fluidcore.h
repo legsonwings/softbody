@@ -65,7 +65,7 @@ struct fluidbox
 	vecfield23<l> d;
 	vecfield22<l> v;
 	vecfield22<l> v0;
-	// diffusion coeffecient, density, velocity, oldvelocity
+	// density, velocity, oldvelocity
 
 	void addvelocity(grididx const& cellidx, stdx::vec<n> vel)
 	{
@@ -79,10 +79,10 @@ struct fluidbox
 };
 
 // todo : figure out a way to generically handle arbitrary dimensions
-// the problem right now is that we have to no way of generating nested loops based on template paramter
-// a potential solution is to wirte loop templates that use recursion
-// alternatvely a more desirable solution could be to iterate the 1d representation(since data in any dimension is just a 1D array) in single loop
-// This might mean padding the vector field with additional cells outside boundary since we require neighbouring cells for solving poisson equations
+// the problem right now is that we have to no way of generating nested loops based on template parameter
+// a potential solution is to write loop templates that use recursion
+// alternatively a more desirable solution could be to iterate the 1d representation(since data in any dimension is just a 1D array) in single loop
+// This might mean padding the vector field with additional cells outside boundary since we require neighboring cells for solving poisson equations
 
 template<uint vd, uint l>
 vecfield2<vd, l> diffuse(vecfield2<vd, l> const& x, vecfield2<vd, l> const& b, float dt, float diff)

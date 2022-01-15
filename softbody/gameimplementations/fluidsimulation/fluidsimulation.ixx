@@ -77,7 +77,7 @@ public:
     cursor cursor;
 private:
     static constexpr uint vd = 1;
-    static constexpr uint l = 400;
+    static constexpr uint l = 300;
     
     using fluid_t = fluidbox<vd, l>;
     static constexpr uint numcolors = decltype(fluid_t::d)::value_type::nd + 1;
