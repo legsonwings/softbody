@@ -2,10 +2,10 @@
 
 #include "stdx/stdx.h"
 
-#include <assert.h>
 #include <wrl.h>
 #include <d3d12.h>
 
+#include <cassert>
 #include <cstddef>
 #include <concepts>
 

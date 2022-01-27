@@ -3,8 +3,7 @@
 
 #include "engine/dxhelpers.h"
 
-#define NOMINMAX
-#include <assert.h>
+#include <cassert>
 
 void gfx::globalresources::init() 
 {

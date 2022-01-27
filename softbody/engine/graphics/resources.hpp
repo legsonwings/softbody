@@ -8,9 +8,7 @@
 #include <wrl.h>
 #include "d3dx12.h"
 
-#define NOMINMAX
-#include <assert.h>
-
+#include <cassert>
 #include <cstdint>
 #include <cstddef>
 

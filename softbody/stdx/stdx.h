@@ -1,14 +1,11 @@
 #pragma once
 
-#ifdef _WIN32
-#include "assert.h"
-#endif 
-
 #include <cmath>
 #include <array>
 #include <vector>
 #include <limits>
 #include <ranges>
+#include <cassert>
 #include <concepts>
 #include <algorithm>
 
@@ -335,9 +332,7 @@ private:
 
 	t* get(uint idx)
 	{
-#ifdef _WIN32
 		assert(idx < calcsizes());
-#endif
 		auto const& [idxrel, idxc] = container(idx);
 		return getimpl(idxrel, idxc);
 	}
@@ -345,9 +340,7 @@ private:
 	template<uint n = 0>
 	t* getimpl(uint idx, uint idxc)
 	{
-#ifdef _WIN32
 		assert(idxc < mysize);
-#endif
 		if (n == idxc)
 			return static_cast<t*>(&(std::get<n>(data)[idx]));
 		if constexpr (n + 1 < mysize) return getimpl<n + 1>(idx, idxc);
@@ -357,9 +350,7 @@ private:
 	template<uint n = 0>
 	uint getsize(uint idxc) const
 	{
-#ifdef _WIN32
 		assert(idxc < mysize);
-#endif
 		if (n == idxc) return std::get<n>(data).size();
 		if constexpr (n + 1 < mysize) return getsize<n + 1>(idxc);
 		return 0;
