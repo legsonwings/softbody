@@ -10,11 +10,11 @@
 
 namespace fluid
 {
-	enum class fieldsize
-	{
-		bounded,
-		unbounded
-	};
+enum class fieldsize
+{
+	bounded,
+	unbounded
+};
 
 // d - dimension of field, vd - dimension of vector, l length of field(assuming hypercubic)
 template <uint d, uint vd, uint l, fieldsize f = fieldsize::unbounded>
