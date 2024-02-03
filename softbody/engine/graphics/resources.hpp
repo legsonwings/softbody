@@ -11,6 +11,7 @@
 #include <cassert>
 #include <cstdint>
 #include <cstddef>
+#include <algorithm>
 
 namespace gfx
 {
@@ -94,7 +95,10 @@ namespace gfx
 	{
 		void createresource(uint heapidx, stdx::vecui2 dims, std::vector<uint8_t> const& texturedata, ID3D12DescriptorHeap *srvheap)
 		{
-			_dims = dims;
+			// textures cannot be 0 sized
+			// todo : min/max should be specailized for stdx::vec
+			// perhaps we should allow dummy objects
+			_dims = { std::max<uint>(dims[0], 1u), std::max<uint>(dims[1], 1u) };
 			_heapidx = heapidx;
 			_srvheap = srvheap;
 			_bufferupload = create_uploadbufferunmapped(size());
@@ -112,6 +116,8 @@ namespace gfx
 
 		void updateresource(std::vector<uint8_t> const& texturedata)
 		{
+			// use 4 bytes per texel for now
+			assert(texturedata.size() == _dims[0] * _dims[1] * 4);
 			D3D12_SUBRESOURCE_DATA subresdata;
 			subresdata.pData = texturedata.data();
 			subresdata.RowPitch = _dims[0] * 4;

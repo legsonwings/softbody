@@ -59,7 +59,7 @@ std::vector<vector3> fillwithspheres(geometry::aabb const& box, uint count, floa
     for (auto i : std::ranges::iota_view{ 0u,  count })
     {
         static auto& re = engineutils::getrandomengine();
-        static const std::uniform_int_distribution<uint> distvoxel(0u, numcells - 1);
+        static std::uniform_int_distribution<uint> distvoxel(0u, numcells - 1);
 
         uint emptycell = 0;
         while (occupied.find(emptycell) != occupied.end()) emptycell = distvoxel(re);
@@ -148,10 +148,8 @@ gfx::resourcelist soft_body::load_assets_and_geometry()
     boxes.emplace_back(cube{ {vector3{0.f, 0.f, 0.f}}, vector3{40.f} }, &cube::vertices_flipped, &cube::instancedata, bodyparams{ "instanced" });
     
     auto const& roomaabb = boxes[0]->bbox();
-    auto const roomhalfspan = (roomaabb.max_pt - roomaabb.min_pt - (vector3::One * gameparams::ballradius) - vector3(0.5f)) / 2.f;
-
     static auto& re = engineutils::getrandomengine();
-    static const std::uniform_real_distribution<float> distvelocity(-1.f, 1.f);
+    static std::uniform_real_distribution<float> distvelocity(-1.f, 1.f);
 
     static const auto basemat_ball = gfx::globalresources::get().mat("ball");
     for (auto const& center : fillwithspheres(roomaabb, gameparams::numballs, gameparams::ballradius))

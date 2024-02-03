@@ -160,6 +160,7 @@ constexpr curveeval evaluate(beziercurve<n> const& curve, float t)
 template<uint n>
 constexpr geometry::vertex evaluate(beziertriangle<n> const& patch, vector3 const& uvw)
 {
+    using namespace stdx;
     auto const& triangle = decasteljau<n, 1>::triangle(patch, uvw);
     controlpoint const& p010 = triangle[triindex<n>::to1d(1, 0)];
     controlpoint const& p100 = triangle[triindex<n>::to1d(0, 0)];
@@ -193,6 +194,7 @@ std::vector<geometry::vertex> bulkevaluate(beziervolume<2> const& v, std::vector
 template<uint n>
 constexpr beziertriangle<n + 1> elevate(beziertriangle<n> const& patch)
 {
+    using namespace stdx;
     beziertriangle<n + 1> elevatedPatch;
     for (int i = 0; i < elevatedPatch.numcontrolpts; ++i)
     {

@@ -23,7 +23,7 @@ struct rectangle
     {
         float const halfl = _dims[0] / 2.f;
         float const halfh = _dims[1] / 2.f;
-        static const vector3 normal = vector3::Forward;
+        vector3 const normal = vector3::Forward;
         std::vector<geometry::vertex> r;
         r.push_back({ _center + vector3{-halfl, halfh, 0.f}, normal, vector2{0.f, 0.f} });
         r.push_back({ _center + vector3{halfl, halfh, 0.f}, normal, vector2{1.f, 0.f} });
@@ -245,7 +245,7 @@ private:
 
     std::vector<vertex> triangulated_sphere;
     std::vector<polar_coords> triangulated_sphere_polar;
-    static std::unordered_map<uint, std::vector<vector3>> unitspheres_tessellated;
+    static inline std::unordered_map<uint, std::vector<vector3>> unitspheres_tessellated;
 public:
 
     float radius = 1.5f;
@@ -255,5 +255,4 @@ public:
     uint numsegments_latitude = (numsegments_longitude / 2) + (numsegments_longitude % 2);
 };
 
-std::unordered_map<uint, std::vector<vector3>> sphere::unitspheres_tessellated;
 }

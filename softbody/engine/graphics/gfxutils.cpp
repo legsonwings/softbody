@@ -8,8 +8,8 @@ std::string gfx::generaterandom_matcolor(stdx::ext<material, bool> definition, s
 {
     static constexpr uint matgenlimit = 1000u;
     auto & re = engineutils::getrandomengine();
-    static const std::uniform_int_distribution<uint> matnumberdist(0, matgenlimit);
-    static const std::uniform_real_distribution<float> colordist(0.f, 1.f);
+    static std::uniform_int_distribution<uint> matnumberdist(0, matgenlimit);
+    static std::uniform_real_distribution<float> colordist(0.f, 1.f);
 
     vector3 const color = { colordist(re), colordist(re), colordist(re) };
     static const std::string basename("mat");

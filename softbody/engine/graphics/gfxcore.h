@@ -33,8 +33,7 @@ namespace gfx
         none = 0x0,
         wireframe = 0x1,
         transparent = 0x2,
-        twosided = 0x4,
-        count
+        twosided = 0x4
     };
 
     struct color

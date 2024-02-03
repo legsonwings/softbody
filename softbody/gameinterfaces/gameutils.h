@@ -10,7 +10,7 @@ enum class game_types : int
 };
 
 extern std::wstring gametitles[int(game_types::num)];
-auto constexpr currentgame = game_types::fluidsimulation;
+auto constexpr currentgame = game_types::softbodydemo;
 
 #include "gamebase.h"
 

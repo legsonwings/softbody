@@ -133,6 +133,12 @@ constexpr void clamp(t& a, containervalue_t<t> l, containervalue_t<t> h)
 	for (uint i(0); i < a.size(); ++i) a[i] = (a[i] < l ? l : (a[i] > h ? h : a[i]));
 }
 
+template<indexablecontainer_c t>
+void ensuresize(t& c, uint size) {}
+
+template<typename t>
+void ensuresize(std::vector<t>& v, uint size) { v.resize(size); }
+
 template<indexablecontainer_c t, typename f_t>
 requires std::invocable<f_t, containervalue_t<t>>
 constexpr auto unaryop(t&& a, f_t f)
@@ -152,12 +158,6 @@ constexpr auto binaryop(l_t&& a, r_t&& b, f_t f)
 	for (uint i(0); i < std::min(a.size(), b.size()); ++i) r[i] = f(a[i], b[i]);
 	return r;
 }
-
-template<indexablecontainer_c t>
-void ensuresize(t &c, uint size) {}
-
-template<typename t>
-void ensuresize(std::vector<t>& v, uint size) { v.resize(size); }
 
 // type, lerp degree, current dimension being lerped
 template<typename t, uint n, uint d = 0>

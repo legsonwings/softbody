@@ -144,22 +144,22 @@ std::vector<vector3> geoutils::create_cube_lines(vector3 const& center, float sc
     return create_box_lines(center, { scale, scale, scale });
 }
 
-bool geoutils::nearlyequal(arithmeticpure_c auto const& l, arithmeticpure_c auto const& r, float const& _tolerance) 
+bool geoutils::nearlyequal(arithmeticpure_c auto const& l, arithmeticpure_c auto const& r, float _tolerance) 
 { 
     return std::fabsf(l - r) < _tolerance;
 }
 
-bool geoutils::nearlyequal(vector2 const& l, vector2 const& r, float const& _tolerance)
+bool geoutils::nearlyequal(vector2 const& l, vector2 const& r, float _tolerance)
 {
     return nearlyequal(l.x, r.x, _tolerance) && nearlyequal(l.y, r.y, _tolerance);
 }
 
-bool geoutils::nearlyequal(vector3 const& l, vector3 const& r, float const& _tolerance)
+bool geoutils::nearlyequal(vector3 const& l, vector3 const& r, float _tolerance)
 {
     return nearlyequal(l.x, r.x, _tolerance) && nearlyequal(l.y, r.y, _tolerance) && nearlyequal(l.z, r.z, _tolerance);
 }
 
-bool geoutils::nearlyequal(vector4 const& l, vector4 const& r, float const& _tolerance)
+bool geoutils::nearlyequal(vector4 const& l, vector4 const& r, float _tolerance)
 {
     return nearlyequal(l.x, r.x, _tolerance) && nearlyequal(l.y, r.y, _tolerance) && nearlyequal(l.z, r.z, _tolerance) && nearlyequal(l.w, r.w, _tolerance);
 }

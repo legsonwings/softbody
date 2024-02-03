@@ -44,7 +44,7 @@ namespace geometry
         std::vector<vector3> boxvertices() const { return box().vertices(); }
         std::vector<vertex> const& vertices() const { return _evaluated_verts; }
         std::vector<vector3> const& physx_triangles() const { return _physx_verts; }
-        std::vector<uint8_t> const& texturedata() const { static std::vector<uint8_t> r; return r; }
+        std::vector<uint8_t> const& texturedata() const { static std::vector<uint8_t> r(4); return r; }
 
         void move(vector3 delta);
         void update(float dt);
